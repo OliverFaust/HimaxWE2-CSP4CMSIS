@@ -1,4 +1,8 @@
-# CSP4CMSIS
+<p align="center">
+  <img src="images/CSP4CMSIS_Logo_1to2.jpg" alt="CSP4CMSIS Logo" width="400"/>
+</p>
+
+# HimaxWE2-CSP4CMSIS
 This repository is a fork (clone and extension) of the original HimaxWiseEyePlus/Seeed_Grove_Vision_AI_Module_V2 base repository. We extend our thanks to the original authors for their excellent work and foundation.
 Here is the original document with an adompted setup procedure. 
 # Himax examples for Seeed Grove Vision AI Module V2
