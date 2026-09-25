@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="images/CSP4CMSIS_Logo_v3.jpg" alt="CSP4CMSIS Logo" width="400"/>
+  <img src="images/CSP4CMSIS_Logo_v3.jpg" alt="CSP4CMSIS Logo" width="150"/>
 </p>
 
 # HimaxWE2-CSP4CMSIS
