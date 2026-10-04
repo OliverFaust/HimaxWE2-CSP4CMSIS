@@ -1,0 +1,13 @@
+Phase B step 1: A-apps built against the shared foundation (2.0.1 library, OS_HAL := y,
+CMSIS-RTOS2 start); sieve and alt_test fully migrated. Arm GNU 13.2.rel1, 2026-10-04.
+Baseline (main): 8 warnings per app, the same two in app code (csp4cmsis_<app>.c:3 and :66).
+
+csp4cmsis_sieve                      exit=0 text/data/bss=103844/2136/97920 warnings=8 (app/library 2)
+csp4cmsis_alt_test                   exit=0 text/data/bss=112912/2144/96136 warnings=8 (app/library 2)
+csp4cmsis_alt_test_max               exit=0 text/data/bss=162108/2136/94304 warnings=8 (app/library 2)
+csp4cmsis_comstime                   exit=0 text/data/bss=106552/2144/97464 warnings=8 (app/library 2)
+csp4cmsis_chain_test                 exit=0 text/data/bss=104284/2120/93432 warnings=8 (app/library 2)
+csp4cmsis_matrix_multiplication      exit=0 text/data/bss=120836/2144/158984 warnings=8 (app/library 2)
+csp4cmsis_dining_philosophers        exit=0 text/data/bss=105400/2120/99192 warnings=8 (app/library 2)
+csp4cmsis_asymmetric_philosophers    exit=0 text/data/bss=105660/2144/99292 warnings=8 (app/library 2)
+csp4cmsis_lossy_policy_test          exit=0 text/data/bss=103760/2144/84944 warnings=8 (app/library 2)
