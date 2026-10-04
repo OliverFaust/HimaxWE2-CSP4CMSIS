@@ -1,0 +1,74 @@
+1st BL Modem Build DATE=Nov 30 2023, 0x0002000b
+Please input any key to enter X-Modem mode in 100 ms 
+waiting input key...
+slot flash_offset 0x00000000
+New MemDesp himax_sec_SB_image_process PASS
+set_memory_s_ns
+bl_status = 0x800000, HX_DSP_FLAG 1
+bl_status = 0x800000
+jump_addr=0x10000000
+Compiler Version: ARM GNU, 13.2.1 20231009
+Task creation C++ CSP wrapper test.
+Application initialization (via csp_app_main_init) started.
+Application tasks created successfully.
+
+--- BOli2 Launching CSP Static Network (Zero-Heap) ---
+*** MainApp_Task: Run() returned, entering stack-report loop ***
+[Sender 1] Starting sequence.
+[Sender 2] Starting sequence.
+[Receiver] Task running. Using Resident-Guard ALT.
+[Receiver] Verified 1000 messages...
+[Receiver] Verified 2000 messages...
+[Receiver] Verified 3000 messages...
+[Receiver] Verified 4000 messages...
+[Receiver] Verified 5000 messages...
+[Receiver] Verified 6000 messages...
+[Receiver] Verified 7000 messages...
+[Receiver] Verified 8000 messages...
+[Receiver] Verified 9000 messages...
+[Receiver] Verified 10000 messages...
+[Receiver] Verified 11000 messages...
+[Receiver] Verified 12000 messages...
+[Receiver] Verified 13000 messages...
+[Receiver] Verified 14000 messages...
+[Receiver] Verified 15000 messages...
+[Receiver] Verified 16000 messages...
+[Receiver] Verified 17000 messages...
+[Receiver] Verified 18000 messages...
+[Receiver] Verified 19000 messages...
+[Sender 1] Finished.
+[Receiver] Verified 20000 messages...
+[Sender 2] Finished.
+[Receiver] SUCCESS: 20000 messages verified heap-free.
+MainApp: 716/4096 bytes used (3380 bytes unused headroom)
+Snd1: 736/2048 bytes used (1312 bytes unused headroom, 328 words HWM)
+Snd2: 800/2048 bytes used (1248 bytes unused headroom, 312 words HWM)
+Receiver: 952/4096 bytes used (3144 bytes unused headroom, 786 words HWM)
+MainApp: 856/4096 bytes used (3240 bytes unused headroom)
+Snd1: 736/2048 bytes used (1312 bytes unused headroom, 328 words HWM)
+Snd2: 800/2048 bytes used (1248 bytes unused headroom, 312 words HWM)
+Receiver: 952/4096 bytes used (3144 bytes unused headroom, 786 words HWM)
+MainApp: 896/4096 bytes used (3200 bytes unused headroom)
+Snd1: 736/2048 bytes used (1312 bytes unused headroom, 328 words HWM)
+Snd2: 800/2048 bytes used (1248 bytes unused headroom, 312 words HWM)
+Receiver: 952/4096 bytes used (3144 bytes unused headroom, 786 words HWM)
+MainApp: 896/4096 bytes used (3200 bytes unused headroom)
+Snd1: 736/2048 bytes used (1312 bytes unused headroom, 328 words HWM)
+Snd2: 800/2048 bytes used (1248 bytes unused headroom, 312 words HWM)
+Receiver: 952/4096 bytes used (3144 bytes unused headroom, 786 words HWM)
+MainApp: 896/4096 bytes used (3200 bytes unused headroom)
+Snd1: 736/2048 bytes used (1312 bytes unused headroom, 328 words HWM)
+Snd2: 800/2048 bytes used (1248 bytes unused headroom, 312 words HWM)
+Receiver: 952/4096 bytes used (3144 bytes unused headroom, 786 words HWM)
+MainApp: 896/4096 bytes used (3200 bytes unused headroom)
+Snd1: 736/2048 bytes used (1312 bytes unused headroom, 328 words HWM)
+Snd2: 800/2048 bytes used (1248 bytes unused headroom, 312 words HWM)
+Receiver: 952/4096 bytes used (3144 bytes unused headroom, 786 words HWM)
+MainApp: 896/4096 bytes used (3200 bytes unused headroom)
+Snd1: 736/2048 bytes used (1312 bytes unused headroom, 328 words HWM)
+Snd2: 800/2048 bytes used (1248 bytes unused headroom, 312 words HWM)
+Receiver: 952/4096 bytes used (3144 bytes unused headroom, 786 words HWM)
+MainApp: 896/4096 bytes used (3200 bytes unused headroom)
+Snd1: 736/2048 bytes used (1312 bytes unused headroom, 328 words HWM)
+Snd2: 800/2048 bytes used (1248 bytes unused headroom, 312 words HWM)
+Receiver: 952/4096 bytes used (3144 bytes unused headroom, 786 words HWM)

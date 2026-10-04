@@ -1,0 +1,12 @@
+== csp4cmsis_irq
+[NVIC 3s] SVCall=0 PendSV=7 SysTick=7; enabled IRQn:prio 7:0 21:0 35:0 40:0 41:0 93:0 96:0 97:0 98:0 99:0 100:0 163:0 169:0 170:0 172:0 173:0 174:0 175:0 176:0
+[NVIC 10s] SVCall=0 PendSV=7 SysTick=7; enabled IRQn:prio 7:0 21:0 35:0 40:0 41:0 93:0 96:0 97:0 98:0 99:0 100:0 163:0 169:0 170:0 172:0 173:0 174:0 175:0 176:0
+== csp4cmsis_shake_detection
+[NVIC 3s] SVCall=0 PendSV=7 SysTick=7; enabled IRQn:prio 7:0 21:0 40:0 41:0 93:0 96:0 97:0 98:0 99:0 100:0 163:0 169:0 170:0 172:0 173:0 174:0 175:0 176:0
+[NVIC 10s] SVCall=0 PendSV=7 SysTick=7; enabled IRQn:prio 7:0 21:0 40:0 41:0 93:0 96:0 97:0 98:0 99:0 100:0 163:0 169:0 170:0 172:0 173:0 174:0 175:0 176:0
+== csp4cmsis_kws_iic
+[NVIC 3s] SVCall=0 PendSV=7 SysTick=7; enabled IRQn:prio 7:0 21:0 40:0 41:0 66:0 93:0 96:0 97:0 98:0 99:0 100:0 114:0 115:0 133:0 163:0 169:0 170:0 172:0 173:0 174:0 175:0 176:0 192:0
+[NVIC 10s] SVCall=0 PendSV=7 SysTick=7; enabled IRQn:prio 7:0 21:0 40:0 41:0 66:0 93:0 96:0 97:0 98:0 99:0 100:0 114:0 115:0 133:0 163:0 169:0 170:0 172:0 173:0 174:0 175:0 176:0 192:0
+== csp4cmsis_allon_sensor_tflm
+[NVIC 3s] SVCall=0 PendSV=7 SysTick=7; enabled IRQn:prio 7:0 21:0 37:0 40:0 41:0 92:0 93:0 96:0 97:0 98:0 99:0 100:0 112:0 163:0 169:0 170:0 172:0 173:0 174:0 175:0 176:0 192:0
+[NVIC 10s] SVCall=0 PendSV=7 SysTick=7; enabled IRQn:prio 7:0 21:0 37:0 40:0 41:0 92:0 93:0 96:0 97:0 98:0 99:0 100:0 112:0 163:0 169:0 170:0 172:0 173:0 174:0 175:0 176:0 192:0
