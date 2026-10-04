@@ -1,0 +1,3 @@
+os/freertos_10_5_1/NTZ/freertos_kernel/include/FreeRTOS.h:59:10: fatal error: FreeRTOSConfig.h: No such file or directory
+os/freertos_10_5_1/NTZ/freertos_kernel/include/FreeRTOS.h:59:10: fatal error: FreeRTOSConfig.h: No such file or directory
+os/freertos_10_5_1/NTZ/freertos_kernel/include/FreeRTOS.h:59:10: fatal error: FreeRTOSConfig.h: No such file or directory
