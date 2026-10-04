@@ -6,6 +6,7 @@
 /* FreeRTOS kernel includes. */
 #include "FreeRTOS.h"
 #include "task.h"
+#include "cmsis_os2.h"
 #include "queue.h"
 #include "timers.h"
 #endif
@@ -38,6 +39,8 @@ extern void csp_app_main_init(void);
  ******************************************************************************/
 int app_main(void)
 {
+    osKernelInitialize();
+
     printf("Initializing System & CSP Network...\r\n");
 
     // 1. Configure Pinmux lines for I2C Master 0
@@ -55,7 +58,7 @@ int app_main(void)
     // 3. Launch the C++ CSP Processing Chain
     csp_app_main_init();
 
-    vTaskStartScheduler();
+    osKernelStart();
 
     for (;;);
 }

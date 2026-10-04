@@ -30,6 +30,7 @@
 /* FreeRTOS kernel includes. */
 #include "FreeRTOS.h"
 #include "task.h"
+#include "cmsis_os2.h"
 #include "queue.h"
 #include "timers.h"
 #endif
@@ -143,12 +144,14 @@ void pinmux_init()
  */
 int app_main(void)
 {
+	osKernelInitialize();
+
 	pinmux_init();
 
 	dbg_printf(DBG_LESS_INFO, "freertos rtos_app\r\n");
 	
 	RunProcessingChainTest();
-        vTaskStartScheduler();
+        osKernelStart();
 
         for (;;)
             ;

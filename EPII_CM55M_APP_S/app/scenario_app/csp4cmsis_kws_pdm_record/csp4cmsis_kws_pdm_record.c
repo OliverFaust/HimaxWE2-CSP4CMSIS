@@ -51,6 +51,7 @@
 
 /* FreeRTOS kernel includes. */
 #include "FreeRTOS.h"
+#include "cmsis_os2.h"
 #include "csp4cmsis_spn.h"
 
 PDM_DEV_INFO pdm_dev_info;
@@ -367,6 +368,8 @@ int app_pdm_setting()
 
 int kws_pdm_record_app(void)
 {
+    osKernelInitialize();
+
     uint32_t wakeup_event;
     uint32_t wakeup_event1;
     uint32_t freq=0;
@@ -430,9 +433,9 @@ int kws_pdm_record_app(void)
     xprintf("KWS init done, handing audio processing off to the CSP4CMSIS task\n");
 
     RunProcessingChainTest();
-    vTaskStartScheduler();
+    osKernelStart();
 
-    // vTaskStartScheduler() does not return in normal operation.
+    // osKernelStart() does not return in normal operation.
     hx_drv_pdm_deinit();
     cv_kws_deinit();
     while(1);
