@@ -107,6 +107,7 @@ Note: The following has been tested to work on Ubuntu 20.04 PC
     ```
 - Output elf file: `./obj_epii_evb_icv30_bdv10/gnu_epii_evb_WLCSP65/EPII_CM55M_gnu_epii_evb_WLCSP65_s.elf`
     ![alt text](images/output_elf_file.png)
+- Note: a build rewrites several vendor archives in `EPII_CM55M_APP_S/prebuilt_libs/gnu/`, so `git status` shows them as modified; `git checkout -- EPII_CM55M_APP_S/prebuilt_libs` restores them.
 - Step 7: Generate firmware image file
     ```
     cd ../we2_image_gen_local/
