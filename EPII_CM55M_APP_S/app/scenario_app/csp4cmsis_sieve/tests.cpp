@@ -1,4 +1,6 @@
 #include "csp/csp4cmsis.h"
+#include "cmsis_os2.h"
+#include "FreeRTOS.h"  // StaticTask_t: the control block of a statically created thread
 #include <cstdio>
 
 using namespace csp;
@@ -17,8 +19,7 @@ public:
         for (int i = 2; i <= limit; ++i) {
             out << i;
         }
-        // Signal end of stream if needed, or just park
-        while(true) vTaskDelay(portMAX_DELAY);
+        // Done: returning from run() ends this process's thread.
     }
 };
 
@@ -74,8 +75,20 @@ public:
 // --- 4. Main Network Construction ---
 #define NUM_FILTERS 5 
 
+// Priorities keep the pre-2.0 order: MainApp (was tskIDLE_PRIORITY + 3) above the
+// network (was + 2), so Run(..., StaticNetwork) creates all processes before any runs.
+static constexpr osPriority_t MAIN_APP_PRIORITY = osPriorityLow3;
+static constexpr osPriority_t NETWORK_PRIORITY  = osPriorityLow2;
+
+// MainApp's stack and control block are static: creating the thread takes no heap.
+// CMSIS-RTOS2 counts the stack in bytes. Provisional (was 4096 words): printf from
+// full newlib needs a generous stack; to be right-sized from measurements.
+alignas(8) static uint8_t mainAppStack[4096];
+static StaticTask_t mainAppControlBlock;
+
 void MainApp_Task(void* params) {
-    vTaskDelay(pdMS_TO_TICKS(500));
+    (void)params;
+    SleepFor(500);  // ticks; configTICK_RATE_HZ is 1000, so 500 ms
     printf("\r\n--- Launching Prime Sieve Daisy Chain ---\r\n");
 
     // We need NUM_FILTERS + 1 channels to connect the stages
@@ -94,15 +107,24 @@ void MainApp_Task(void* params) {
 
     Run(
         InParallel(generator, f0, f1, f2, f3, f4, sink),
-        ExecutionMode::StaticNetwork
+        ExecutionMode::StaticNetwork,
+        NETWORK_PRIORITY
     );
 
-    // Run() returns immediately in StaticNetwork mode; the task must
-    // delete itself rather than fall off the end of the function.
-    vTaskDelete(NULL);
+    // Run() returns immediately in StaticNetwork mode; the thread must
+    // end itself rather than fall off the end of the function.
+    osThreadExit();
 }
 
 void RunProcessingChainTest(void) {
-    // Note: Task creation is the only 'dynamic' part remaining, standard for FreeRTOS
-    xTaskCreate(MainApp_Task, "MainApp", 4096, NULL, tskIDLE_PRIORITY + 3, NULL);
+    osThreadAttr_t attr = {};
+    attr.name       = "MainApp";
+    attr.stack_mem  = mainAppStack;
+    attr.stack_size = sizeof(mainAppStack);
+    attr.cb_mem     = &mainAppControlBlock;
+    attr.cb_size    = sizeof(mainAppControlBlock);
+    attr.priority   = MAIN_APP_PRIORITY;
+    if (osThreadNew(MainApp_Task, NULL, &attr) == NULL) {
+        printf("ERROR: MainApp_Task creation failed!\r\n");
+    }
 }
