@@ -96,7 +96,14 @@ extern uint32_t SystemCoreClock;
 /* Constants provided for debugging and optimisation assistance. */
 #define configCHECK_FOR_STACK_OVERFLOW        0
 #define configQUEUE_REGISTRY_SIZE             0
-#define configASSERT( x )                     if( ( x ) == 0 ) { taskDISABLE_INTERRUPTS(); for( ;; ); }
+/* Report a failed assertion (file and line) before halting; see freertos_app.c. */
+#ifndef __ASSEMBLER__
+#ifdef __cplusplus
+extern "C"
+#endif
+void vAssertCalled(const char *file, int line);
+#endif
+#define configASSERT( x )                     if( ( x ) == 0 ) { vAssertCalled(__FILE__, __LINE__); }
 
 /* Constants that define which hook (callback) functions should be used. */
 #define configUSE_IDLE_HOOK                   0
