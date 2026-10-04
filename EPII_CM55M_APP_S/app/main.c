@@ -113,18 +113,6 @@ int main(void)
 }
 #endif
 
-#ifdef CSP4CMSIS_AI_TESTBENCH
-#include "csp4cmsis_AI_testbench.h"
-
-/** main entry */
-int main(void)
-{
-	board_init();
-	app_main();
-	return 0;
-}
-#endif
-
 
 
 #ifdef CSP4CMSIS_ALLON_SENSOR_TFLM
@@ -225,18 +213,6 @@ int main(void)
 
 #ifdef CSP4CMSIS_ALT_TEST_MAX
 #include "csp4cmsis_alt_test_max.h"
-
-/** main entry */
-int main(void)
-{
-	board_init();
-	app_main();
-	return 0;
-}
-#endif
-
-#ifdef CSP4CMSIS_ALT_ALT_TEST
-#include "csp4cmsis_alt_alt_test.h"
 
 /** main entry */
 int main(void)
