@@ -45,7 +45,7 @@ The test calculates the average latency per communication cycle by:
 
 ### Prerequisites
 * **Hardware:** Himax WE2 (Cortex-M55).
-* **Environment:** FreeRTOS environment with high-resolution tick configuration.
+* **Library and RTOS:** CSP4CMSIS 2.0.1 on FreeRTOS 10.5.1 through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`); the app starts the kernel with `osKernelInitialize()`/`osKernelStart()`. The latency is measured with `osKernelGetTickCount()` (1 ms tick).
 * **Make environment** in `CSP4CMSIS/EPII_CM55M_APP_S/makefile` set `APP_TYPE = csp4cmsis_comstime`.
 
 ### Expected UART Output
@@ -55,8 +55,8 @@ The console will display the results of the 10,000-cycle stress test. The "Avg L
 [Comstime] Benchmark starting. Measuring 10000 cycles...
 --- Comstime Results ---
 Iterations: 10000
-Total Time: 420.00 ms
-Avg Latency: 42.00 us/cycle
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
 Last Value: 9999
 ------------------------
 >>> [ALT] External Trigger Event Latency Check <<<
