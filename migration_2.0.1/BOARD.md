@@ -169,3 +169,44 @@ Not tested: the I2C devices themselves (README of each app says so).
 Stacks (`measure_<app>.txt`): launchers 228–552 B of 4096; irq TimerProcess 712/1024 B; shake
 processes ≤ 368/1024 B; KWS Acquisition 464/8192, Preprocessing 800/16 384, Inference 1264/32 768,
 Filter/FSM/Console ≤ 400/2048, Reporter and the I2C process ≤ 608/4096 B.
+
+## Neurochannel `csp4cmsis_allon_sensor_tflm` (D8, 2026-10-05)
+
+Camera IMX219. Trigger channel `BufferedChannel<trigger_t, 1>` written via `isrWriter()`; a failed
+write prints and halts. Logs: `migrated_allon_sensor_tflm*.txt`, `baseline2_allon_sensor_tflm*.txt`,
+`measure_allon_sensor_tflm*.txt`.
+
+**Which interrupt calls the callback** (scratch build recording IPSR per callback event,
+`measure_allon_sensor_tflm_callback_irq.txt`): only event 5 (`SENSORDPLIB_STATUS_XDMA_FRAME_READY`),
+only from IRQ 85 `SC_sen_nframe_end_IRQn` (765 calls in 40 s). The prebuilt `libsensordp.a` and
+`libdriver.a` reference no FreeRTOS/CMSIS-RTOS2 function, and the app has no Ethos-U RTOS override.
+So: **85 → priority 5** (set in `Camera::run()` before `cisdp_dp_init()`); **84, 143, 154–157 and
+192 (NPU) stay at 0** (no RTOS or CSP4CMSIS calls). Read back with the camera running: 85:5, all
+others 0.
+
+| | `main` (same conditions, 2 runs) | 2.0.1 (final build, 4 runs) | Class |
+|---|---|---|---|
+| Frames in 40 s | 764, 764 | 764, 764, 764, 764 (≈ 19.6 fps) | — |
+| Camera running the whole capture | yes | yes, no stall, no `FATAL` | — |
+| Person score, nobody in view | −96…−78 | −95…−64 | — (scene-dependent; the earlier baseline f6563b9 saw −51…42 in another scene/light) |
+| Stacks (B used / allocated) | Camera 744/1024, Inference 472/1024, Console 320–360/1024, CSP_Main 376/2048 | Camera 744/1536, Inference 472/1024, Console 360/1024, CSP_Main 560/2048 | (b) Camera stack enlarged |
+| FreeRTOS heap | 160 KB | 0 allocations → 1 KB | (b) |
+| C heap | — | 1.25–1.5 of 16 KB | — |
+| Duplicate result lines, mid-line interleaving | yes | yes (unchanged) | — |
+
+**Intermittent camera start-up failure (both builds):** `IMX219 off by app fail` / `Camera: sensor
+init failed` (I2C −60 on the sensor's first register write) in 1 of 6 migrated runs and 3 of 5
+`main` runs today, always right after another camera run; after a non-camera app, or a second reset,
+it started. The IMX219 keeps its state across a WE2 reset — pre-existing, not a migration
+difference (logs `*_sensor_init_fail.txt`). Not tested: a person in view.
+
+## Status of the 16 apps
+
+| App | Migrated | Verified on the board against `main` |
+|---|---|---|
+| `sieve`, `alt_test`, `alt_test_max`, `comstime`, `chain_test`, `matrix_multiplication`, `dining_philosophers`, `asymmetric_philosophers`, `lossy_policy_test` | yes | yes |
+| `irq` | yes | yes |
+| `kws_pdm_record` | yes | yes (on-board microphone) |
+| `allon_sensor_tflm` | yes | yes (IMX219; no person-in-view run) |
+| `shake_detection` | yes | start-up and I2C completion path only (no ADXL345) |
+| `kws_iic`, `kws_PCA9685`, `kws_PCA9685_alt` | yes | audio path only (no PCF8574/PCA9685) |

@@ -3,3 +3,4 @@ csp4cmsis_shake_detection exit=0 warnings=7 (baseline 7)
 csp4cmsis_kws_iic exit=0 warnings=79 (baseline 79), no new warnings in app code
 csp4cmsis_kws_PCA9685 exit=0 warnings=79 (baseline 79), no new warnings in app code
 csp4cmsis_kws_PCA9685_alt exit=0 warnings=79 (baseline 79), no new warnings in app code
+csp4cmsis_allon_sensor_tflm exit=0 warnings=41 (baseline 41), no new warnings in app code

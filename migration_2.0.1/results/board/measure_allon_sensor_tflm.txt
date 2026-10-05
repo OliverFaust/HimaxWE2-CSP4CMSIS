@@ -1,0 +1,46 @@
+[NVIC 3s] SVCall=0 PendSV=7 SysTick=7; enabled IRQn:prio 7:0 21:0 37:0 40:0 41:0 84:0 85:5 92:0
+[MEAS 3s] heap total=1024 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 3s] C heap (newlib) used=1248 of 16384
+[MEAS 3s] task meas prio=54 unused=3920 93:0 96:0 97:0 98:0 99:0 100:0 112:0 143:0 154:0 155:0 156:0 157:0 163:0 169:0 170 B
+[MEAS 3s] task nvic2 prio=54 unused=1624 B
+[MEAS 3s] task IDLE prio=0 unuse:0 172:0 173:0 174:0 175:0 176:0 192:0
+[NVIC 3s] prio of 35,37,66,93,114,115,133d=1256 B
+[MEAS 3s] task CSP_Main prio=11 unused=7720 B
+[MEAS 3s] task Camera p,192: 35:0 37:0 66:0 93:0 114:0 115:0 133:0 192:0
+[MEAS 3s] task Console prio=10 unused=664 B
+[MEAS 3s] task Inference prio=10 unused=552 B
+[MEAS 3s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 3s] mainAppStack used=472 B of 8192
+[NVIC 10s] SVCall=0 PendSV=7 SysTick=7; enabled IRQn:prio 7:0 21:0 37:0 40:0 41:0 84:0 85:5 92:0 93:0 96:0 97:0 98:0 99:0 100:0 112:0 143:0 154:0 155:0 156:0 157:0 163:0 169:0 170:0 172:0 173:0 174:0 175:0 176:0 192:0
+[NVIC 10s] prio of 35,37,66,93,114,115,1
+[MEAS 10s] heap total=1024 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 10s] C heap (newlib) used=1248 of 16384
+[MEAS 10s] task meas prio=54 unused=3633,192: 35:0 37:0 66:0 93:0 114:0 115:0 133:0 192:0
+[MEAS 10s] task nvic2 prio=54 unused=1584 B
+[MEAS 10s] task IDLE prio=0 unused=1256 B
+[MEAS 10s] task CSP_Main prio=11 unused=7672 B
+[MEAS 10s] task Inference prio=10 unused=552 B
+[MEAS 10s] task Console prio=10 unused=664 B
+[MEAS 10s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 10s] task Camera prio=10 unused=792 B
+[MEAS 10s] mainAppStack used=520 B of 8192
+[MEAS 25s] heap total=1024 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 25s] C heap (newlib) used=1248 of 16384
+[MEAS 25s] task meas prio=54 unused=3584 B
+[MEAS 25s] task IDLE prio=0 unused=1256 B
+[MEAS 25s] task CSP_Main prio=11 unused=7672 B
+[MEAS 25s] task Camera prio=10 unused=792 B
+[MEAS 25s] task Inference prio=10 unused=552 B
+[MEAS 25s] task Console prio=10 unused=664 B
+[MEAS 25s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 25s] mainAppStack used=520 B of 8192
+[MEAS 40s] heap total=1024 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 40s] C heap (newlib) used=1248 of 16384
+[MEAS 40s] task meas prio=54 unused=3584 B
+[MEAS 40s] task IDLE prio=0 unused=1256 B
+[MEAS 40s] task CSP_Main prio=11 unused=7632 B
+[MEAS 40s] task Inference prio=10 unused=552 B
+[MEAS 40s] task Console prio=10 unused=664 B
+[MEAS 40s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 40s] task Camera prio=10 unused=792 B
+[MEAS 40s] mainAppStack used=560 B of 8192
