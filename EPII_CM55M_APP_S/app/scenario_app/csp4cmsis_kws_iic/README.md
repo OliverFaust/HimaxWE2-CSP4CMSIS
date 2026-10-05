@@ -8,7 +8,7 @@ Audio preprocessing follows ARM's [ml-embedded-evaluation-kit](https://review.ml
 
 ## 🚀 Concurrency with CSP4CMSIS
 
-The app is a **seven-process CSP network** built with [CSP4CMSIS](https://oliverfaust.github.io/CSP4CMSIS/)'s Communicating Sequential Processes model on top of FreeRTOS. Each process is an independent, statically-allocated task communicating exclusively through typed channels — no shared mutable state, no manual locking. Six of the seven form the active audio-to-actuation pipeline; the seventh (`ReporterProcess`) is a diagnostic sink that sits off to the side so console I/O can never stall the pipeline.
+The app is a **seven-process CSP network** built with [CSP4CMSIS](https://oliverfaust.github.io/CSP4CMSIS/)'s Communicating Sequential Processes model (CSP4CMSIS 2.0.1) on top of FreeRTOS 10.5.1, through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`; the kernel is started with `osKernelInitialize()`/`osKernelStart()`). Each process is an independent, statically-allocated thread communicating exclusively through typed channels — no shared mutable state, no manual locking. Six of the seven form the active audio-to-actuation pipeline; the seventh (`ReporterProcess`) is a diagnostic sink that sits off to the side so console I/O can never stall the pipeline.
 
 | Process | Responsibility |
 |---|---|
@@ -43,16 +43,16 @@ flowchart LR
 
 ### Task Priorities
 
-FreeRTOS on this build is configured with `configMAX_PRIORITIES = 5`, so every task priority must stay in **`tskIDLE_PRIORITY + 0` through `+4`** — going out of range trips `configASSERT` inside `xTaskCreate` silently (no crash message, task just never starts). Priorities decrease monotonically along the data-flow direction, and the task that constructs the network (`MainApp_Task`) is created at a priority **at or above** every child's, so none of them can preempt it mid-construction:
+Priorities are CMSIS-RTOS2 `osPriority_t` values; they keep the order of the pre-2.0 FreeRTOS priorities `tskIDLE_PRIORITY + 0..4`, mapped to `osPriorityLow..osPriorityLow4` (with the adapter, `configMAX_PRIORITIES` is 56, so all of them are in range). Priorities decrease monotonically along the data-flow direction, and the task that constructs the network (`MainApp_Task`) is created at a priority **at or above** every child's, so none of them can preempt it mid-construction:
 
 | Task | Priority |
 |---|---|
-| `MainApp_Task` (network construction) | `+4` |
-| `AcquisitionProcess` | `+4` |
-| `PreprocessingProcess` | `+3` |
-| `InferenceProcess` | `+2` |
-| `FilterProcess` / `FsmProcess` | `+1` |
-| `ReporterProcess` / `Pcf8574Process` | `+0` |
+| `MainApp_Task` (network construction) | `osPriorityLow4` (was `+4`) |
+| `AcquisitionProcess` | `osPriorityLow4` (was `+4`) |
+| `PreprocessingProcess` | `osPriorityLow3` (was `+3`) |
+| `InferenceProcess` | `osPriorityLow2` (was `+2`) |
+| `FilterProcess` / `FsmProcess` | `osPriorityLow1` (was `+1`) |
+| `ReporterProcess` / `Pcf8574Process` | `osPriorityLow` (was `+0`) |
 
 ---
 
@@ -134,6 +134,12 @@ void write_port(uint8_t val) {
 }
 ```
 
+The completion callback runs in the I2C interrupt. It writes `true` to a one-slot `BufferedChannel<bool, 1>` through `isrWriter().putFromISR()` (an interrupt cannot wait for a rendezvous partner, and the slot keeps a completion that arrives before the process waits). The process starts one transfer at a time, so a failed write means a second completion before the first was read (a driver bug): the callback then prints `FATAL: I2C completion lost ...` and halts.
+
+**Interrupt priorities:** every interrupt whose handler calls CSP4CMSIS or FreeRTOS must run at priority 5..7 (`CSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY` = 5, 3 priority bits); the SDK leaves them at 0. The app sets `I2C_MST_0_intr_IRQn` (I2C completion) and `DMAC2_DMACINTR_IRQn` (PDM audio DMA; its callback reads the RTOS tick) to 5 in the app's `.c` file before the drivers start, and `U55_IRQn` (NPU; gives the Ethos-U semaphore) in `cvapp_kws.cpp` before it is enabled.
+
+**Ethos-U semaphore:** `ethosu_rtos_semaphore.c` overrides the driver's weak bare-metal semaphore with a FreeRTOS binary semaphore, so `Invoke()` blocks the inference thread instead of spinning. It stays native FreeRTOS on purpose (a driver hook) and is the only object in the FreeRTOS heap (`configTOTAL_HEAP_SIZE` 1 KB; C++ allocations use the C library heap, `__HEAP_SIZE` 44 KB in the `.ld`).
+
 ---
 
 ## Sample Console Output
@@ -170,13 +176,18 @@ app/scenario_app/csp4cmsis_kws_iic/
 └── ethosu_rtos_semaphore.c // FreeRTOS-backed semaphore for the Ethos-U55 IRQ
 ```
 
-## 🐛 Troubleshooting
+## 🧪 Test status (CSP4CMSIS 2.0.1)
+Tested on the Grove Vision AI V2 with the on-board microphone: start-up, the audio path, MFCC, inference and reporting match the pre-2.0 build. The I2C part (Pcf8574Process) is migrated but **not tested with a PCF8574 attached**: without the device the driver completes each (unacknowledged) transfer, so the actuator process starts and runs, but no output can be observed.
 
-* **Everything goes silent, immediately, right after task creation, with no crash output** — a `taskPriority()` override (or `MainApp_Task`'s own creation priority) is `≥ configMAX_PRIORITIES`. This build has `configMAX_PRIORITIES = 5`, so the valid range is `tskIDLE_PRIORITY + 0` through `+4`. Out-of-range values trip `configASSERT` inside `xTaskCreate` before the task runs a single instruction — grep your `FreeRTOSConfig.h` to confirm the ceiling on your build.
-* **All processes go silent together after running fine for a while, with no crash output** — a downstream stage is blocked forever on an un-timed-out wait, and its unbuffered channel is back-pressuring the whole chain. `Pcf8574Process::wait_for_i2c_isr()` has no timeout and no I2C error callback; a single bus NACK or glitch leaves it blocked indefinitely, which then blocks `FsmProcess` → `FilterProcess` → `InferenceProcess` → the buffered channels behind them, in that order. Add a bounded wait and an error path to any ISR-driven completion signal on the critical path.
-* **A process never runs at a priority higher than the task that constructs the network** — CSP4CMSIS's `Run(InParallel(...))` creates child tasks one at a time from the calling task. A child priority *strictly greater* than the constructor's own priority triggers an immediate preemption, which can stall construction of the remaining processes indefinitely. Keep the constructing task's priority ≥ every child's.
-* **Reporter process never prints anything, but the app doesn't crash** — priority/stack starvation of a low-priority process. Use `vTaskDelay(1)`, not `taskYIELD()` (which only rotates same-priority tasks), in any polling loop on a higher-priority process.
-* **Timing measurements wrap to a huge (~4 billion) value** — a raw `SysTick`-based cycle counter was used across a genuine RTOS blocking wait. Use `xTaskGetTickCount()`/`portTICK_PERIOD_MS` for any measurement spanning a blocking call.
+## 🐛 Troubleshooting
+* **`std::bad_alloc` right after the pipeline banner** — the C library heap is too small. Since CSP4CMSIS 2.0, C++ `new` uses the C library heap (`__HEAP_SIZE` in the `.ld`, 44 KB; about 35 KB in use); before, the library routed it to the FreeRTOS heap.
+* **`FATAL: I2C completion lost`** — a second I2C completion arrived before the actuator process had read the first one; the transfer protocol (one transfer, then wait) rules this out, so it points at the driver.
+
+* **Everything goes silent, immediately, right after thread creation** — a `taskPriority()` override (or `MAIN_APP_PRIORITY`) is outside the CMSIS-RTOS2 range; use the named `osPriority_t` values (`osPriorityLow`..`osPriorityLow4` here). The library then prints `FATAL ERROR: Failed to create RTOS2 task for CSProcess '...' (osThreadNew returned NULL ...)`.
+* **All processes go silent together after running fine for a while, with no crash output** — a downstream stage is blocked forever on an un-timed-out wait, and its unbuffered channel is back-pressuring the whole chain. `Pcf8574Process::wait_for_i2c_isr()` has no timeout and no I2C error callback; a single bus NACK or glitch leaves it blocked indefinitely, which then blocks `FsmProcess` → `FilterProcess` → `InferenceProcess` → the buffered channels behind them, in that order. Add a bounded wait and an error path to any ISR-driven completion signal on the critical path. (Measured with CSP4CMSIS 2.0.1 on a board without an I2C device: the Himax driver still calls the completion callback for an unacknowledged transfer, so a missing device alone does not block.)
+* **A process never runs at a priority higher than the thread that constructs the network** — `Run(InParallel(...))` creates the child threads one at a time from the calling thread; a child priority *strictly greater* than the constructor's own priority preempts it immediately. Keep `MAIN_APP_PRIORITY` (`osPriorityLow4`) ≥ every child's.
+* **Reporter process never prints anything, but the app doesn't crash** — priority/stack starvation of a low-priority process. Use `SleepFor(1)`, not a yield (which only rotates same-priority threads), in any polling loop on a higher-priority process.
+* **Timing measurements wrap to a huge (~4 billion) value** — a raw `SysTick`-based cycle counter was used across a genuine RTOS blocking wait. Use `osKernelGetTickCount()` and `ticksToMs()` (in `cvapp_kws.h`) for any measurement spanning a blocking call.
 * **Classification results look wrong / model seems to be fed stale audio** — check that `BLK_NUM` (in `csp4cmsis_kws_iic.h`) and `current_buf`'s one-slot-behind offset agree on which buffer the DMA has actually finished writing.
 * **Build fails or asserts inside `fully_connected_common.cc`** — this app compiles with `-DCSP4CMSIS_KWS_IIC`. Extend the existing symmetric-quantization guard in `library/inference/<tflm_tag>/tensorflow/lite/micro/kernels/fully_connected_common.cc` to include it:
     ```cpp
