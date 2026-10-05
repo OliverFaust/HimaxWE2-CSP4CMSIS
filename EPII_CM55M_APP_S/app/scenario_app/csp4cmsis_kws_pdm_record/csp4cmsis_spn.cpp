@@ -3,8 +3,8 @@
 #include <cstring>
 #include <cstdint>
 
-#include "FreeRTOS.h"
-#include "task.h"
+#include "cmsis_os2.h"
+#include "FreeRTOS.h"  // StaticTask_t: the control block of a statically created thread
 
 #include "WE2_core.h"
 #include "csp4cmsis_kws_pdm_record.h"
@@ -263,14 +263,16 @@ public:
     // this reproduces the same 4*2048-word figure this process declared
     // explicitly under API 1.2. taskPriority() remains a normal virtual
     // override, unaffected by that change.
-    UBaseType_t taskPriority() const override { return tskIDLE_PRIORITY + 3; }
+    // osPriorityLow3 was tskIDLE_PRIORITY + 3 (D5 mapping +0..+4 -> Low..Low4):
+    // above the other three processes (the network default, was +2).
+    osPriority_t taskPriority() const override { return osPriorityLow3; }
 
     void run() override {
         int32_t processed = 0;
         uint32_t copy_ms_accum = 0;
         uint32_t invoke_ms_accum = 0;
         uint32_t postproc_ms_accum = 0;
-        TickType_t windowStartTick = xTaskGetTickCount();
+        uint32_t windowStartTick = osKernelGetTickCount();
 
         while (true) {
             FeatureTensorMsg msg;
@@ -284,8 +286,8 @@ public:
             processed++;
 
             if (processed % 20 == 0) {
-                TickType_t now = xTaskGetTickCount();
-                uint32_t elapsedMs = (now - windowStartTick) * portTICK_PERIOD_MS;
+                uint32_t now = osKernelGetTickCount();
+                uint32_t elapsedMs = ticksToMs(now - windowStartTick);
                 // 20 windows x 0.25 s hop = 5 s of new audio per batch.
                 float realtimeFactor = elapsedMs > 0 ? (5000.0f / (float)elapsedMs) : 0.0f;
 
@@ -320,7 +322,7 @@ public:
         int32_t priming_step = 0;
         uint32_t mfcc_ms_accum = 0;
         uint32_t chan_send_wait_ms_accum = 0;
-        TickType_t windowStartTick = xTaskGetTickCount();
+        uint32_t windowStartTick = osKernelGetTickCount();
 
         while (true) {
             AudioChunkMsg msg;
@@ -331,10 +333,10 @@ public:
 
             if (tensor != nullptr) {
                 FeatureTensorMsg out_msg{ tensor };
-                TickType_t sendStart = xTaskGetTickCount();
+                uint32_t sendStart = osKernelGetTickCount();
                 out << out_msg;   // blocks iff InferenceProcess is still mid-Invoke
-                TickType_t sendEnd = xTaskGetTickCount();
-                chan_send_wait_ms_accum += (sendEnd - sendStart) * portTICK_PERIOD_MS;
+                uint32_t sendEnd = osKernelGetTickCount();
+                chan_send_wait_ms_accum += ticksToMs(sendEnd - sendStart);
             } else {
                 priming_step++;
                 kws_report_priming(priming_step);
@@ -342,8 +344,8 @@ public:
 
             processed++;
             if (processed % 20 == 0) {
-                TickType_t now = xTaskGetTickCount();
-                uint32_t elapsedMs = (now - windowStartTick) * portTICK_PERIOD_MS;
+                uint32_t now = osKernelGetTickCount();
+                uint32_t elapsedMs = ticksToMs(now - windowStartTick);
                 float realtimeFactor = elapsedMs > 0 ? (5000.0f / (float)elapsedMs) : 0.0f;
 
                 kws_report_prep_stats(processed, mfcc_ms_accum, chan_send_wait_ms_accum,
@@ -375,24 +377,24 @@ public:
         uint32_t dma_wait_ms_accum = 0;
         uint32_t buf_asm_ms_accum = 0;
         uint32_t chan_send_wait_ms_accum = 0;
-        TickType_t windowStartTick = xTaskGetTickCount();
+        uint32_t windowStartTick = osKernelGetTickCount();
 
         // One hop = one quarter-slot's real duration: 250 ms for BLK_NUM=1.
         const uint32_t kHopBudgetMs =
             (BLK_NUM * QUARTER_SECOND_MONO_BYTES / 2) * 1000UL / 16000UL;
 
         while (true) {
-            TickType_t iterStart = xTaskGetTickCount();
+            uint32_t iterStart = osKernelGetTickCount();
 
-            TickType_t dmaWaitStart = xTaskGetTickCount();
+            uint32_t dmaWaitStart = osKernelGetTickCount();
             while (!kws_processing_complete) {
-                vTaskDelay(1);
+                SleepFor(1);
             }
             while (w_buf_idx == last_current_buf) {
-                vTaskDelay(1);
+                SleepFor(1);
             }
-            TickType_t dmaWaitEnd = xTaskGetTickCount();
-            dma_wait_ms_accum += (dmaWaitEnd - dmaWaitStart) * portTICK_PERIOD_MS;
+            uint32_t dmaWaitEnd = osKernelGetTickCount();
+            dma_wait_ms_accum += ticksToMs(dmaWaitEnd - dmaWaitStart);
 
             int32_t current_buf = w_buf_idx;   // the slot that just completed
 
@@ -405,23 +407,23 @@ public:
                 }
             }
 
-            TickType_t bufAsmStart = xTaskGetTickCount();
+            uint32_t bufAsmStart = osKernelGetTickCount();
             SCB_InvalidateDCache_by_Addr((uint32_t*)audio_buf[current_buf], QUARTER_SECOND_MONO_BYTES);
-            TickType_t bufAsmEnd = xTaskGetTickCount();
-            buf_asm_ms_accum += (bufAsmEnd - bufAsmStart) * portTICK_PERIOD_MS;
+            uint32_t bufAsmEnd = osKernelGetTickCount();
+            buf_asm_ms_accum += ticksToMs(bufAsmEnd - bufAsmStart);
 
             AudioChunkMsg msg{ audio_buf[current_buf] };
-            TickType_t sendStart = xTaskGetTickCount();
+            uint32_t sendStart = osKernelGetTickCount();
             out << msg;   // blocks here iff PreprocessingProcess is still busy with the previous chunk
-            TickType_t sendEnd = xTaskGetTickCount();
-            chan_send_wait_ms_accum += (sendEnd - sendStart) * portTICK_PERIOD_MS;
+            uint32_t sendEnd = osKernelGetTickCount();
+            chan_send_wait_ms_accum += ticksToMs(sendEnd - sendStart);
 
             last_current_buf = current_buf;
             r_buf_idx++;
 
             if (r_buf_idx % 20 == 0) {
-                TickType_t now = xTaskGetTickCount();
-                uint32_t elapsedMs = (now - windowStartTick) * portTICK_PERIOD_MS;
+                uint32_t now = osKernelGetTickCount();
+                uint32_t elapsedMs = ticksToMs(now - windowStartTick);
                 float realtimeFactor = elapsedMs > 0 ? (5000.0f / (float)elapsedMs) : 0.0f;
 
                 kws_report_acq_stats(miss_inf, r_buf_idx,
@@ -437,21 +439,33 @@ public:
             // Only spend slack we actually have. If this iteration already
             // ate most/all of the 250 ms hop budget, skip the yield rather
             // than risk pushing this iteration past the next DMA buffer.
-            uint32_t elapsedThisIterMs = (xTaskGetTickCount() - iterStart) * portTICK_PERIOD_MS;
+            uint32_t elapsedThisIterMs = ticksToMs(osKernelGetTickCount() - iterStart);
             if (elapsedThisIterMs + 1 < kHopBudgetMs) {
-                vTaskDelay(1);
+                SleepFor(1);
             }
         }
     }
 };
 
+// Priorities keep the pre-2.0 order: MainApp (was tskIDLE_PRIORITY + 3) above the
+// network default (was + 2), so Run(..., StaticNetwork) creates all processes before any runs.
+static constexpr osPriority_t MAIN_APP_PRIORITY = osPriorityLow3;
+static constexpr osPriority_t NETWORK_PRIORITY  = osPriorityLow2;
+
+// MainApp's stack and control block are static: creating the thread takes no heap.
+// CMSIS-RTOS2 counts the stack in bytes. Provisional (was 4*2048 words); to be
+// right-sized from measurements.
+alignas(8) static uint8_t mainAppStack[4096];
+static StaticTask_t mainAppControlBlock;
+
 void MainApp_Task(void* params) {
-    vTaskDelay(pdMS_TO_TICKS(10));
+    (void)params;
+    SleepFor(10);  // 10 ms (1000 Hz tick)
     xprintf("\r\n--- KWS Processing (4-process pipeline: Acquisition | Preprocessing | Inference | Reporter) ---\r\n");
 
     if (cv_kws_preprocess_init() != 0) {
         xprintf("ERROR: cv_kws_preprocess_init failed!\r\n");
-        return;
+        osThreadExit();  // a thread must not return from its function
     }
 
     // API 1.2/1.3: argument order is not priority/stack-significant --
@@ -465,34 +479,30 @@ void MainApp_Task(void* params) {
 
     Run(
         InParallel(acquisition, preprocessing, inference, reporter),
-        ExecutionMode::StaticNetwork
+        ExecutionMode::StaticNetwork,
+        NETWORK_PRIORITY
     );
 
     // API 1.2: MainApp_Task no longer executes any CSP process inline --
     // Run() above spawns all four as their own tasks and returns
     // immediately (StaticNetwork mode). There is nothing further for this
-    // task to do, so it deletes itself, reclaiming its stack allocation.
-    // (heap_4 is confirmed as this project's allocator, so the memory is
-    // genuinely returned to the pool, not just descheduled -- see the
-    // heap-scheme discussion above.)
-    vTaskDelete(NULL);
+    // thread to do, so it ends itself (its stack is static, see above).
+    osThreadExit();
 }
 
 extern "C" void RunProcessingChainTest(void)
 {
-    // NOTE (API 1.2): this task's stack no longer needs to accommodate
-    // any CSP process's call depth -- that requirement now lives on
-    // InferenceProcess itself (see its CSProcessStatic<4*2048> base) and is
-    // honored regardless of its position in InParallel(...) above. This
-    // 4*2048 figure predates that change and is very likely oversized for
-    // what MainApp_Task itself now does (spawn calls + cv_kws_preprocess_init()
-    // + a couple of xprintf calls). It has been left unchanged here rather
-    // than guessed at, since cv_kws_preprocess_init()'s own stack depth is
-    // opaque to this analysis -- a good first experiment for the API 1.3
-    // test project is to measure MainApp_Task's actual high-water mark via
-    // uxTaskGetStackHighWaterMark() and right-size this literal down.
-    BaseType_t status = xTaskCreate(MainApp_Task, "MainApp", 4*2048, NULL, tskIDLE_PRIORITY + 3, NULL);
-    if (status != pdPASS) {
+    // This thread's stack only has to hold MainApp_Task itself (spawn calls,
+    // cv_kws_preprocess_init(), a couple of xprintf calls); every CSP process
+    // brings its own (see InferenceProcess's CSProcessStatic<4*2048> base).
+    osThreadAttr_t attr = {};
+    attr.name       = "MainApp";
+    attr.stack_mem  = mainAppStack;
+    attr.stack_size = sizeof(mainAppStack);
+    attr.cb_mem     = &mainAppControlBlock;
+    attr.cb_size    = sizeof(mainAppControlBlock);
+    attr.priority   = MAIN_APP_PRIORITY;
+    if (osThreadNew(MainApp_Task, NULL, &attr) == NULL) {
         xprintf("ERROR: MainApp_Task creation failed!\r\n");
     }
 }
