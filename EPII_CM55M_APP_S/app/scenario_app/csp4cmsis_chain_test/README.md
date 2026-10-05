@@ -43,8 +43,8 @@ All processes and channels are declared as `static`, residing in the `.data` or 
 
 ### Prerequisites
 * **Hardware:** Himax WE2 (Cortex-M55).
-* **Environment:** FreeRTOS environment.
-* * **Make environment** in `CSP4CMSIS/EPII_CM55M_APP_S/makefile` set `APP_TYPE = csp4cmsis_chain_test`.
+* **Library and RTOS:** CSP4CMSIS 2.0.1 on FreeRTOS 10.5.1 through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`); the app starts the kernel with `osKernelInitialize()`/`osKernelStart()`.
+* **Make environment** in `CSP4CMSIS/EPII_CM55M_APP_S/makefile` set `APP_TYPE = csp4cmsis_chain_test`.
 
 ### Expected UART Output
 The console will display the initialization and the verification progress of the receiver. A successful test confirms that the rendezvous logic successfully propagated data across 6 different synchronization points per message.
