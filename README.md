@@ -450,3 +450,9 @@ So that, it can support cis_imx219 or cis_imx477 camera.
             ```
 
 [Back to Outline](https://github.com/HimaxWiseEyePlus/Seeed_Grove_Vision_AI_Module_V2?tab=readme-ov-file#outline)
+
+## License and Declaration
+
+MIT License – see the `LICENSE` file. CSP4CMSIS: MIT License, `lib/csp4cmsis/LICENSE`.
+
+Development of this project utilizes AI coding assistants for boilerplate generation, unit test creation, and architectural drafting. All core logic is manually reviewed and verified.
