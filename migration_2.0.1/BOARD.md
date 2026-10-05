@@ -24,10 +24,11 @@ project_case1_blp_wlcsp.json` → `xmodem_send.py --port=/dev/ttyACM0 --baudrate
 | `asymmetric_philosophers` | no deadlock: 628 EATING lines in 25 s |
 | `lossy_policy_test` | **timing-dependent, as predicted:** the receiver drains after its fixed 100 ms, in the middle of the first burst — KeepNewest shows 68 930…70 271 with gaps (sum 695 309), not the last ten; the KeepOldest burst starts after draining began. Hence D: "done" rendezvous |
 | `irq` | timer 1 → channel: 22 values received in 25 s (~1 per s, two heartbeats between) |
+| `allon_sensor_tflm` (neurochannel, IMX219 camera on CSI; 40 s) | 764 frames in ~39 s (≈ 19.6 frames/s), no stall; person scores −51…8 (no person in view); stacks: Camera 744/1024 B (280 B headroom — the tightest), Inference 472/1024 B, Console 320/1024 B, CSP_Main 376 of 2048 B. Each result is printed twice by design (Inference's `dbg_printf` and Console's `xprintf`), and lines interleave mid-string (unlocked `xprintf` from several processes) |
 | `kws_pdm_record` | runs with the on-board microphone: model loaded from flash, results ("None"), timing reports (`rt` 0.85–1.03×) |
 
 Not run: `shake_detection` (ADXL345), `kws_iic`/`kws_PCA9685`/`kws_PCA9685_alt` (I2C actuator
-boards), `allon_sensor_tflm` (camera) — peripherals to be confirmed.
+boards) — peripherals not available so far.
 
 ## NVIC priorities (old state)
 
