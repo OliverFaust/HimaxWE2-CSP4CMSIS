@@ -73,6 +73,15 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
 
 /*-----------------------------------------------------------*/
 
+void vAssertCalled(const char *file, int line) {
+	taskDISABLE_INTERRUPTS();
+	printf("\r\nconfigASSERT failed: %s:%d\r\n", file, line);
+	for (;;) {
+	}
+}
+
+/*-----------------------------------------------------------*/
+
 void prvGetRegistersFromStack(uint32_t *pulFaultStackAddress) {
 	/* These are volatile to try and prevent the compiler/linker optimising them
 	 * away as the variables never actually get used.  If the debugger won't show the

@@ -1,0 +1,27 @@
+csp4cmsis_AI_testbench               exit=2 text/data/bss= warnings=6 2s ./os/freertos_10_5_1/NTZ/freertos_kernel/include/FreeRTOS.h:59:10: fatal error: FreeRTOSConfig.h: No such file or direct
+csp4cmsis_allon_sensor_tflm          exit=0 text/data/bss=430868/2992/822420 warnings=41 108s 
+csp4cmsis_alt_alt_test               exit=0 text/data/bss=103124/2136/87156 warnings=8 5s 
+csp4cmsis_alt_test                   exit=0 text/data/bss=109472/2136/90240 warnings=8 5s 
+csp4cmsis_alt_test_max               exit=0 text/data/bss=158560/2136/90840 warnings=8 6s 
+csp4cmsis_asymmetric_philosophers    exit=0 text/data/bss=103892/2144/96024 warnings=8 5s 
+csp4cmsis_chain_test                 exit=0 text/data/bss=101748/2120/91204 warnings=8 5s 
+csp4cmsis_comstime                   exit=0 text/data/bss=104416/2144/95436 warnings=8 5s 
+csp4cmsis_dining_philosophers        exit=0 text/data/bss=103308/2120/95924 warnings=8 5s 
+csp4cmsis_irq                        exit=0 text/data/bss=102064/2188/83668 warnings=8 5s 
+csp4cmsis_kws_iic                    exit=0 text/data/bss=358476/46112/678456 warnings=79 114s 
+csp4cmsis_kws_PCA9685                exit=0 text/data/bss=359560/46104/678464 warnings=79 115s 
+csp4cmsis_kws_PCA9685_alt            exit=0 text/data/bss=361864/46112/681016 warnings=79 113s 
+csp4cmsis_kws_pdm_record             exit=0 text/data/bss=352684/46112/329436 warnings=76 111s 
+csp4cmsis_lossy_policy_test          exit=0 text/data/bss=99160/2136/83588 warnings=8 5s 
+csp4cmsis_matrix_multiplication      exit=0 text/data/bss=117472/2144/153156 warnings=8 6s 
+csp4cmsis_shake_detection            exit=0 text/data/bss=102256/2132/85252 warnings=7 5s 
+csp4cmsis_sieve                      exit=0 text/data/bss=101176/2144/91220 warnings=8 5s 
+tracked files modified by the builds:
+ M EPII_CM55M_APP_S/prebuilt_libs/gnu/lib_cmsis_dsp.a
+ M EPII_CM55M_APP_S/prebuilt_libs/gnu/lib_cmsis_nn.a
+ M EPII_CM55M_APP_S/prebuilt_libs/gnu/lib_cmsis_nn_7_0_0.a
+ M EPII_CM55M_APP_S/prebuilt_libs/gnu/libcommon.a
+ M EPII_CM55M_APP_S/prebuilt_libs/gnu/libcsp4cmsis.a
+ M EPII_CM55M_APP_S/prebuilt_libs/gnu/libfatfs.a
+ M EPII_CM55M_APP_S/prebuilt_libs/gnu/libtflmtag2209_u55tag2205_cmsisnn_gnu.a
+ M EPII_CM55M_APP_S/prebuilt_libs/gnu/libtrustzone_cfg.a

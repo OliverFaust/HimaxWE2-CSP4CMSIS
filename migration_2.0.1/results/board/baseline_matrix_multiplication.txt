@@ -1,0 +1,206 @@
+1st BL Modem Build DATE=Nov 30 2023, 0x0002000b
+Please input any key to enter X-Modem mode in 100 ms 
+waiting input key...
+slot flash_offset 0x00000000
+New MemDesp himax_sec_SB_image_process PASS
+set_memory_s_ns
+bl_status = 0x800000, HX_DSP_FLAG 1
+bl_status = 0x800000
+jump_addr=0x10000000
+Compiler Version: ARM GNU, 13.2.1 20231009
+Task creation C++ CSP wrapper test.
+Application initialization (via csp_app_main_init) started.
+Application tasks created successfully.
+
+--- Systolic Array 3x3: A * Identity ---
+*** MainApp_Task: Run() returned, entering stack-report loop ***
+[PE 0,0] Pulse 0: In(1, 1) Accum: 1
+[PE 0,1] Pulse 0: In(1, 0) Accum: 0
+[PE 0,0] Pulse 1: In(2, 0) Accum: 1
+[PE 1,0] Pulse 0: In(4, 1) Accum: 4
+[PE 0,2] Pulse 0: In(1, 0) Accum: 0
+[PE 1,1] Pulse 0: In(4, 0) Accum: 0
+[PE 2,0] Pulse 0: In(7, 1) Accum: 7
+[PE 0,1] Pulse 1: In(2, 1) Accum: 2
+[PE 1,2] Pulse 0: In(4, 0) Accum: 0
+[PE 0,0] Pulse 2: In(3, 0) Accum: 1
+[PE 0,2] Pulse 1: In(2, 0) Accum: 0
+[PE 2,1] Pulse 0: In(7, 0) Accum: 0
+[PE 1,0] Pulse 1: In(5, 0) Accum: 4
+[PE 1,1] Pulse 1: In(5, 1) Accum: 5
+[PE 2,2] Pulse 0: In(7, 0) Accum: 0
+[PE 0,1] Pulse 2: In(3, 0) Accum: 2
+[PE 1,2] Pulse 1: In(5, 0) Accum: 0
+[PE 2,0] Pulse 1: In(8, 0) Accum: 7
+>>> [PE 0,0] COMPLETED. Final: 1
+[PE 0,2] Pulse 2: In(3, 1) Accum: 3
+[PE 1,0] Pulse 2: In(6, 0) Accum: 4
+[PE 2,1] Pulse 1: In(8, 1) Accum: 8
+[PE 1,1] Pulse 2: In(6, 0) Accum: 5
+>>> [PE 1,0] COMPLETED. Final: 4
+>>> [PE 0,1] COMPLETED. Final: 2
+[PE 2,2] Pulse 1: In(8, 0) Accum: 0
+[PE 2,0] Pulse 2: In(9, 0) Accum: 7
+[PE 1,2] Pulse 2: In(6, 1) Accum: 6
+>>> [PE 2,0] COMPLETED. Final: 7
+>>> [PE 0,2] COMPLETED. Final: 3
+[PE 2,1] Pulse 2: In(9, 0) Accum: 8
+>>> [PE 2,1] COMPLETED. Final: 8
+>>> [PE 1,1] COMPLETED. Final: 5
+[PE 2,2] Pulse 2: In(9, 1) Accum: 9
+>>> [PE 1,2] COMPLETED. Final: 6
+>>> [PE 2,2] COMPLETED. Final: 9
+MainApp: 15484 bytes unused headroom (3871 words HWM, of 4096 allocated)
+row0: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+row1: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+row2: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col0: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col1: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col2: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+PE00: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE01: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE02: 864/4096 bytes used (3232 bytes unused headroom, 808 words HWM)
+PE10: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE11: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE12: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE20: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE21: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE22: 864/4096 bytes used (3232 bytes unused headroom, 808 words HWM)
+sH0: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sH1: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sH2: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV0: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV1: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV2: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+MainApp: 15272 bytes unused headroom (3818 words HWM, of 4096 allocated)
+row0: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+row1: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+row2: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col0: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col1: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col2: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+PE00: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE01: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE02: 864/4096 bytes used (3232 bytes unused headroom, 808 words HWM)
+PE10: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE11: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE12: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE20: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE21: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE22: 864/4096 bytes used (3232 bytes unused headroom, 808 words HWM)
+sH0: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sH1: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sH2: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV0: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV1: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV2: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+MainApp: 15272 bytes unused headroom (3818 words HWM, of 4096 allocated)
+row0: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+row1: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+row2: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col0: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col1: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col2: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+PE00: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE01: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE02: 864/4096 bytes used (3232 bytes unused headroom, 808 words HWM)
+PE10: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE11: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE12: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE20: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE21: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE22: 864/4096 bytes used (3232 bytes unused headroom, 808 words HWM)
+sH0: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sH1: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sH2: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV0: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV1: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV2: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+MainApp: 15272 bytes unused headroom (3818 words HWM, of 4096 allocated)
+row0: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+row1: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+row2: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col0: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col1: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col2: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+PE00: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE01: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE02: 864/4096 bytes used (3232 bytes unused headroom, 808 words HWM)
+PE10: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE11: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE12: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE20: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE21: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE22: 864/4096 bytes used (3232 bytes unused headroom, 808 words HWM)
+sH0: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sH1: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sH2: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV0: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV1: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV2: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+MainApp: 15272 bytes unused headroom (3818 words HWM, of 4096 allocated)
+row0: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+row1: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+row2: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col0: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col1: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col2: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+PE00: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE01: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE02: 864/4096 bytes used (3232 bytes unused headroom, 808 words HWM)
+PE10: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE11: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE12: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE20: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE21: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE22: 864/4096 bytes used (3232 bytes unused headroom, 808 words HWM)
+sH0: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sH1: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sH2: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV0: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV1: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV2: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+MainApp: 15272 bytes unused headroom (3818 words HWM, of 4096 allocated)
+row0: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+row1: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+row2: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col0: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col1: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col2: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+PE00: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE01: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE02: 864/4096 bytes used (3232 bytes unused headroom, 808 words HWM)
+PE10: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE11: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE12: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE20: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE21: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE22: 864/4096 bytes used (3232 bytes unused headroom, 808 words HWM)
+sH0: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sH1: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sH2: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV0: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV1: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV2: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+MainApp: 15272 bytes unused headroom (3818 words HWM, of 4096 allocated)
+row0: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+row1: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+row2: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col0: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col1: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+col2: 144/2048 bytes used (1904 bytes unused headroom, 476 words HWM)
+PE00: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE01: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE02: 864/4096 bytes used (3232 bytes unused headroom, 808 words HWM)
+PE10: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE11: 760/4096 bytes used (3336 bytes unused headroom, 834 words HWM)
+PE12: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE20: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE21: 824/4096 bytes used (3272 bytes unused headroom, 818 words HWM)
+PE22: 864/4096 bytes used (3232 bytes unused headroom, 808 words HWM)
+sH0: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sH1: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sH2: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV0: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV1: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)
+sV2: 136/2048 bytes used (1912 bytes unused headroom, 478 words HWM)

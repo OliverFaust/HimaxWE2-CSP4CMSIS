@@ -1,0 +1,20 @@
+
+/* ---- scratch diagnostic (not committed): NVIC priorities of enabled IRQs ---- */
+static void nvic_dump(const char *tag) {
+	printf("\r\n[NVIC %s] SVCall=%u PendSV=%u SysTick=%u; enabled IRQn:prio", tag,
+	       (unsigned)NVIC_GetPriority(SVCall_IRQn), (unsigned)NVIC_GetPriority(PendSV_IRQn),
+	       (unsigned)NVIC_GetPriority(SysTick_IRQn));
+	for (int n = 0; n < 224; n++) {
+		if (NVIC_GetEnableIRQ((IRQn_Type)n)) printf(" %d:%u", n, (unsigned)NVIC_GetPriority((IRQn_Type)n));
+	}
+	printf("\r\n");
+}
+static void nvic_diag_task(void *p) {
+	(void)p;
+	vTaskDelay(pdMS_TO_TICKS(3000)); nvic_dump("3s");
+	vTaskDelay(pdMS_TO_TICKS(7000)); nvic_dump("10s");
+	vTaskDelete(NULL);
+}
+__attribute__((constructor)) static void nvic_diag_create(void) {
+	xTaskCreate(nvic_diag_task, "nvicdiag", 1024, NULL, configMAX_PRIORITIES - 2, NULL);
+}

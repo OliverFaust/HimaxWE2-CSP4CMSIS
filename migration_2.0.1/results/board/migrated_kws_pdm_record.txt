@@ -1,0 +1,159 @@
+1st BL Modem Build DATE=Nov 30 2023, 0x0002000b
+Please input any key to enter X-Modem mode in 100 ms 
+waiting input key...
+slot flash_offset 0x00100000
+New MemDesp himax_sec_SB_image_process PASS
+set_memory_s_ns
+bl_status = 0x800000, HX_DSP_FLAG 1
+bl_status = 0x800000
+jump_addr=0x10000000
+Compiler Version: ARM GNU, 13.2.1 20231009
+ori_clk src info, 0x56100030=4077
+ori_clk src info, 0x56100034=0
+ori_clk src info, 0x56100038=c1a4
+clk src info, 0x56100030=4037
+clk src info, 0x56100034=0
+clk src info, 0x56100038=c1b8
+start KWS exmample now recording
+TA[3403ca90]
+Ethos-U55 device initialised
+kws model's schema version 3
+Arm NPU support added to op resolver.
+MicroInterpreter kws_static_interpreter 1
+initial done
+KWS init done, handing audio processing off to the CSP4CMSIS task
+
+--- KWS Processing (4-process pipeline: Acquisition | Preprocessing | Inference | Reporter) ---
+Preprocessing state initialised: tensor_bytes=3920 type=9
+Preprocessing: priming step 1/3 (window not yet fully real)
+Preprocessing: priming step 2/3 (window not yet fully real)
+Preprocessing: priming step 3/3 (window not yet fully real)
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+[Acq]  Missed 0/20 | ms: dma_wait=4816 buf_asm=0 chan_send_wait=1 | elapsed=4819 ms | rt=1.03x
+None 
+[Prep] Processed 20 | ms: mfcc=61 chan_send_wait=4080 | elapsed=5063 ms | rt=0.98x
+None 
+None 
+None 
+[Inf]  Processed 20 | ms: copy=0 invoke=4800 post=0 | elapsed=5830 ms | rt=0.85x
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+[Acq]  Missed 0/40 | ms: dma_wait=5120 buf_asm=0 chan_send_wait=0 | elapsed=5120 ms | rt=0.97x
+None 
+[Prep] Processed 40 | ms: mfcc=61 chan_send_wait=4801 | elapsed=5120 ms | rt=0.97x
+None 
+None 
+None 
+[Inf]  Processed 40 | ms: copy=0 invoke=4800 post=0 | elapsed=5120 ms | rt=0.97x
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+[Acq]  Missed 0/60 | ms: dma_wait=5120 buf_asm=0 chan_send_wait=0 | elapsed=5120 ms | rt=0.97x
+None 
+[Prep] Processed 60 | ms: mfcc=61 chan_send_wait=4801 | elapsed=5120 ms | rt=0.97x
+None 
+None 
+None 
+[Inf]  Processed 60 | ms: copy=0 invoke=4800 post=0 | elapsed=5120 ms | rt=0.97x
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+[Acq]  Missed 0/80 | ms: dma_wait=5120 buf_asm=0 chan_send_wait=0 | elapsed=5120 ms | rt=0.97x
+None 
+[Prep] Processed 80 | ms: mfcc=61 chan_send_wait=4801 | elapsed=5120 ms | rt=0.97x
+None 
+None 
+None 
+[Inf]  Processed 80 | ms: copy=0 invoke=4800 post=0 | elapsed=5120 ms | rt=0.97x
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+[Acq]  Missed 0/100 | ms: dma_wait=5120 buf_asm=0 chan_send_wait=0 | elapsed=5120 ms | rt=0.97x
+None 
+[Prep] Processed 100 | ms: mfcc=61 chan_send_wait=4801 | elapsed=5120 ms | rt=0.97x
+None 
+None 
+None 
+[Inf]  Processed 100 | ms: copy=0 invoke=4800 post=0 | elapsed=5120 ms | rt=0.97x
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 
+None 

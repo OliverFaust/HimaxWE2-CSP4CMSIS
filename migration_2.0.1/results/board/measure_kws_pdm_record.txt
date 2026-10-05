@@ -1,0 +1,40 @@
+[MEAS 3s] heap total=65536 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 3s] C heap (newlib) used=34840 of 65536
+[MEAS 3s] task meas prio=54 unused=3920 B
+[MEAS 3s] task Inference prio=11 unused=31576 B
+[MEAS 3s] task Preproces prio=10 unused=232 B
+[MEAS 3s] task Acquisiti prio=10 unused=512 B
+[MEAS 3s] task IDLE prio=0 unused=1256 B
+[MEAS 3s] task ReporterP prio=10 unused=520 B
+[MEAS 3s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 3s] mainAppStack used=456 B of 8192
+[MEAS 10s] heap total=65536 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 10s] C heap (newlib) used=34840 of 65536
+[MEAS 10s] task meas prio=54 unused=3688 B
+[MEAS 10s] task Inference prio=11 unused=31512 B
+[MEAS 10s] task Preproces prio=10 unused=232 B
+[MEAS 10s] task Acquisiti prio=10 unused=512 B
+[MEAS 10s] task IDLE prio=0 unused=1256 B
+[MEAS 10s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 10s] task ReporterP prio=10 unused=520 B
+[MEAS 10s] mainAppStack used=456 B of 8192
+[MEAS 25s] heap total=65536 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 25s] C heap (newlib) used=34840 of 65536
+[MEAS 25s] task meas prio=54 unused=3688 B
+[MEAS 25s] task Inference prio=11 unused=31512 B
+[MEAS 25s] task Preproces prio=10 unused=232 B
+[MEAS 25s] task Acquisiti prio=10 unused=512 B
+[MEAS 25s] task IDLE prio=0 unused=1256 B
+[MEAS 25s] task ReporterP prio=10 unused=480 B
+[MEAS 25s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 25s] mainAppStack used=456 B of 8192
+[MEAS 40s] heap total=65536 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 40s] C heap (newlib) used=34840 of 65536
+[MEAS 40s] task meas prio=54 unused=3688 B
+[MEAS 40s] task Inference prio=11 unused=31512 B
+[MEAS 40s] task Preproces prio=10 unused=232 B
+[MEAS 40s] task Acquisiti prio=10 unused=512 B
+[MEAS 40s] task IDLE prio=0 unused=1256 B
+[MEAS 40s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 40s] task ReporterP prio=10 unused=480 B
+[MEAS 40s] mainAppStack used=456 B of 8192

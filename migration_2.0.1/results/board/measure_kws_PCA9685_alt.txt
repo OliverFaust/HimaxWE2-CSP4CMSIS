@@ -1,0 +1,60 @@
+[NVIC 3s] SVCall=0 PendSV=7 SysTick=7; enabled IRQn:prio 7:0 21:0 40:0 41:0 66:5 93:5 96:0 97:0
+[MEAS 3s] heap total=307200 free=307000 min_ever_free=307000 allocs=2 frees=0
+[MEAS 3s] task meas prio=54 unused=39192:5
+[NVIC 3s] prio of 35,37,66,93,114,115,133,192: 35:0 37:0 66:5 93:5 114:0 120 B
+[MEAS 3s] task nvic2 prio=54 unused=1624 B
+[MEAS 3s] task csp_task prio=115:0 133:0 192:5
+[MEAS 3s] task csp_task prio=9 unused=1768 B
+[MEAS 3s] task IDLE prio=0 unused=1256 B
+[MEAS 3s] task csp_task prio=9 unused=1800 B
+[MEAS 3s] task csp_task prio=9 unused=1648 B
+[MEAS 3s] task csp_task prio=8 unused=3488 B
+[MEAS 3s] task csp_task prio=11 unused=15584 B
+[MEAS 3s] task csp_task prio=10 unused=31504 B
+[MEAS 3s] task csp_task prio=8 unused=3552 B
+[MEAS 3s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 3s] mainAppStack used=464 B of 8192
+[NVIC 10s] SVCall=0 PendSV=7 SysTick=7; enabled IRQn:prio 7:0 21:0 40:0 41:0 66:5 93:5 96:0 97:0 98:0 99:0 100:0 114:0 115:0 133:0 163:0 169:0 170:0 172:0 173:0 174:0 175:0 176:0 192:5
+[NVIC 10s] prio of 35,37,66,93,114,115,133,192: 35:0 37:0 66:5 93:5 114:0 115:0 133:0 192:5
+[MEAS 10s] heap total=307200 free=307000 min_ever_free=307000 allocs=2 frees=0
+[MEAS 10s] C heap (newlib) used=31960 of 65536
+[MEAS 10s] task meas prio=54 unused=3624 B
+[MEAS 10s] task csp_task prio=12 unused=7728 B
+[MEAS 10s] task csp_task prio=9 unused=1680 B
+[MEAS 10s] task IDLE prio=0 unused=1256 B
+[MEAS 10s] task csp_task prio=9 unused=1648 B
+[MEAS 10s] task csp_task prio=8 unused=3488 B
+[MEAS 10s] task csp_task prio=11 unused=15584 B
+[MEAS 10s] task csp_task prio=10 unused=31504 B
+[MEAS 10s] task csp_task prio=8 unused=3512 B
+[MEAS 10s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 10s] task csp_task prio=9 unused=1800 B
+[MEAS 10s] mainAppStack used=464 B of 8192
+[MEAS 25s] heap total=307200 free=307000 min_ever_free=307000 allocs=2 frees=0
+[MEAS 25s] C heap (newlib) used=31960 of 65536
+[MEAS 25s] task meas prio=54 unused=3624 B
+[MEAS 25s] task csp_task prio=12 unused=7728 B
+[MEAS 25s] task csp_task prio=9 unused=1680 B
+[MEAS 25s] task IDLE prio=0 unused=1256 B
+[MEAS 25s] task csp_task prio=8 unused=3488 B
+[MEAS 25s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 25s] task csp_task prio=11 unused=15584 B
+[MEAS 25s] task csp_task prio=10 unused=31504 B
+[MEAS 25s] task csp_task prio=8 unused=3512 B
+[MEAS 25s] task csp_task prio=9 unused=1800 B
+[MEAS 25s] task csp_task prio=9 unused=1648 B
+[MEAS 25s] mainAppStack used=464 B of 8192
+[MEAS 40s] heap total=307200 free=307000 min_ever_free=307000 allocs=2 frees=0
+[MEAS 40s] C heap (newlib) used=31960 of 65536
+[MEAS 40s] task meas prio=54 unused=3624 B
+[MEAS 40s] task csp_task prio=12 unused=7728 B
+[MEAS 40s] task csp_task prio=10 unused=31504 B
+[MEAS 40s] task csp_task prio=9 unused=1680 B
+[MEAS 40s] task IDLE prio=0 unused=1256 B
+[MEAS 40s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 40s] task csp_task prio=9 unused=1800 B
+[MEAS 40s] task csp_task prio=8 unused=3512 B
+[MEAS 40s] task csp_task prio=11 unused=15584 B
+[MEAS 40s] task csp_task prio=9 unused=1648 B
+[MEAS 40s] task csp_task prio=8 unused=3488 B
+[MEAS 40s] mainAppStack used=464 B of 8192

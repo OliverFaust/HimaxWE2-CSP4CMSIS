@@ -1,0 +1,86 @@
+1st BL Modem Build DATE=Nov 30 2023, 0x0002000b
+Please input any key to enter X-Modem mode in 100 ms 
+waiting input key...
+slot flash_offset 0x00100000
+New MemDesp himax_sec_SB_image_process PASS
+set_memory_s_ns
+bl_status = 0x800000, HX_DSP_FLAG 1
+bl_status = 0x800000
+jump_addr=0x10000000
+Compiler Version: ARM GNU, 13.2.1 20231009
+freertos rtos_app
+*** MainApp_Task: Run() returned, entering report loop ***
+Camera: initializing sensor
+cis_IMEthos-U55 device initialised
+model's schema version 3
+initial done
+X219_init 
+mclk DIV3, xshutdown_pin=82
+Set PA1(AON_GPIO1) to High
+hx_drv_cis_set_slaveID(0x10)
+dw_iic_write err_state:2 
+dw_iic_write err_code:-60 
+[hx_drv_i2cm_write_data]-L:701, Fail:-60 
+    retry=0, (regAddr=0x0100, val=0x00) Fail (-60)
+dw_iic_write err_state:2 
+dw_iic_write err_code:-60 
+[hx_drv_i2cm_write_data]-L:701, Fail:-60 
+    retry=1, (regAddr=0x0100, val=0x00) Fail (-60)
+dw_iic_write err_state:2 
+dw_iic_write err_code:-60 
+[hx_drv_i2cm_write_data]-L:701, Fail:-60 
+    retry=2, (regAddr=0x0100, val=0x00) Fail (-60)
+IMX219 off by app fail
+Camera: sensor init failed
+CSP_Main: 1760 bytes unused headroom (440 words HWM, of 512 allocated)
+Camera: 536/1024 bytes used (488 bytes unused headroom, 122 words HWM)
+Inference: 376/1024 bytes used (648 bytes unused headroom, 162 words HWM)
+Console: 128/1024 bytes used (896 bytes unused headroom, 224 words HWM)
+CSP_Main: 1672 bytes unused headroom (418 words HWM, of 512 allocated)
+Camera: 536/1024 bytes used (488 bytes unused headroom, 122 words HWM)
+Inference: 376/1024 bytes used (648 bytes unused headroom, 162 words HWM)
+Console: 128/1024 bytes used (896 bytes unused headroom, 224 words HWM)
+CSP_Main: 1672 bytes unused headroom (418 words HWM, of 512 allocated)
+Camera: 536/1024 bytes used (488 bytes unused headroom, 122 words HWM)
+Inference: 376/1024 bytes used (648 bytes unused headroom, 162 words HWM)
+Console: 128/1024 bytes used (896 bytes unused headroom, 224 words HWM)
+CSP_Main: 1672 bytes unused headroom (418 words HWM, of 512 allocated)
+Camera: 536/1024 bytes used (488 bytes unused headroom, 122 words HWM)
+Inference: 376/1024 bytes used (648 bytes unused headroom, 162 words HWM)
+Console: 128/1024 bytes used (896 bytes unused headroom, 224 words HWM)
+CSP_Main: 1672 bytes unused headroom (418 words HWM, of 512 allocated)
+Camera: 536/1024 bytes used (488 bytes unused headroom, 122 words HWM)
+Inference: 376/1024 bytes used (648 bytes unused headroom, 162 words HWM)
+Console: 128/1024 bytes used (896 bytes unused headroom, 224 words HWM)
+CSP_Main: 1672 bytes unused headroom (418 words HWM, of 512 allocated)
+Camera: 536/1024 bytes used (488 bytes unused headroom, 122 words HWM)
+Inference: 376/1024 bytes used (648 bytes unused headroom, 162 words HWM)
+Console: 128/1024 bytes used (896 bytes unused headroom, 224 words HWM)
+CSP_Main: 1672 bytes unused headroom (418 words HWM, of 512 allocated)
+Camera: 536/1024 bytes used (488 bytes unused headroom, 122 words HWM)
+Inference: 376/1024 bytes used (648 bytes unused headroom, 162 words HWM)
+Console: 128/1024 bytes used (896 bytes unused headroom, 224 words HWM)
+CSP_Main: 1672 bytes unused headroom (418 words HWM, of 512 allocated)
+Camera: 536/1024 bytes used (488 bytes unused headroom, 122 words HWM)
+Inference: 376/1024 bytes used (648 bytes unused headroom, 162 words HWM)
+Console: 128/1024 bytes used (896 bytes unused headroom, 224 words HWM)
+CSP_Main: 1672 bytes unused headroom (418 words HWM, of 512 allocated)
+Camera: 536/1024 bytes used (488 bytes unused headroom, 122 words HWM)
+Inference: 376/1024 bytes used (648 bytes unused headroom, 162 words HWM)
+Console: 128/1024 bytes used (896 bytes unused headroom, 224 words HWM)
+CSP_Main: 1672 bytes unused headroom (418 words HWM, of 512 allocated)
+Camera: 536/1024 bytes used (488 bytes unused headroom, 122 words HWM)
+Inference: 376/1024 bytes used (648 bytes unused headroom, 162 words HWM)
+Console: 128/1024 bytes used (896 bytes unused headroom, 224 words HWM)
+CSP_Main: 1672 bytes unused headroom (418 words HWM, of 512 allocated)
+Camera: 536/1024 bytes used (488 bytes unused headroom, 122 words HWM)
+Inference: 376/1024 bytes used (648 bytes unused headroom, 162 words HWM)
+Console: 128/1024 bytes used (896 bytes unused headroom, 224 words HWM)
+CSP_Main: 1672 bytes unused headroom (418 words HWM, of 512 allocated)
+Camera: 536/1024 bytes used (488 bytes unused headroom, 122 words HWM)
+Inference: 376/1024 bytes used (648 bytes unused headroom, 162 words HWM)
+Console: 128/1024 bytes used (896 bytes unused headroom, 224 words HWM)
+CSP_Main: 1672 bytes unused headroom (418 words HWM, of 512 allocated)
+Camera: 536/1024 bytes used (488 bytes unused headroom, 122 words HWM)
+Inference: 376/1024 bytes used (648 bytes unused headroom, 162 words HWM)
+Console: 128/1024 bytes used (896 bytes unused headroom, 224 words HWM)

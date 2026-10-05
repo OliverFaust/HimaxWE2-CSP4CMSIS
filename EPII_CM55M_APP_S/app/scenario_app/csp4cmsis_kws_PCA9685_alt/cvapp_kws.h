@@ -2,6 +2,7 @@
 #define SCENARIO_KWS_CVAPP
 
 #include "spi_protocol.h"
+#include "cmsis_os2.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,13 +43,16 @@ void *cv_kws_preprocess_step(const int16_t *newQuarterBuffer);
 // Returns 0 on success, -1 on failure (invoke failure or null input).
 int cv_kws_infer_step(void *featureTensor);
 
-// All four are xTaskGetTickCount()-based milliseconds, each representing the
+// All four are osKernelGetTickCount()-based milliseconds, each representing the
 // duration of the single most recent call to the corresponding step (not an
 // internal accumulation -- callers accumulate across calls themselves).
 extern uint32_t g_kws_mfcc_ms;       // cv_kws_preprocess_step: time in ShiftAndAppendFrames
 extern uint32_t g_kws_copy_ms;       // cv_kws_infer_step: time copying the tensor into the live model input
 extern uint32_t g_kws_invoke_ms;     // cv_kws_infer_step: time inside kws_int_ptr->Invoke() (NPU dispatch)
 extern uint32_t g_kws_postproc_ms;   // cv_kws_infer_step: GetClassificationResults + reporting
+
+// Converts a difference of osKernelGetTickCount() values to milliseconds.
+static inline uint32_t ticksToMs(uint32_t ticks) { return ticks * 1000U / osKernelGetTickFreq(); }
 
 #ifdef __cplusplus
 }

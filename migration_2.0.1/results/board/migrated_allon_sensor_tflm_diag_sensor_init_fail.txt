@@ -1,0 +1,134 @@
+1st BL Modem Build DATE=Nov 30 2023, 0x0002000b
+Please input any key to enter X-Modem mode in 100 ms 
+waiting input key...
+slot flash_offset 0x00000000
+New MemDesp himax_sec_SB_image_process PASS
+set_memory_s_ns
+bl_status = 0x800000, HX_DSP_FLAG 1
+bl_status = 0x800000
+jump_addr=0x10000000
+Compiler Version: ARM GNU, 13.2.1 20231009
+freertos rtos_app
+*** MainApp_Task: Run() returned, entering report loop ***
+Camera: initializing sensor
+cis_IMEthos-U55 device initialised
+model's schema version 3
+initial done
+X219_init 
+mclk DIV3, xshutdown_pin=82
+Set PA1(AON_GPIO1) to High
+hx_drv_cis_set_slaveID(0x10)
+dw_iic_write err_state:2 
+dw_iic_write err_code:-60 
+[hx_drv_i2cm_write_data]-L:701, Fail:-60 
+    retry=0, (regAddr=0x0100, val=0x00) Fail (-60)
+dw_iic_write err_state:2 
+dw_iic_write err_code:-60 
+[hx_drv_i2cm_write_data]-L:701, Fail:-60 
+    retry=1, (regAddr=0x0100, val=0x00) Fail (-60)
+dw_iic_write err_state:2 
+dw_iic_write err_code:-60 
+[hx_drv_i2cm_write_data]-L:701, Fail:-60 
+    retry=2, (regAddr=0x0100, val=0x00) Fail (-60)
+IMX219 off by app fail
+Camera: sensor init failed
+
+[NVIC 3s] SVCall=0 PendSV=7 SysTick=7; enabled IRQn:prio 7:0 21:0 37:0 40:0 41:0 92:0 93:0 96:0
+[MEAS 3s] heap total=1024 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 3s] C heap (newlib) used=1248 of 16384
+[MEAS 3s] task meas prio=54 unused=3920  97:0 98:0 99:0 100:0 112:0 163:0 169:0 170:0 172:0 173:0 174:0 175:0 176:0 192:0B
+[MEAS 3s] task nvic2 prio=54 unused=1624 B
+[MEAS 3s] task IDLE prio=0 unused=
+[NVIC 3s] prio of 35,37,66,93,114,115,133,192: 35:0 37:0 66:0 93:0 114:0 115:0 11256 B
+[MEAS 3s] task CSP_Main prio=11 unused=7720 B
+[MEAS 3s] task Inference 33:0 192:0
+prio=10 unused=640 B
+[MEAS 3s] task Console prio=10 unused=800 B
+[MEAS 3s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 3s] mainAppStack used=472 B of 8192
+CSP_Main: 472/8192 bytes used (7720 bytes unused headroom)
+Camera: 536/1536 bytes used (1000 bytes unused headroom, 250 words HWM)
+Inference: 384/1024 bytes used (640 bytes unused headroom, 160 words HWM)
+Console: 224/1024 bytes used (800 bytes unused headroom, 200 words HWM)
+CSP_Main: 520/8192 bytes used (7672 bytes unused headroom)
+Camera: 536/1536 bytes used (1000 bytes unused headroom, 250 words HWM)
+Inference: 384/1024 bytes used (640 bytes unused headroom, 160 words HWM)
+Console: 224/1024 bytes used (800 bytes unused headroom, 200 words HWM)
+CSP_Main: 520/8192 bytes used (7672 bytes unused headroom)
+Camera: 536/1536 bytes used (1000 bytes unused headroom, 250 words HWM)
+Inference: 384/1024 bytes used (640 bytes unused headroom, 160 words HWM)
+Console: 224/1024 bytes used (800 bytes unused headroom, 200 words HWM)
+
+[NVIC 10s] SVCall=0 PendSV=7 SysTick=7; enabled IRQn:prio 7:0 21:0 37:0 40:0 41:0 92:0 93:0 96:0 97:0 98:0 99:0 100:0 112:0 163:0 169:0 170:0 172:0 173:0 174:0 175:0 176:0 192:0
+[MEAS 10s] heap total=1024 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 10s] C heap (newlib) used=1248 of 16384
+[MEAS 10s] task meas prio=54 unused=358
+[NVIC 10s] prio of 35,37,66,93,114,115,133,192: 35:0 37:0 66:0 93:0 114:0 115:0 4 B
+[MEAS 10s] task nvic2 prio=54 unused=1568 B
+[MEAS 10s] task IDLE prio=0 un133:0 192:0
+used=1256 B
+[MEAS 10s] task CSP_Main prio=11 unused=7672 B
+[MEAS 10s] task Console prio=10 unused=800 B
+[MEAS 10s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 10s] task Inference prio=10 unused=640 B
+[MEAS 10s] mainAppStack used=520 B of 8192
+CSP_Main: 520/8192 bytes used (7672 bytes unused headroom)
+Camera: 536/1536 bytes used (1000 bytes unused headroom, 250 words HWM)
+Inference: 384/1024 bytes used (640 bytes unused headroom, 160 words HWM)
+Console: 224/1024 bytes used (800 bytes unused headroom, 200 words HWM)
+CSP_Main: 520/8192 bytes used (7672 bytes unused headroom)
+Camera: 536/1536 bytes used (1000 bytes unused headroom, 250 words HWM)
+Inference: 384/1024 bytes used (640 bytes unused headroom, 160 words HWM)
+Console: 224/1024 bytes used (800 bytes unused headroom, 200 words HWM)
+CSP_Main: 520/8192 bytes used (7672 bytes unused headroom)
+Camera: 536/1536 bytes used (1000 bytes unused headroom, 250 words HWM)
+Inference: 384/1024 bytes used (640 bytes unused headroom, 160 words HWM)
+Console: 224/1024 bytes used (800 bytes unused headroom, 200 words HWM)
+CSP_Main: 520/8192 bytes used (7672 bytes unused headroom)
+Camera: 536/1536 bytes used (1000 bytes unused headroom, 250 words HWM)
+Inference: 384/1024 bytes used (640 bytes unused headroom, 160 words HWM)
+Console: 224/1024 bytes used (800 bytes unused headroom, 200 words HWM)
+CSP_Main: 520/8192 bytes used (7672 bytes unused headroom)
+Camera: 536/1536 bytes used (1000 bytes unused headroom, 250 words HWM)
+Inference: 384/1024 bytes used (640 bytes unused headroom, 160 words HWM)
+Console: 224/1024 bytes used (800 bytes unused headroom, 200 words HWM)
+
+[MEAS 25s] heap total=1024 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 25s] C heap (newlib) used=1248 of 16384
+[MEAS 25s] task meas prio=54 unused=3584 B
+[MEAS 25s] task IDLE prio=0 unused=1256 B
+[MEAS 25s] task CSP_Main prio=11 unused=7672 B
+[MEAS 25s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 25s] task Inference prio=10 unused=640 B
+[MEAS 25s] task Console prio=10 unused=800 B
+[MEAS 25s] mainAppStack used=520 B of 8192
+CSP_Main: 520/8192 bytes used (7672 bytes unused headroom)
+Camera: 536/1536 bytes used (1000 bytes unused headroom, 250 words HWM)
+Inference: 384/1024 bytes used (640 bytes unused headroom, 160 words HWM)
+Console: 224/1024 bytes used (800 bytes unused headroom, 200 words HWM)
+CSP_Main: 520/8192 bytes used (7672 bytes unused headroom)
+Camera: 536/1536 bytes used (1000 bytes unused headroom, 250 words HWM)
+Inference: 384/1024 bytes used (640 bytes unused headroom, 160 words HWM)
+Console: 224/1024 bytes used (800 bytes unused headroom, 200 words HWM)
+CSP_Main: 520/8192 bytes used (7672 bytes unused headroom)
+Camera: 536/1536 bytes used (1000 bytes unused headroom, 250 words HWM)
+Inference: 384/1024 bytes used (640 bytes unused headroom, 160 words HWM)
+Console: 224/1024 bytes used (800 bytes unused headroom, 200 words HWM)
+CSP_Main: 520/8192 bytes used (7672 bytes unused headroom)
+Camera: 536/1536 bytes used (1000 bytes unused headroom, 250 words HWM)
+Inference: 384/1024 bytes used (640 bytes unused headroom, 160 words HWM)
+Console: 224/1024 bytes used (800 bytes unused headroom, 200 words HWM)
+CSP_Main: 520/8192 bytes used (7672 bytes unused headroom)
+Camera: 536/1536 bytes used (1000 bytes unused headroom, 250 words HWM)
+Inference: 384/1024 bytes used (640 bytes unused headroom, 160 words HWM)
+Console: 224/1024 bytes used (800 bytes unused headroom, 200 words HWM)
+
+[MEAS 40s] heap total=1024 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 40s] C heap (newlib) used=1248 of 16384
+[MEAS 40s] task meas prio=54 unused=3584 B
+[MEAS 40s] task IDLE prio=0 unused=1256 B
+[MEAS 40s] task CSP_Main prio=11 unused=7672 B
+[MEAS 40s] task Inference prio=10 unused=640 B
+[MEAS 40s] task Console prio=10 unused=800 B
+[MEAS 40s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 40s] mainAppStack used=520 B of 8192

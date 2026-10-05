@@ -14,10 +14,15 @@ APPL_DEFINES += -DDBG_MORE
 # The source code should be loacted in ~\library\{lib_name}\
 ##
 LIB_SEL = csp4cmsis
+# CSP4CMSIS 2.0 on the SDK's CMSIS-RTOS2 adapter for FreeRTOS (OS_HAL := y below)
+APPL_DEFINES += -DCSP4CMSIS_RTOS2_BACKEND_FREERTOS -DCSP4CMSIS_STATIC_ALLOCATION
+APPL_DEFINES += -DCSP4CMSIS_DEVICE_HEADER=\"WE2_device.h\"
+# configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY in FreeRTOSConfig.h
+APPL_DEFINES += -DCSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY=5
 
 #override OS_SEL := freertos
 override OS_SEL := freertos_10_5_1
-override OS_HAL := n
+override OS_HAL := y
 override MPU := n
 override TRUSTZONE := y
 override TRUSTZONE_TYPE := security

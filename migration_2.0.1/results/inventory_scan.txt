@@ -1,0 +1,259 @@
+=== csp4cmsis_AI_testbench (24 source files, 4001 lines)
+  BufferedChannel    BufferedOne2OneChannel<×2
+  xTaskCreate        xTaskCreate×1
+  vTaskDelay         vTaskDelay×2
+  CSProcess(dyn)     : public CSProcess×2
+  Run(               Run(×1
+  ExecutionMode      ExecutionMode::StaticNetwork×1
+  NVIC               NVIC_EnableIRQ×1
+  new/malloc         new p×2
+=== csp4cmsis_allon_sensor_tflm (43 source files, 7619 lines)
+  Channel<           Channel<×2, Channel <×1
+  putFromISR         putFromISR×1
+  xSemaphore         xSemaphoreGetMutexHolder×1
+  xQueue             xQueueGetMutexHolder×1
+  xTaskCreate        xTaskCreateStatic×2
+  vTaskDelay         vTaskDelay×3
+  vTaskDelete        vTaskDelete×1
+  taskENTER_CRITICAL taskDISABLE_INTERRUPTS×2
+  CSProcessStatic    CSProcessStatic<N>×4, CSProcessStatic<256>×3
+  Run(               Run(×4
+  ExecutionMode      ExecutionMode::StaticNetwork×1
+  stackWords         stackWords×1
+  register_cb        _register_cb×5, hx_drv_hxautoi2c_register_cb×1
+  NVIC               NVIC_EnableIRQ×1
+  new/malloc         new p×2, pvPortMalloc×1
+=== csp4cmsis_alt_alt_test (7 source files, 735 lines)
+  Channel<           Channel<×1
+  Alternative        Alternative×17
+  priSelect          priSelect×3
+  RelTimeoutGuard    RelTimeoutGuard×4
+  xTaskNotify        xTaskNotifyGive×1
+  xSemaphore         xSemaphoreGive×1, xSemaphoreGetMutexHolder×1
+  xQueue             xQueueGetMutexHolder×1
+  xTaskCreate        xTaskCreate×1
+  vTaskDelay         vTaskDelay×8
+  vTaskDelete        vTaskDelete×2
+  taskENTER_CRITICAL taskDISABLE_INTERRUPTS×1
+  CSProcessStatic    CSProcessStatic<512>×2, CSProcessStatic<256>×1
+  Run(               Run(×2
+  ExecutionMode      ExecutionMode::StaticNetwork×1
+=== csp4cmsis_alt_test (7 source files, 664 lines)
+  Channel<           Channel<×1
+  Alternative        Alternative×3
+  fairSelect         fairSelect×2
+  xSemaphore         xSemaphoreGetMutexHolder×1
+  xQueue             xQueueGetMutexHolder×1
+  xTaskCreate        xTaskCreate×2
+  vTaskDelay         vTaskDelay×8
+  vTaskDelete        vTaskDelete×1
+  taskENTER_CRITICAL taskDISABLE_INTERRUPTS×1
+  CSProcessStatic    CSProcessStatic<N>×2, CSProcessStatic<512>×1, CSProcessStatic<1024>×1
+  Run(               Run(×2
+  ExecutionMode      ExecutionMode::StaticNetwork×1
+  stackWords         stackWords×2
+=== csp4cmsis_alt_test_max (7 source files, 679 lines)
+  Channel<           Channel<×1
+  Alternative        Alternative×2
+  priSelect          priSelect×1
+  fairSelect         fairSelect×1
+  xSemaphore         xSemaphoreGetMutexHolder×1
+  xQueue             xQueueGetMutexHolder×1
+  xTaskCreate        xTaskCreate×3
+  vTaskDelay         vTaskDelay×7
+  vTaskDelete        vTaskDelete×1
+  taskENTER_CRITICAL taskDISABLE_INTERRUPTS×1
+  CSProcessStatic    CSProcessStatic<N>×2, CSProcessStatic<512>×1, CSProcessStatic<2048>×1
+  Run(               Run(×2
+  ExecutionMode      ExecutionMode::StaticNetwork×1
+  stackWords         stackWords×2
+  new/malloc         new S×1
+=== csp4cmsis_asymmetric_philosophers (7 source files, 619 lines)
+  Channel<           Channel<×2
+  xSemaphore         xSemaphoreGetMutexHolder×1
+  xQueue             xQueueGetMutexHolder×1
+  xTaskCreate        xTaskCreate×1
+  vTaskDelay         vTaskDelay×8
+  vTaskDelete        vTaskDelete×2
+  taskENTER_CRITICAL taskDISABLE_INTERRUPTS×1
+  CSProcessStatic    CSProcessStatic<256>×3
+  Run(               Run(×3
+  ExecutionMode      ExecutionMode::StaticNetwork×1
+=== csp4cmsis_chain_test (7 source files, 615 lines)
+  Channel<           Channel<×1
+  xSemaphore         xSemaphoreGetMutexHolder×1
+  xQueue             xQueueGetMutexHolder×1
+  xTaskCreate        xTaskCreate×1
+  vTaskDelay         vTaskDelay×4
+  vTaskDelete        vTaskDelete×2
+  taskENTER_CRITICAL taskDISABLE_INTERRUPTS×1
+  CSProcessStatic    CSProcessStatic<256>×3
+  Run(               Run(×2
+  ExecutionMode      ExecutionMode::StaticNetwork×1
+=== csp4cmsis_comstime (7 source files, 669 lines)
+  Channel<           Channel<×2
+  Alternative        Alternative×2
+  fairSelect         fairSelect×1
+  xSemaphore         xSemaphoreGetMutexHolder×1
+  xQueue             xQueueGetMutexHolder×1
+  xTaskCreate        xTaskCreate×2
+  vTaskDelay         vTaskDelay×4
+  vTaskDelete        vTaskDelete×1
+  taskENTER_CRITICAL taskDISABLE_INTERRUPTS×1
+  CSProcessStatic    CSProcessStatic<512>×4, CSProcessStatic<N>×2, CSProcessStatic<1024>×1
+  Run(               Run(×2
+  ExecutionMode      ExecutionMode::StaticNetwork×1
+  stackWords         stackWords×2
+=== csp4cmsis_dining_philosophers (7 source files, 583 lines)
+  Channel<           Channel<×2
+  xSemaphore         xSemaphoreGetMutexHolder×1
+  xQueue             xQueueGetMutexHolder×1
+  xTaskCreate        xTaskCreate×1
+  vTaskDelay         vTaskDelay×5
+  vTaskDelete        vTaskDelete×2
+  taskENTER_CRITICAL taskDISABLE_INTERRUPTS×1
+  CSProcessStatic    CSProcessStatic<256>×2
+  Run(               Run(×2
+  ExecutionMode      ExecutionMode::StaticNetwork×1
+=== csp4cmsis_irq (7 source files, 551 lines)
+  Channel<           Channel<×1
+  putFromISR         putFromISR×1
+  xSemaphore         xSemaphoreGetMutexHolder×1
+  xQueue             xQueueGetMutexHolder×1
+  xTaskCreate        xTaskCreate×1
+  vTaskDelay         vTaskDelay×3
+  vTaskDelete        vTaskDelete×2
+  taskENTER_CRITICAL taskDISABLE_INTERRUPTS×1
+  CSProcessStatic    CSProcessStatic<256>×2
+  Run(               Run(×2
+  ExecutionMode      ExecutionMode::StaticNetwork×1
+  NVIC               NVIC_EnableIRQ×1
+=== csp4cmsis_kws_PCA9685 (20 source files, 4378 lines)
+  Channel<           Channel<×8
+  BufferedChannel    BufferedChannel<×2
+  SamplingBuffered   SamplingBufferedChannel<×2
+  BufferPolicy       BufferPolicy::KeepNewest×1
+  putFromISR         putFromISR×1
+  portYIELD_FROM_ISR portYIELD_FROM_ISR×1
+  xSemaphore         xSemaphoreCreateBinary×1, vSemaphoreDelete×1, xSemaphoreTake×1, xSemaphoreGiveFromISR×1, xSemaphoreGetMutexHolder×1
+  xQueue             xQueueGetMutexHolder×1
+  xTaskCreate        xTaskCreate×1
+  vTaskDelay         vTaskDelay×6
+  vTaskDelete        vTaskDelete×2
+  taskENTER_CRITICAL taskDISABLE_INTERRUPTS×1
+  CSProcessStatic    CSProcessStatic<1024>×2, CSProcessStatic<512>×2, CSProcessStatic<N>×1, CSProcessStatic<2048>×1
+  Run(               Run(×1
+  ExecutionMode      ExecutionMode::StaticNetwork×1
+  taskPriority()     taskPriority()×7
+  stackWords         stackWords×1
+  ethosu_sem         ethosu_semaphore_create×1, ethosu_semaphore_destroy×1, ethosu_semaphore_take×1, ethosu_semaphore_give×1
+  NVIC               NVIC_EnableIRQ×1
+  new/malloc         new a×2, new d×2, new k×1, new o×1, new f×1, new w×1
+=== csp4cmsis_kws_PCA9685_alt (20 source files, 4500 lines)
+  Channel<           Channel<×9
+  BufferedChannel    BufferedChannel<×2
+  SamplingBuffered   SamplingBufferedChannel<×2
+  BufferPolicy       BufferPolicy::KeepNewest×1
+  Alternative        Alternative×4
+  fairSelect         fairSelect×2
+  putFromISR         putFromISR×1
+  portYIELD_FROM_ISR portYIELD_FROM_ISR×1
+  xSemaphore         xSemaphoreCreateBinary×1, vSemaphoreDelete×1, xSemaphoreTake×1, xSemaphoreGiveFromISR×1, xSemaphoreGetMutexHolder×1
+  xQueue             xQueueGetMutexHolder×1
+  xTaskCreate        xTaskCreate×1
+  vTaskDelay         vTaskDelay×9
+  vTaskDelete        vTaskDelete×2
+  taskENTER_CRITICAL taskDISABLE_INTERRUPTS×1
+  CSProcessStatic    CSProcessStatic<512>×3, CSProcessStatic<1024>×2, CSProcessStatic<N>×1, CSProcessStatic<2048>×1
+  Run(               Run(×1
+  ExecutionMode      ExecutionMode::StaticNetwork×1
+  taskPriority()     taskPriority()×8
+  stackWords         stackWords×1
+  ethosu_sem         ethosu_semaphore_create×1, ethosu_semaphore_destroy×1, ethosu_semaphore_take×1, ethosu_semaphore_give×1
+  NVIC               NVIC_EnableIRQ×1
+  new/malloc         new a×2, new d×2, new k×1, new o×1, new f×1, new w×1
+=== csp4cmsis_kws_iic (20 source files, 4279 lines)
+  Channel<           Channel<×8
+  BufferedChannel    BufferedChannel<×2
+  SamplingBuffered   SamplingBufferedChannel<×2
+  BufferPolicy       BufferPolicy::KeepNewest×1
+  putFromISR         putFromISR×1
+  portYIELD_FROM_ISR portYIELD_FROM_ISR×1
+  xSemaphore         xSemaphoreCreateBinary×1, vSemaphoreDelete×1, xSemaphoreTake×1, xSemaphoreGiveFromISR×1, xSemaphoreGetMutexHolder×1
+  xQueue             xQueueGetMutexHolder×1
+  xTaskCreate        xTaskCreate×1
+  vTaskDelay         vTaskDelay×5
+  vTaskDelete        vTaskDelete×2
+  taskENTER_CRITICAL taskDISABLE_INTERRUPTS×1
+  CSProcessStatic    CSProcessStatic<1024>×2, CSProcessStatic<512>×2, CSProcessStatic<N>×1, CSProcessStatic<2048>×1
+  Run(               Run(×1
+  ExecutionMode      ExecutionMode::StaticNetwork×1
+  taskPriority()     taskPriority()×7
+  stackWords         stackWords×1
+  ethosu_sem         ethosu_semaphore_create×1, ethosu_semaphore_destroy×1, ethosu_semaphore_take×1, ethosu_semaphore_give×1
+  NVIC               NVIC_EnableIRQ×1
+  new/malloc         new s×2, new a×2, new d×2, new k×1, new o×1, new f×1
+=== csp4cmsis_kws_pdm_record (19 source files, 4067 lines)
+  Channel<           Channel<×4
+  SamplingBuffered   SamplingBufferedChannel<×2
+  BufferPolicy       BufferPolicy::KeepNewest×1
+  xSemaphore         xSemaphoreGetMutexHolder×1
+  xQueue             xQueueGetMutexHolder×1
+  xTaskCreate        xTaskCreate×1
+  vTaskDelay         vTaskDelay×5
+  vTaskDelete        vTaskDelete×2
+  taskENTER_CRITICAL taskDISABLE_INTERRUPTS×1
+  CSProcessStatic    CSProcessStatic<N>×4, CSProcessStatic<256>×4
+  Run(               Run(×2
+  ExecutionMode      ExecutionMode::StaticNetwork×1
+  taskPriority()     taskPriority()×5
+  stackWords         stackWords×2
+  NVIC               NVIC_EnableIRQ×1
+  new/malloc         new a×3, new d×2, new i×1, new f×1, new w×1, new r×1
+=== csp4cmsis_lossy_policy_test (7 source files, 579 lines)
+  BufferedChannel    BufferedOne2OneChannel<×2
+  BufferPolicy       BufferPolicy::KeepNewest×1, BufferPolicy::KeepOldest×1
+  xSemaphore         xSemaphoreGetMutexHolder×1
+  xQueue             xQueueGetMutexHolder×1
+  xTaskCreate        xTaskCreate×1
+  vTaskDelay         vTaskDelay×3
+  vTaskDelete        vTaskDelete×2
+  taskENTER_CRITICAL taskDISABLE_INTERRUPTS×1
+  CSProcessStatic    CSProcessStatic<256>×2
+  Run(               Run(×2
+  ExecutionMode      ExecutionMode::StaticNetwork×1
+=== csp4cmsis_matrix_multiplication (7 source files, 689 lines)
+  Channel<           Channel<×2
+  xSemaphore         xSemaphoreGetMutexHolder×1
+  xQueue             xQueueGetMutexHolder×1
+  xTaskCreate        xTaskCreate×2
+  vTaskDelay         vTaskDelay×8
+  vTaskDelete        vTaskDelete×1
+  taskENTER_CRITICAL taskDISABLE_INTERRUPTS×1
+  CSProcessStatic    CSProcessStatic<N>×2, CSProcessStatic<512>×2, CSProcessStatic<1024>×1
+  Run(               Run(×2
+  ExecutionMode      ExecutionMode::StaticNetwork×1
+  stackWords         stackWords×2
+=== csp4cmsis_shake_detection (7 source files, 648 lines)
+  Channel<           Channel<×3
+  putFromISR         putFromISR×1
+  xSemaphore         xSemaphoreGetMutexHolder×1
+  xQueue             xQueueGetMutexHolder×1
+  xTaskCreate        xTaskCreate×1
+  vTaskDelay         vTaskDelay×3
+  vTaskDelete        vTaskDelete×2
+  taskENTER_CRITICAL taskDISABLE_INTERRUPTS×1
+  CSProcessStatic    CSProcessStatic<256>×3
+  Run(               Run(×2
+  ExecutionMode      ExecutionMode::StaticNetwork×1
+=== csp4cmsis_sieve (7 source files, 576 lines)
+  Channel<           Channel<×1
+  xSemaphore         xSemaphoreGetMutexHolder×1
+  xQueue             xQueueGetMutexHolder×1
+  xTaskCreate        xTaskCreate×1
+  vTaskDelay         vTaskDelay×3
+  vTaskDelete        vTaskDelete×2
+  taskENTER_CRITICAL taskDISABLE_INTERRUPTS×1
+  CSProcessStatic    CSProcessStatic<256>×3
+  Run(               Run(×2
+  ExecutionMode      ExecutionMode::StaticNetwork×1

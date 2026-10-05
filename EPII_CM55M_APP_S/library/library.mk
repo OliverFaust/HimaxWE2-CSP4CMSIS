@@ -54,6 +54,14 @@ ifdef LIB_SEL
 	LIB_INCLUDES += $(foreach LIB_INFERENCE_ENGINE_MK, $(LIB_INFERENCE_ENGINE_MKS), $(wildcard $(LIBRARIES_ROOT)/$(LIB_INFERENCE_ENGINE_MK)))
 	LIB_INCLUDES += $(foreach LIB_CMSIS_NN_MK, $(LIB_CMSIS_NN_MKS), $(wildcard $(LIBRARIES_ROOT)/$(LIB_CMSIS_NN_MK)))
 	
+	# The wildcards above silently skip a missing .mk; for CSP4CMSIS that
+	# would only surface later as a missing header, so stop here instead.
+    ifneq ($(filter csp4cmsis,$(LIB_SEL)),)
+    ifeq ($(wildcard $(LIBRARIES_ROOT)/csp4cmsis/csp4cmsis.mk),)
+      $(error LIB_SEL selects csp4cmsis, but $(LIBRARIES_ROOT)/csp4cmsis/csp4cmsis.mk is missing)
+    endif
+    endif
+
 	# Pull in the logic from library/csp4cmsis/csp4cmsis.mk
 	include $(LIB_INCLUDES)
 

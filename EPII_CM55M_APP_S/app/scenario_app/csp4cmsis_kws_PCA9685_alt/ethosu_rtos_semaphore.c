@@ -1,3 +1,9 @@
+// Ethos-U driver hook: overrides the driver's weak bare-metal semaphore
+// functions so that Invoke() blocks the calling thread instead of spinning in
+// __WFE(). Kept as native FreeRTOS on purpose: the driver calls these hooks
+// directly (ethosu_semaphore_give from the NPU interrupt, whose priority is set
+// to 5 in cvapp_kws.cpp). The binary semaphore is the only object in the
+// FreeRTOS heap.
 #include "FreeRTOS.h"
 #include "semphr.h"
 

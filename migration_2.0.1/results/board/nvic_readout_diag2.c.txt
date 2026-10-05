@@ -1,0 +1,25 @@
+
+/* ---- scratch diagnostic (not committed): NVIC priorities of enabled IRQs ---- */
+#include "xprintf.h"
+static void nvic2_dump(const char *tag) {
+	xprintf("\r\n[NVIC %s] SVCall=%d PendSV=%d SysTick=%d; enabled IRQn:prio", tag,
+	        (int)NVIC_GetPriority(SVCall_IRQn), (int)NVIC_GetPriority(PendSV_IRQn), (int)NVIC_GetPriority(SysTick_IRQn));
+	for (int n = 0; n < 224; n++) {
+		if (NVIC_GetEnableIRQ((IRQn_Type)n)) xprintf(" %d:%d", n, (int)NVIC_GetPriority((IRQn_Type)n));
+	}
+	xprintf("\r\n[NVIC %s] prio of 35,37,66,93,114,115,133,192:", tag);
+	static const int ids[] = {35, 37, 66, 93, 114, 115, 133, 192};
+	for (unsigned i = 0; i < sizeof(ids) / sizeof(ids[0]); i++) xprintf(" %d:%d", ids[i], (int)NVIC_GetPriority((IRQn_Type)ids[i]));
+	xprintf("\r\n");
+}
+static void nvic2_task(void *p) {
+	(void)p;
+	vTaskDelay(3000); nvic2_dump("3s");
+	vTaskDelay(7000); nvic2_dump("10s");
+	vTaskDelete(NULL);
+}
+static StackType_t nvic2_stack[512];
+static StaticTask_t nvic2_tcb;
+__attribute__((constructor)) static void nvic2_create(void) {
+	xTaskCreateStatic(nvic2_task, "nvic2", 512, NULL, configMAX_PRIORITIES - 2, nvic2_stack, &nvic2_tcb);
+}

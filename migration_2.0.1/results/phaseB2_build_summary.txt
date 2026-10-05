@@ -1,0 +1,8 @@
+csp4cmsis_alt_test_max               exit=0 text/data/bss=162176/2144/34260 warnings=8 (baseline 8) new-in-app=0
+csp4cmsis_comstime                   exit=0 text/data/bss=106676/2128/37420 warnings=8 (baseline 8) new-in-app=0
+csp4cmsis_chain_test                 exit=0 text/data/bss=104340/2144/33392 warnings=8 (baseline 8) new-in-app=0
+csp4cmsis_matrix_multiplication      exit=0 text/data/bss=120976/2120/98940 warnings=8 (baseline 8) new-in-app=0
+csp4cmsis_dining_philosophers        exit=0 text/data/bss=105548/2144/39152 warnings=8 (baseline 8) new-in-app=0
+csp4cmsis_asymmetric_philosophers    exit=0 text/data/bss=105840/2136/39252 warnings=8 (baseline 8) new-in-app=0
+csp4cmsis_lossy_policy_test          exit=0 text/data/bss=106552/2136/25216 warnings=8 (baseline 8) new-in-app=0
+csp4cmsis_kws_pdm_record             exit=0 text/data/bss=356784/46128/271568 warnings=75 (baseline 76) new-in-app=0

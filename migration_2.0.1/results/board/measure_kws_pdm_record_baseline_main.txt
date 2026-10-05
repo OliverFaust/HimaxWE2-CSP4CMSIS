@@ -1,0 +1,18 @@
+[MEAS 3s] heap total=65536 free=35600 min_ever_free=1384
+[MEAS 3s] C heap (newlib) used=4616 of 65536
+[MEAS 3s] task meas prio=3 unused=3952 B
+[MEAS 3s] task Inference prio=3 unused=31496 B
+[MEAS 3s] task Preproces prio=2 unused=160 B
+[MEAS 3s] task Acquisiti prio=2 unused=544 B
+[MEAS 3s] task IDLE prio=0 unused=1256 B
+[MEAS 3s] task ReporterP prio=2 unused=480 B
+[MEAS 3s] task Tmr Svc prio=2 unused=1920 B
+[MEAS 10s] heap total=65536 free=35600 min_ever_free=1384
+[MEAS 10s] C heap (newlib) used=4616 of 65536
+[MEAS 10s] task meas prio=3 unused=3624 B
+[MEAS 10s] task Inference prio=3 unused=31496 B
+[MEAS 10s] task Preproces prio=2 unused=160 B
+[MEAS 10s] task Acquisiti prio=2 unused=544 B
+[MEAS 10s] task IDLE prio=0 unused=1256 B
+[MEAS 10s] task Tmr Svc prio=2 unused=1920 B
+[MEAS 10s] task ReporterP prio=2 unused=480 B

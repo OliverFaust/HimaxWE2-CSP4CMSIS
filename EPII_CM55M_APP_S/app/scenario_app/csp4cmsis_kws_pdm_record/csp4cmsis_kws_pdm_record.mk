@@ -23,6 +23,11 @@ APPL_DEFINES += -DU55_PMU_ENABLE=0
 # The source code should be loacted in ~\library\{lib_name}\
 ##
 LIB_SEL = pwrmgmt sensordp tflmtag2209_u55tag2205 spi_ptl spi_eeprom hxevent cmsis_dsp csp4cmsis
+# CSP4CMSIS 2.0 on the SDK's CMSIS-RTOS2 adapter for FreeRTOS (OS_HAL := y below)
+APPL_DEFINES += -DCSP4CMSIS_RTOS2_BACKEND_FREERTOS -DCSP4CMSIS_STATIC_ALLOCATION
+APPL_DEFINES += -DCSP4CMSIS_DEVICE_HEADER=\"WE2_device.h\"
+# configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY in FreeRTOSConfig.h
+APPL_DEFINES += -DCSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY=5
 override LIB_CMSIS_NN_ENALBE := 1
 ## 0 : default version (tflmtag2209_u55tag2205)
 override LIB_CMSIS_NN_VERSION := 0
@@ -41,7 +46,7 @@ override TRUSTZONE_TYPE := security
 override TRUSTZONE_FW_TYPE := 1
 override CIS_SEL := HM_COMMON
 override EPII_USECASE_SEL := drv_user_defined
-override OS_HAL := n
+override OS_HAL := y
 override MPU := n
 
 ifeq ($(strip $(TOOLCHAIN)), arm)

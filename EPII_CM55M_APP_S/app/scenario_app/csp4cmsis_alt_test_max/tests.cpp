@@ -1,4 +1,6 @@
 #include "csp/csp4cmsis.h" 
+#include "cmsis_os2.h"
+#include "FreeRTOS.h"  // StaticTask_t: the control block of a statically created thread
 #include <cstdio>
 #include <vector>
 
@@ -11,8 +13,8 @@ using namespace csp;
 
 // How often to print a stack-usage report for the whole network. This is a
 // *live* reading (CSProcess::stackHighWaterMarkWords()), not a one-shot
-// end-of-run report -- Sender/Receiver both idle in vTaskDelay(portMAX_DELAY)
-// after finishing rather than exiting, so the report loop below keeps
+// end-of-run report -- Sender/Receiver both idle in SleepFor(osWaitForever)
+// after finishing rather than exiting (an exited thread's handle can't be queried), so the report loop below keeps
 // running for the life of the task. Read the HWM columns to right-size the
 // provisional CSProcessStatic<N> values on Sender/Receiver above -- the
 // numbers there were picked before this test ever ran, not measured.
@@ -20,11 +22,16 @@ using namespace csp;
 #define CSP_STACK_REPORT_INTERVAL_MS (3000)
 #endif
 
-// Set in RunProcessingChainTest() right after xTaskCreate() succeeds, so the
-// report loop can also measure MainApp_Task's own stack headroom (it isn't
-// a CSProcess, so it doesn't get a stackHighWaterMarkWords() of its own).
-static TaskHandle_t s_main_app_task_handle = NULL;
-#define MAIN_APP_STACK_WORDS 4096
+// Priorities keep the pre-2.0 order: MainApp (was tskIDLE_PRIORITY + 3) above the
+// network (was + 2), so Run(..., StaticNetwork) creates all processes before any runs.
+static constexpr osPriority_t MAIN_APP_PRIORITY = osPriorityLow3;
+static constexpr osPriority_t NETWORK_PRIORITY  = osPriorityLow2;
+
+// MainApp's stack and control block are static: creating the thread takes no heap.
+// CMSIS-RTOS2 counts the stack in bytes. Provisional (was 4096 words); the report
+// loop below prints MainApp's own headroom, to right-size it from.
+alignas(8) static uint8_t mainAppStack[4096];
+static StaticTask_t mainAppControlBlock;
 
 struct Message {
     int source_id; 
@@ -56,7 +63,7 @@ public:
         for (int i = 0; i < TOTAL_MESSAGES_PER_SENDER; ++i) {
             out << Message{id, i}; 
         }
-        while (true) vTaskDelay(portMAX_DELAY); 
+        while (true) SleepFor(osWaitForever);
     }
 };
 
@@ -124,13 +131,14 @@ public:
         }
 
         printf("[Receiver] SUCCESS: All %d messages verified with fair round-robin.\r\n", total_count);
-        while (true) vTaskDelay(portMAX_DELAY);
+        while (true) SleepFor(osWaitForever);
     }
 };
 
 // --- Main Application Task ---
 void MainApp_Task(void* params) {
-    vTaskDelay(pdMS_TO_TICKS(500)); 
+    (void)params;
+    SleepFor(500);  // 500 ms (1000 Hz tick)
     printf("--- Launching 16-Sender CSP Network ---\r\n");
 
     // 1. Static storage for channels
@@ -150,7 +158,7 @@ void MainApp_Task(void* params) {
 
     // Note: To use InParallel with an array/vector, we would typically 
     // need a variadic expander. For this test, we can manually trigger 
-    // the ParallelHelper or use a simpler loop to xTaskCreate if 
+    // the ParallelHelper or use a simpler loop to osThreadNew if 
     // InParallel doesn't support runtime arrays.
     
     // Using the helper for the Receiver (index 0) and spawning senders
@@ -159,37 +167,35 @@ void MainApp_Task(void* params) {
                              *senders[8], *senders[9], *senders[10], *senders[11],
                              *senders[12], *senders[13], *senders[14], *senders[15]);
 
-    Run(network, ExecutionMode::StaticNetwork);
+    Run(network, ExecutionMode::StaticNetwork, NETWORK_PRIORITY);
 
     printf("*** MainApp_Task: Run() returned, entering stack-report loop ***\r\n");
 
     // Sender/Receiver never return from run() (both drop into
-    // vTaskDelay(portMAX_DELAY) once done), so there's no "network
+    // SleepFor(osWaitForever) once done), so there's no "network
     // finished" point to report stack usage at -- report periodically
     // instead, same as the KWS pipeline's report loop.
     while (true) {
-        vTaskDelay(pdMS_TO_TICKS(CSP_STACK_REPORT_INTERVAL_MS));
+        SleepFor(CSP_STACK_REPORT_INTERVAL_MS);  // ticks = ms at 1000 Hz
 
-        if (s_main_app_task_handle != NULL) {
-            UBaseType_t hwm = uxTaskGetStackHighWaterMark(s_main_app_task_handle);
-            size_t unused_bytes = hwm * sizeof(StackType_t);
-            printf("MainApp: %u bytes unused headroom (%u words HWM, of %u allocated)\r\n",
-                    (unsigned)unused_bytes, (unsigned)hwm, (unsigned)MAIN_APP_STACK_WORDS);
-        }
+        uint32_t unused_bytes = osThreadGetStackSpace(osThreadGetId());
+        printf("MainApp: %u/%u bytes used (%u bytes unused headroom)\r\n",
+                (unsigned)(sizeof(mainAppStack) - unused_bytes),
+                (unsigned)sizeof(mainAppStack), (unsigned)unused_bytes);
 
         network.forEachProcess([](CSProcess& p) {
             // API 1.3: stack depth is fixed at compile time -- no more
             // resolveStackWords()/fallback constant to consult, just ask
             // the process directly.
             size_t allocated_words = p.stackWords();
-            size_t allocated_bytes = allocated_words * sizeof(StackType_t);
+            size_t allocated_bytes = allocated_words * sizeof(uint32_t);
 
-            UBaseType_t hwm = p.stackHighWaterMarkWords();
+            uint32_t hwm = p.stackHighWaterMarkWords();
             if (hwm == CSP_STACK_HWM_UNAVAILABLE) {
                 printf("%s: allocated = %u words (%u bytes), HWM unavailable\r\n",
                         p.name(), (unsigned)allocated_words, (unsigned)allocated_bytes);
             } else {
-                size_t unused_bytes = hwm * sizeof(StackType_t);
+                size_t unused_bytes = hwm * sizeof(uint32_t);
                 size_t used_bytes = (unused_bytes <= allocated_bytes)
                                         ? allocated_bytes - unused_bytes
                                         : 0; // guard against any inconsistency
@@ -203,9 +209,14 @@ void MainApp_Task(void* params) {
 
 void RunProcessingChainTest(void) {
     // Note: Task creation is the only 'dynamic' part remaining, standard for FreeRTOS
-    BaseType_t status = xTaskCreate(MainApp_Task, "MainApp", MAIN_APP_STACK_WORDS, NULL,
-                                     tskIDLE_PRIORITY + 3, &s_main_app_task_handle);
-    if (status != pdPASS) {
+    osThreadAttr_t attr = {};
+    attr.name       = "MainApp";
+    attr.stack_mem  = mainAppStack;
+    attr.stack_size = sizeof(mainAppStack);
+    attr.cb_mem     = &mainAppControlBlock;
+    attr.cb_size    = sizeof(mainAppControlBlock);
+    attr.priority   = MAIN_APP_PRIORITY;
+    if (osThreadNew(MainApp_Task, NULL, &attr) == NULL) {
         printf("ERROR: MainApp_Task creation failed!\r\n");
     }
 }

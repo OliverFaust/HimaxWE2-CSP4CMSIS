@@ -9,7 +9,10 @@ MEMORY
   CM55M_S_SRAM (rwx) : ORIGIN = BOOT2NDLOADER_BASE, LENGTH = 0x00200000-(BOOT2NDLOADER_BASE-BASE_ADDR_SRAM0_ALIAS) /* 2M-0x1f000 bytes*/
 }
 
-__HEAP_SIZE = 0x7000; /*linker script symbol; symbol: name given for an address, value: address*/
+/* C library heap (malloc, C++ new). Measured with CSP4CMSIS 2.0.1: 34.7 KB in use
+   (KWS std::vector/std::function state, stdio). Was 0x7000: enough while the old
+   library routed operator new to the FreeRTOS heap, too small since 2.0 removed that. */
+__HEAP_SIZE = 0xB000; /*linker script symbol; symbol: name given for an address, value: address*/
 __STACK_SIZE = 0x11000; /* adds symbol name to the final symbol table and assigns it a value*/
 
 ENTRY(Reset_Handler)

@@ -39,3 +39,5 @@ we2_image_gen_local/Images*.txt
 *.img
 
 .vscode/
+# Built and copied here by library/csp4cmsis/csp4cmsis.mk on every build
+EPII_CM55M_APP_S/prebuilt_libs/gnu/libcsp4cmsis.a

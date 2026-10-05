@@ -1,0 +1,46 @@
+1st BL Modem Build DATE=Nov 30 2023, 0x0002000b
+Please input any key to enter X-Modem mode in 100 ms 
+waiting input key...
+slot flash_offset 0x00000000
+New MemDesp himax_sec_SB_image_process PASS
+set_memory_s_ns
+bl_status = 0x800000, HX_DSP_FLAG 1
+bl_status = 0x800000
+jump_addr=0x10000000
+Compiler Version: ARM GNU, 13.2.1 20231009
+Task creation C++ CSP wrapper test.
+Application initialization (via csp_app_main_init) started.
+Application tasks created successfully.
+
+--- Launching Policy Comparison Test ---
+[Sender] Bursting 1000000 messages to KeepNewest...
+[Sender] Bursting 1000000 messages to KeepOldest...
+[Sender] Finished sending.
+[Receiver] Draining KeepNewest buffer...
+  Newest[0]: 999990
+  Newest[1]: 999991
+  Newest[2]: 999992
+  Newest[3]: 999993
+  Newest[4]: 999994
+  Newest[5]: 999995
+  Newest[6]: 999996
+  Newest[7]: 999997
+  Newest[8]: 999998
+  Newest[9]: 999999
+[Receiver] Draining KeepOldest buffer...
+  Oldest[0]: 0
+  Oldest[1]: 1
+  Oldest[2]: 2
+  Oldest[3]: 3
+  Oldest[4]: 4
+  Oldest[5]: 5
+  Oldest[6]: 6
+  Oldest[7]: 7
+  Oldest[8]: 8
+  Oldest[9]: 9
+
+--- FINAL RESULTS ---
+KeepNewest Total Accumulation: 9999945
+KeepOldest Total Accumulation: 45
+HYPOTHESIS CONFIRMED: KeepNewest kept the high-sequence values.
+PASS (expected KeepNewest 999990..999999, KeepOldest 0..9)

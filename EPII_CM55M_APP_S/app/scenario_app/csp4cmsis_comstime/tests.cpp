@@ -1,4 +1,6 @@
 #include "csp/csp4cmsis.h"
+#include "cmsis_os2.h"
+#include "FreeRTOS.h"  // StaticTask_t: the control block of a statically created thread
 #include <cstdio>
 
 using namespace csp;
@@ -14,11 +16,16 @@ using namespace csp;
 #define CSP_STACK_REPORT_INTERVAL_MS (3000)
 #endif
 
-// Set in RunProcessingChainTest() right after xTaskCreate() succeeds, so the
-// report loop can also measure MainApp_Task's own stack headroom (it isn't
-// a CSProcess, so it doesn't get a stackHighWaterMarkWords() of its own).
-static TaskHandle_t s_main_app_task_handle = NULL;
-#define MAIN_APP_STACK_WORDS 2048
+// Priorities keep the pre-2.0 order: MainApp (was tskIDLE_PRIORITY + 3) above the
+// network (was + 2), so Run(..., StaticNetwork) creates all processes before any runs.
+static constexpr osPriority_t MAIN_APP_PRIORITY = osPriorityLow3;
+static constexpr osPriority_t NETWORK_PRIORITY  = osPriorityLow2;
+
+// MainApp's stack and control block are static: creating the thread takes no heap.
+// CMSIS-RTOS2 counts the stack in bytes. Provisional (was 2048 words); the report
+// loop below prints MainApp's own headroom, to right-size it from.
+alignas(8) static uint8_t mainAppStack[4096];
+static StaticTask_t mainAppControlBlock;
 
 // --- 1. Basic Ring Components ---
 
@@ -90,15 +97,15 @@ public:
 
         printf("[Comstime] Benchmark starting. Measuring %lu cycles...\n", benchmark_limit);
         
-        TickType_t start_time = xTaskGetTickCount();
+        uint32_t start_time = osKernelGetTickCount();
 
         while (true) {
             int selected = alt.fairSelect();
 
             if (selected == 0) { 
                 if (++count >= benchmark_limit) {
-                    TickType_t end_time = xTaskGetTickCount();
-                    float total_ms = (float)(end_time - start_time) * portTICK_PERIOD_MS;
+                    uint32_t end_time = osKernelGetTickCount();
+                    float total_ms = (float)(end_time - start_time) * 1000.0f / (float)osKernelGetTickFreq();
                     float micro_per_loop = (total_ms * 1000.0f) / (float)benchmark_limit;
                     
                     printf("--- Comstime Results ---\r\n");
@@ -109,7 +116,7 @@ public:
                     printf("------------------------\r\n");
                     
                     count = 0;
-                    start_time = xTaskGetTickCount();
+                    start_time = osKernelGetTickCount();
                 }
             } else if (selected == 1) {
                 printf(">>> [ALT] External Trigger Event Latency Check <<<\r\n");
@@ -127,7 +134,7 @@ public:
     const char* name() const override { return "Trigger"; }
     void run() override {
         while (true) {
-            vTaskDelay(pdMS_TO_TICKS(1000)); 
+            SleepFor(1000);  // 1 s (1000 Hz tick)
             bool dummy = true;
             out << dummy;
         }
@@ -137,7 +144,8 @@ public:
 // --- 4. Main App Task ---
 
 void MainApp_Task(void* params) {
-    vTaskDelay(pdMS_TO_TICKS(500));
+    (void)params;
+    SleepFor(500);  // 500 ms (1000 Hz tick)
     
     // Channels
     static Channel<int> c1, c2, c3, c4;
@@ -151,7 +159,7 @@ void MainApp_Task(void* params) {
     static Trigger   proc_trig(c_trigger.writer());
 
     auto network = InParallel(proc_succ, proc_pref, proc_delt, proc_cons, proc_trig);
-    Run(network, ExecutionMode::StaticNetwork);
+    Run(network, ExecutionMode::StaticNetwork, NETWORK_PRIORITY);
 
     printf("*** MainApp_Task: Run() returned, entering stack-report loop ***\r\n");
 
@@ -159,28 +167,26 @@ void MainApp_Task(void* params) {
     // "network finished" point to report stack usage at -- report
     // periodically instead.
     while (true) {
-        vTaskDelay(pdMS_TO_TICKS(CSP_STACK_REPORT_INTERVAL_MS));
+        SleepFor(CSP_STACK_REPORT_INTERVAL_MS);  // ticks = ms at 1000 Hz
 
-        if (s_main_app_task_handle != NULL) {
-            UBaseType_t hwm = uxTaskGetStackHighWaterMark(s_main_app_task_handle);
-            size_t unused_bytes = hwm * sizeof(StackType_t);
-            printf("MainApp: %u bytes unused headroom (%u words HWM, of %u allocated)\r\n",
-                    (unsigned)unused_bytes, (unsigned)hwm, (unsigned)MAIN_APP_STACK_WORDS);
-        }
+        uint32_t unused_bytes = osThreadGetStackSpace(osThreadGetId());
+        printf("MainApp: %u/%u bytes used (%u bytes unused headroom)\r\n",
+                (unsigned)(sizeof(mainAppStack) - unused_bytes),
+                (unsigned)sizeof(mainAppStack), (unsigned)unused_bytes);
 
         network.forEachProcess([](CSProcess& p) {
             // API 1.3: stack depth is fixed at compile time -- no more
             // resolveStackWords()/fallback constant to consult, just ask
             // the process directly.
             size_t allocated_words = p.stackWords();
-            size_t allocated_bytes = allocated_words * sizeof(StackType_t);
+            size_t allocated_bytes = allocated_words * sizeof(uint32_t);
 
-            UBaseType_t hwm = p.stackHighWaterMarkWords();
+            uint32_t hwm = p.stackHighWaterMarkWords();
             if (hwm == CSP_STACK_HWM_UNAVAILABLE) {
                 printf("%s: allocated = %u words (%u bytes), HWM unavailable\r\n",
                         p.name(), (unsigned)allocated_words, (unsigned)allocated_bytes);
             } else {
-                size_t unused_bytes = hwm * sizeof(StackType_t);
+                size_t unused_bytes = hwm * sizeof(uint32_t);
                 size_t used_bytes = (unused_bytes <= allocated_bytes)
                                         ? allocated_bytes - unused_bytes
                                         : 0; // guard against any inconsistency
@@ -193,9 +199,14 @@ void MainApp_Task(void* params) {
 }
 
 extern "C" void RunProcessingChainTest(void) {
-    BaseType_t status = xTaskCreate(MainApp_Task, "ComsMain", MAIN_APP_STACK_WORDS, NULL,
-                                     tskIDLE_PRIORITY + 3, &s_main_app_task_handle);
-    if (status != pdPASS) {
+    osThreadAttr_t attr = {};
+    attr.name       = "ComsMain";
+    attr.stack_mem  = mainAppStack;
+    attr.stack_size = sizeof(mainAppStack);
+    attr.cb_mem     = &mainAppControlBlock;
+    attr.cb_size    = sizeof(mainAppControlBlock);
+    attr.priority   = MAIN_APP_PRIORITY;
+    if (osThreadNew(MainApp_Task, NULL, &attr) == NULL) {
         printf("ERROR: MainApp_Task creation failed!\r\n");
     }
 }

@@ -1,0 +1,3905 @@
+1st BL Modem Build DATE=Nov 30 2023, 0x0002000b
+Please input any key to enter X-Modem mode in 100 ms 
+waiting input key...
+slot flash_offset 0x00000000
+New MemDesp himax_sec_SB_image_process PASS
+set_memory_s_ns
+bl_status = 0x800000, HX_DSP_FLAG 1
+bl_status = 0x800000
+jump_addr=0x10000000
+Compiler Version: ARM GNU, 13.2.1 20231009
+freertos rtos_app
+*** MainApp_Task: Run() returned, entering report loop ***
+Camera: initializing sensor
+cis_IMEthos-U55 device initialised
+model's schema version 3
+initial done
+X219_init 
+mclk DIV3, xshutdown_pin=82
+Set PA1(AON_GPIO1) to High
+hx_drv_cis_set_slaveID(0x10)
+IMX219 Init Stream by app 
+IMX219 Init by app (IMX219_binning_setting)
+IMX219 Init by app (IMX219_exposure_setting)
+IMX219 Init by app (IMX219_again_setting)
+IMX219 Init by app (IMX219_dgain_setting)
+IMX219 Init by app (IMX219_mirror_setting)
+WD1[340dfe80], WD2_J[340dfe80], WD3_RAW[3406f680], JPAuto[3406f600]
+MIPI CLK change to PLL freq:(400000000 / 2)
+MIPI TX CLK: 200M
+RESET MIPI CSI RX/TX
+sensor_type: 15
+IMX219 on by app done
+g_cursensorstream: 0
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 0: prediction = -71Frame 0: prediction = -71
+
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 1: prediction = -69
+Frame 1: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 2: predicFrame 2: prediction = -70
+tion = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 3: prediction = -71
+Frame 3: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+FraFrame 4: prediction = -68
+me 4: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 5: prediction = -68
+Frame 5: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 6: prediction = -67
+Frame 6: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 7: prediction = -71
+Frame 7: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 8: prediction = -71
+Frame 8: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 9: predicFrame 9: prediction = -70
+tion = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 10: prediction = -69
+Frame 10: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+FramFrame 11: prediction = -68
+e 11: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 12: prediction = -70
+Frame 12: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 13: prediction = -68
+Frame 13: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 14: prediction = -67
+Frame 14: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 15: prediction = -71
+Frame 15: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 16: predicFrame 16: prediction = -70
+tion = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 17: prediction = -70
+Frame 17: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+FramFrame 18: prediction = -70
+e 18: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 19: prediction = -71
+Frame 19: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 20: prediction = -67
+Frame 20: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 21: prediction = -69
+Frame 21: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 22: prediction = -69
+Frame 22: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 23: predictFrame 23: prediction = -69
+ion = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 24: prediction = -71
+Frame 24: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+FrameFrame 25: prediction = -70
+ 25: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 26: prediction = -70
+Frame 26: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 27: prediction = -69
+Frame 27: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 28: prediction = -71
+Frame 28: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 29: prediction = -68
+Frame 29: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 30: predictFrame 30: prediction = -69
+ion = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 31: prediction = -71
+Frame 31: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame Frame 32: prediction = -69
+32: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 33: prediction = -68
+Frame 33: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 34: prediction = -68
+Frame 34: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 35: prediction = -68
+Frame 35: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 36: prediction = -69
+Frame 36: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 37: predictiFrame 37: prediction = -69
+on = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 38: prediction = -69
+Frame 38: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame Frame 39: prediction = -71
+39: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 40: prediction = -67
+Frame 40: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 41: prediction = -67
+Frame 41: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 42: prediction = -68
+Frame 42: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 43: prediction = -71
+Frame 43: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 44: predictioFrame 44: prediction = -70
+n = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 45: prediction = -69
+Frame 45: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 4Frame 46: prediction = -71
+6: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 47: prediction = -69
+Frame 47: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 48: prediction = -70
+Frame 48: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 49: prediction = -69
+Frame 49: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 50: prediction = -68
+Frame 50: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 51: predictioFrame 51: prediction = -70
+n = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 52: prediction = -71
+Frame 52: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 53Frame 53: prediction = -69
+: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 54: prediction = -68
+Frame 54: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 55: prediction = -70
+Frame 55: prediction = -70
+CSP_Main: 472/2048 bytes used (1576 bytes unused headroom)
+Camera: 744/1536 bytes used (792 bytes unused headroom, 198 words HWM)
+Inference: 472/1024 bytes used (552 bytes unused headroom, 138 words HWM)
+Console: 360/1024 bytes used (664 bytes unused headroom, 166 words HWM)
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 56: prediction = -69
+Frame 56: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 57: prediction = -69
+Frame 57: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 58: predictionFrame 58: prediction = -68
+ = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 59: prediction = -70
+Frame 59: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 60Frame 60: prediction = -68
+: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 61: prediction = -68
+Frame 61: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 62: prediction = -68
+Frame 62: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 63: prediction = -67
+Frame 63: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 64: prediction = -68
+Frame 64: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 65: prediction Frame 65: prediction = -67
+= -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 66: prediction = -71
+Frame 66: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 67:Frame 67: prediction = -68
+ prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 68: prediction = -69
+Frame 68: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 69: prediction = -70
+Frame 69: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 70: prediction = -68
+Frame 70: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 71: prediction = -68
+Frame 71: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-72
+Frame 72: prediction Frame 72: prediction = -72
+= -72
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 73: prediction = -69
+Frame 73: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 74: Frame 74: prediction = -68
+prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 75: prediction = -69
+Frame 75: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 76: prediction = -69
+Frame 76: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 77: prediction = -70
+Frame 77: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 78: prediction = -71
+Frame 78: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 79: prediction =Frame 79: prediction = -69
+ -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 80: prediction = -69
+Frame 80: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 81: Frame 81: prediction = -70
+prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 82: prediction = -69
+Frame 82: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 83: prediction = -69
+Frame 83: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 84: prediction = -69
+Frame 84: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 85: prediction = -70
+Frame 85: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 86: prediction = Frame 86: prediction = -69
+-69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 87: prediction = -71
+Frame 87: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 88: pFrame 88: prediction = -68
+rediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 89: prediction = -69
+Frame 89: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 90: prediction = -70
+Frame 90: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 91: prediction = -68
+Frame 91: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 92: prediction = -71
+Frame 92: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 93: prediction = Frame 93: prediction = -68
+-68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 94: prediction = -69
+Frame 94: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 95: prFrame 95: prediction = -70
+ediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 96: prediction = -69
+Frame 96: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 97: prediction = -68
+Frame 97: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 98: prediction = -67
+Frame 98: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 99: prediction = -68
+Frame 99: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-72
+Frame 100: prediction = Frame 100: prediction = -72
+-72
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 101: prediction = -71
+Frame 101: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 102: prFrame 102: prediction = -69
+ediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 103: prediction = -65
+Frame 103: prediction = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+FFrame 104: prediction = -71
+rame 104: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 105: prediction = -69
+Frame 105: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 106: prediction = -70
+Frame 106: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 107: prediction = -Frame 107: prediction = -67
+67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 108: prediction = -70
+Frame 108: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 109: prFrame 109: prediction = -69
+ediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 110: prediction = -71
+Frame 110: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+FrFrame 111: prediction = -68
+ame 111: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 112: prediction = -67
+Frame 112: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 113: prediction = -69
+Frame 113: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 114: prediction = -Frame 114: prediction = -70
+70
+CSP_Main: 560/2048 bytes used (1488 bytes unused headroom)
+Camera: 744/1536 bytes used (792 bytes unused headroom, 198 words HWM)
+Inference: 472/1024 bytes used (552 bytes unused headroom, 138 words HWM)
+Console: 360/1024 bytes used (664 bytes unused headroom, 166 words HWM)
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-72
+Frame 115: prediction = -72
+Frame 115: prediction = -72
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 116: preFrame 116: prediction = -71
+diction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 117: prediction = -68
+Frame 117: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+FrFrame 118: prediction = -70
+ame 118: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 119: prediction = -67
+Frame 119: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 120: prediction = -69
+Frame 120: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 121: prediction = -6Frame 121: prediction = -66
+6
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 122: prediction = -68
+Frame 122: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 123: predFrame 123: prediction = -67
+iction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 124: prediction = -71
+Frame 124: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+FraFrame 125: prediction = -68
+me 125: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 126: prediction = -69
+Frame 126: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 127: prediction = -67
+Frame 127: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 128: prediction = -71
+Frame 128: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 129: prediction = -69
+Frame 129: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 130: predFrame 130: prediction = -69
+iction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 131: prediction = -69
+Frame 131: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+FramFrame 132: prediction = -68
+e 132: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 133: prediction = -68
+Frame 133: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 134: prediction = -69
+Frame 134: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 135: prediction = -68
+Frame 135: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 136: prediction = -69
+Frame 136: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 137: prediFrame 137: prediction = -67
+ction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 138: prediction = -69
+Frame 138: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+FramFrame 139: prediction = -71
+e 139: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 140: prediction = -68
+Frame 140: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 141: prediction = -69
+Frame 141: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 142: prediction = -71
+Frame 142: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 143: prediction = -71
+Frame 143: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 144: predicFrame 144: prediction = -69
+tion = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 145: prediction = -67
+Frame 145: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+FrameFrame 146: prediction = -69
+ 146: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 147: prediction = -69
+Frame 147: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 148: prediction = -69
+Frame 148: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 149: prediction = -69
+Frame 149: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 150: prediction = -68
+Frame 150: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 151: predicFrame 151: prediction = -68
+tion = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 152: prediction = -69
+Frame 152: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame Frame 153: prediction = -67
+153: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 154: prediction = -69
+Frame 154: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 155: prediction = -68
+Frame 155: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 156: prediction = -67
+Frame 156: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 157: prediction = -67
+Frame 157: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 158: predictFrame 158: prediction = -71
+ion = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 159: prediction = -69
+Frame 159: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame Frame 160: prediction = -68
+160: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 161: prediction = -69
+Frame 161: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 162: prediction = -71
+Frame 162: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 163: prediction = -68
+Frame 163: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 164: prediction = -69
+Frame 164: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 165: predictiFrame 165: prediction = -69
+on = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 166: prediction = -68
+Frame 166: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 1Frame 167: prediction = -69
+67: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 168: prediction = -68
+Frame 168: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 169: prediction = -69
+Frame 169: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 170: prediction = -69
+Frame 170: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 171: prediction = -66
+Frame 171: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 172: predictiFrame 172: prediction = -68
+on = -68
+CSP_Main: 560/2048 bytes used (1488 bytes unused headroom)
+Camera: 744/1536 bytes used (792 bytes unused headroom, 198 words HWM)
+Inference: 472/1024 bytes used (552 bytes unused headroom, 138 words HWM)
+Console: 360/1024 bytes used (664 bytes unused headroom, 166 words HWM)
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 173: prediction = -69
+Frame 173: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 17Frame 174: prediction = -69
+4: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 175: prediction = -70
+Frame 175: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 176: prediction = -68
+Frame 176: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 177: prediction = -70
+Frame 177: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 178: prediction = -67
+Frame 178: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 179: predictioFrame 179: prediction = -71
+n = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 180: prediction = -70
+Frame 180: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 18Frame 181: prediction = -67
+1: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 182: prediction = -69
+Frame 182: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 183: prediction = -68
+Frame 183: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 184: prediction = -69
+Frame 184: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 185: prediction = -70
+Frame 185: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 186: predictionFrame 186: prediction = -69
+ = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 187: prediction = -68
+Frame 187: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 188Frame 188: prediction = -68
+: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 189: prediction = -67
+Frame 189: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 190: prediction = -69
+Frame 190: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 191: prediction = -69
+Frame 191: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 192: prediction = -68
+Frame 192: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 193: predictionFrame 193: prediction = -69
+ = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 194: prediction = -67
+Frame 194: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 195:Frame 195: prediction = -68
+ prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 196: prediction = -69
+Frame 196: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 197: prediction = -69
+Frame 197: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 198: prediction = -67
+Frame 198: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 199: prediction = -70
+Frame 199: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-72
+Frame 200: prediction Frame 200: prediction = -72
+= -72
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 201: prediction = -69
+Frame 201: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 202:Frame 202: prediction = -71
+ prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 203: prediction = -69
+Frame 203: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 204: prediction = -70
+Frame 204: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 205: prediction = -70
+Frame 205: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 206: prediction = -70
+Frame 206: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 207: prediction =Frame 207: prediction = -69
+ -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 208: prediction = -69
+Frame 208: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 209: Frame 209: prediction = -68
+prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 210: prediction = -67
+Frame 210: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 211: prediction = -67
+Frame 211: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 212: prediction = -69
+Frame 212: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 213: prediction = -68
+Frame 213: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 214: prediction =Frame 214: prediction = -70
+ -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 215: prediction = -67
+Frame 215: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 216: pFrame 216: prediction = -68
+rediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 217: prediction = -69
+Frame 217: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 218: prediction = -68
+Frame 218: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 219: prediction = -70
+Frame 219: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 220: prediction = -67
+Frame 220: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 221: prediction = Frame 221: prediction = -68
+-68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 222: prediction = -70
+Frame 222: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 223: pFrame 223: prediction = -69
+rediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 224: prediction = -70
+Frame 224: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+FFrame 225: prediction = -69
+rame 225: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 226: prediction = -69
+Frame 226: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 227: prediction = -69
+Frame 227: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 228: prediction = -Frame 228: prediction = -67
+67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-72
+Frame 229: prediction = -72
+Frame 229: prediction = -72
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 230: prFrame 230: prediction = -69
+ediction = -69
+CSP_Main: 560/2048 bytes used (1488 bytes unused headroom)
+Camera: 744/1536 bytes used (792 bytes unused headroom, 198 words HWM)
+Inference: 472/1024 bytes used (552 bytes unused headroom, 138 words HWM)
+Console: 360/1024 bytes used (664 bytes unused headroom, 166 words HWM)
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 231: prediction = -68
+Frame 231: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+FrFrame 232: prediction = -69
+ame 232: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 233: prediction = -69
+Frame 233: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 234: prediction = -71
+Frame 234: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 235: prediction = -Frame 235: prediction = -69
+69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 236: prediction = -68
+Frame 236: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 237: preFrame 237: prediction = -68
+diction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 238: prediction = -68
+Frame 238: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+FrFrame 239: prediction = -69
+ame 239: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 240: prediction = -69
+Frame 240: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 241: prediction = -67
+Frame 241: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 242: prediction = -6Frame 242: prediction = -67
+7
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 243: prediction = -69
+Frame 243: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 244: predFrame 244: prediction = -71
+iction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 245: prediction = -66
+Frame 245: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+FraFrame 246: prediction = -71
+me 246: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 247: prediction = -69
+Frame 247: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 248: prediction = -68
+Frame 248: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 249: prediction = -69
+Frame 249: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 250: prediction = -68
+Frame 250: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 251: predFrame 251: prediction = -68
+iction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 252: prediction = -69
+Frame 252: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+FramFrame 253: prediction = -68
+e 253: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 254: prediction = -70
+Frame 254: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 255: prediction = -69
+Frame 255: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 256: prediction = -69
+Frame 256: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 257: prediction = -69
+Frame 257: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 258: prediFrame 258: prediction = -68
+ction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 259: prediction = -67
+Frame 259: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+FramFrame 260: prediction = -70
+e 260: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 261: prediction = -68
+Frame 261: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 262: prediction = -65
+Frame 262: prediction = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 263: prediction = -70
+Frame 263: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 264: prediction = -67
+Frame 264: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-72
+Frame 265: predicFrame 265: prediction = -72
+tion = -72
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 266: prediction = -68
+Frame 266: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+FrameFrame 267: prediction = -67
+ 267: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 268: prediction = -69
+Frame 268: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 269: prediction = -69
+Frame 269: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 270: prediction = -69
+Frame 270: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 271: prediction = -70
+Frame 271: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 272: predicFrame 272: prediction = -68
+tion = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 273: prediction = -71
+Frame 273: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame Frame 274: prediction = -70
+274: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 275: prediction = -69
+Frame 275: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 276: prediction = -68
+Frame 276: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 277: prediction = -69
+Frame 277: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 278: prediction = -69
+Frame 278: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 279: predictFrame 279: prediction = -67
+ion = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 280: prediction = -66
+Frame 280: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame Frame 281: prediction = -67
+281: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 282: prediction = -69
+Frame 282: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 283: prediction = -71
+Frame 283: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 284: prediction = -66
+Frame 284: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 285: prediction = -69
+Frame 285: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 286: predictiFrame 286: prediction = -69
+on = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 287: prediction = -70
+Frame 287: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 2Frame 288: prediction = -69
+88: prediction = -69
+CSP_Main: 560/2048 bytes used (1488 bytes unused headroom)
+Camera: 744/1536 bytes used (792 bytes unused headroom, 198 words HWM)
+Inference: 472/1024 bytes used (552 bytes unused headroom, 138 words HWM)
+Console: 360/1024 bytes used (664 bytes unused headroom, 166 words HWM)
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 289: prediction = -68
+Frame 289: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 290: prediction = -65
+Frame 290: prediction = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-73
+Frame 291: prediction = -73
+Frame 291: prediction = -73
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-72
+Frame 292: prediction = -72
+Frame 292: prediction = -72
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 293: predictiFrame 293: prediction = -69
+on = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 294: prediction = -71
+Frame 294: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 29Frame 295: prediction = -69
+5: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 296: prediction = -71
+Frame 296: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-72
+Frame 297: prediction = -72
+Frame 297: prediction = -72
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 298: prediction = -66
+Frame 298: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 299: prediction = -67
+Frame 299: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 300: predictioFrame 300: prediction = -69
+n = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 301: prediction = -67
+Frame 301: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 30Frame 302: prediction = -67
+2: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 303: prediction = -68
+Frame 303: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 304: prediction = -67
+Frame 304: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 305: prediction = -68
+Frame 305: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 306: prediction = -70
+Frame 306: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 307: predictionFrame 307: prediction = -69
+ = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 308: prediction = -68
+Frame 308: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 309Frame 309: prediction = -69
+: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 310: prediction = -69
+Frame 310: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 311: prediction = -69
+Frame 311: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 312: prediction = -69
+Frame 312: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 313: prediction = -68
+Frame 313: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 314: predictionFrame 314: prediction = -69
+ = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 315: prediction = -67
+Frame 315: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 316:Frame 316: prediction = -69
+ prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 317: prediction = -68
+Frame 317: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 318: prediction = -67
+Frame 318: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 319: prediction = -69
+Frame 319: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 320: prediction = -68
+Frame 320: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 321: prediction Frame 321: prediction = -69
+= -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 322: prediction = -68
+Frame 322: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 323:Frame 323: prediction = -67
+ prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 324: prediction = -68
+Frame 324: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 325: prediction = -68
+Frame 325: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 326: prediction = -67
+Frame 326: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 327: prediction = -68
+Frame 327: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 328: prediction =Frame 328: prediction = -69
+ -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 329: prediction = -69
+Frame 329: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 330: Frame 330: prediction = -68
+prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 331: prediction = -71
+Frame 331: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-72
+Frame 332: prediction = -72
+Frame 332: prediction = -72
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 333: prediction = -69
+Frame 333: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 334: prediction = -69
+Frame 334: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 335: prediction =Frame 335: prediction = -67
+ -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 336: prediction = -70
+Frame 336: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 337: pFrame 337: prediction = -71
+rediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 338: prediction = -69
+Frame 338: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 339: prediction = -70
+Frame 339: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 340: prediction = -70
+Frame 340: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 341: prediction = -68
+Frame 341: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 342: prediction = Frame 342: prediction = -69
+-69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 343: prediction = -70
+Frame 343: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 344: pFrame 344: prediction = -71
+rediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 345: prediction = -68
+Frame 345: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+FFrame 346: prediction = -67
+rame 346: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 347: prediction = -70
+Frame 347: prediction = -70
+CSP_Main: 560/2048 bytes used (1488 bytes unused headroom)
+Camera: 744/1536 bytes used (792 bytes unused headroom, 198 words HWM)
+Inference: 472/1024 bytes used (552 bytes unused headroom, 138 words HWM)
+Console: 360/1024 bytes used (664 bytes unused headroom, 166 words HWM)
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 348: prediction = -69
+Frame 348: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 349: prediction = -Frame 349: prediction = -71
+71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 350: prediction = -66
+Frame 350: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 351: prFrame 351: prediction = -68
+ediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 352: prediction = -67
+Frame 352: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+FrFrame 353: prediction = -68
+ame 353: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 354: prediction = -69
+Frame 354: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 355: prediction = -65
+Frame 355: prediction = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 356: prediction = -Frame 356: prediction = -67
+67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 357: prediction = -65
+Frame 357: prediction = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 358: preFrame 358: prediction = -68
+diction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 359: prediction = -71
+Frame 359: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+FrFrame 360: prediction = -67
+ame 360: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 361: prediction = -69
+Frame 361: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 362: prediction = -69
+Frame 362: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 363: prediction = -6Frame 363: prediction = -68
+8
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 364: prediction = -68
+Frame 364: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 365: preFrame 365: prediction = -69
+iction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 366: prediction = -68
+Frame 366: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+FraFrame 367: prediction = -67
+me 367: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 368: prediction = -68
+Frame 368: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 369: prediction = -69
+Frame 369: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 370: prediction = -65
+Frame 370: prediction = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 371: prediction = -67
+Frame 371: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 372: predFrame 372: prediction = -68
+iction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 373: prediction = -68
+Frame 373: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+FramFrame 374: prediction = -68
+e 374: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 375: prediction = -68
+Frame 375: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 376: prediction = -70
+Frame 376: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 377: prediction = -66
+Frame 377: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 378: prediction = -69
+Frame 378: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 379: prediFrame 379: prediction = -69
+ction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 380: prediction = -68
+Frame 380: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+FramFrame 381: prediction = -67
+e 381: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 382: prediction = -69
+Frame 382: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 383: prediction = -67
+Frame 383: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 384: prediction = -71
+Frame 384: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 385: prediction = -71
+Frame 385: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 386: predicFrame 386: prediction = -70
+tion = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 387: prediction = -69
+Frame 387: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+FrameFrame 388: prediction = -66
+ 388: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 389: prediction = -70
+Frame 389: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 390: prediction = -67
+Frame 390: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 391: prediction = -68
+Frame 391: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 392: prediction = -68
+Frame 392: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 393: predicFrame 393: prediction = -68
+tion = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 394: prediction = -69
+Frame 394: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame Frame 395: prediction = -69
+395: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 396: prediction = -68
+Frame 396: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 397: prediction = -68
+Frame 397: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 398: prediction = -68
+Frame 398: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 399: prediction = -68
+Frame 399: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 400: predictFrame 400: prediction = -68
+ion = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 401: prediction = -68
+Frame 401: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame Frame 402: prediction = -68
+402: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 403: prediction = -68
+Frame 403: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 404: prediction = -70
+Frame 404: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 405: prediction = -68
+Frame 405: prediction = -68
+CSP_Main: 560/2048 bytes used (1488 bytes unused headroom)
+Camera: 744/1536 bytes used (792 bytes unused headroom, 198 words HWM)
+Inference: 472/1024 bytes used (552 bytes unused headroom, 138 words HWM)
+Console: 360/1024 bytes used (664 bytes unused headroom, 166 words HWM)
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 406: prediction = -69
+Frame 406: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 407: predictiFrame 407: prediction = -71
+on = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 408: prediction = -70
+Frame 408: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 4Frame 409: prediction = -69
+09: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 410: prediction = -67
+Frame 410: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 411: prediction = -67
+Frame 411: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 412: prediction = -69
+Frame 412: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 413: prediction = -67
+Frame 413: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 414: predictiFrame 414: prediction = -67
+on = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 415: prediction = -68
+Frame 415: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 41Frame 416: prediction = -67
+6: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 417: prediction = -67
+Frame 417: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 418: prediction = -70
+Frame 418: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 419: prediction = -69
+Frame 419: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 420: prediction = -69
+Frame 420: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 421: predictioFrame 421: prediction = -69
+n = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 422: prediction = -67
+Frame 422: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 42Frame 423: prediction = -68
+3: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 424: prediction = -66
+Frame 424: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 425: prediction = -68
+Frame 425: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 426: prediction = -68
+Frame 426: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 427: prediction = -71
+Frame 427: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 428: predictionFrame 428: prediction = -69
+ = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 429: prediction = -68
+Frame 429: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 430Frame 430: prediction = -68
+: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 431: prediction = -68
+Frame 431: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 432: prediction = -68
+Frame 432: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 433: prediction = -69
+Frame 433: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 434: prediction = -68
+Frame 434: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 435: predictionFrame 435: prediction = -69
+ = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 436: prediction = -68
+Frame 436: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 437:Frame 437: prediction = -68
+ prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 438: prediction = -69
+Frame 438: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 439: prediction = -68
+Frame 439: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 440: prediction = -68
+Frame 440: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 441: prediction = -68
+Frame 441: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 442: prediction Frame 442: prediction = -68
+= -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 443: prediction = -69
+Frame 443: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 444:Frame 444: prediction = -67
+ prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 445: prediction = -68
+Frame 445: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 446: prediction = -68
+Frame 446: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 447: prediction = -67
+Frame 447: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 448: prediction = -66
+Frame 448: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 449: prediction =Frame 449: prediction = -65
+ -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 450: prediction = -66
+Frame 450: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 451: Frame 451: prediction = -69
+prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 452: prediction = -68
+Frame 452: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 453: prediction = -65
+Frame 453: prediction = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 454: prediction = -69
+Frame 454: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 455: prediction = -68
+Frame 455: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 456: prediction =Frame 456: prediction = -69
+ -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 457: prediction = -68
+Frame 457: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 458: pFrame 458: prediction = -68
+rediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 459: prediction = -68
+Frame 459: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 460: prediction = -67
+Frame 460: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 461: prediction = -69
+Frame 461: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 462: prediction = -69
+Frame 462: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 463: prediction = Frame 463: prediction = -69
+-69
+CSP_Main: 560/2048 bytes used (1488 bytes unused headroom)
+Camera: 744/1536 bytes used (792 bytes unused headroom, 198 words HWM)
+Inference: 472/1024 bytes used (552 bytes unused headroom, 138 words HWM)
+Console: 360/1024 bytes used (664 bytes unused headroom, 166 words HWM)
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 464: prediction = -66
+Frame 464: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 465: prFrame 465: prediction = -68
+ediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 466: prediction = -71
+Frame 466: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+FFrame 467: prediction = -69
+rame 467: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 468: prediction = -69
+Frame 468: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 469: prediction = -66
+Frame 469: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 470: prediction = -Frame 470: prediction = -68
+68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 471: prediction = -70
+Frame 471: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 472: prFrame 472: prediction = -68
+ediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 473: prediction = -68
+Frame 473: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+FrFrame 474: prediction = -69
+ame 474: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 475: prediction = -69
+Frame 475: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 476: prediction = -68
+Frame 476: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 477: prediction = -Frame 477: prediction = -68
+68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 478: prediction = -67
+Frame 478: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 479: preFrame 479: prediction = -69
+diction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 480: prediction = -69
+Frame 480: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+FrFrame 481: prediction = -71
+ame 481: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 482: prediction = -69
+Frame 482: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 483: prediction = -68
+Frame 483: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 484: prediction = -6Frame 484: prediction = -69
+9
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 485: prediction = -68
+Frame 485: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 486: preFrame 486: prediction = -68
+diction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 487: prediction = -68
+Frame 487: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+FraFrame 488: prediction = -65
+me 488: prediction = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 489: prediction = -68
+Frame 489: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 490: prediction = -68
+Frame 490: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 491: prediction = -68
+Frame 491: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 492: prediction = -69
+Frame 492: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 493: predFrame 493: prediction = -69
+iction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 494: prediction = -67
+Frame 494: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+FramFrame 495: prediction = -71
+e 495: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 496: prediction = -69
+Frame 496: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 497: prediction = -71
+Frame 497: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 498: prediction = -69
+Frame 498: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 499: prediction = -66
+Frame 499: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 500: prediFrame 500: prediction = -69
+ction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 501: prediction = -68
+Frame 501: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+FramFrame 502: prediction = -70
+e 502: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 503: prediction = -69
+Frame 503: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 504: prediction = -69
+Frame 504: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 505: prediction = -66
+Frame 505: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 506: prediction = -65
+Frame 506: prediction = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 507: prediFrame 507: prediction = -69
+tion = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 508: prediction = -67
+Frame 508: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+FrameFrame 509: prediction = -68
+ 509: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 510: prediction = -68
+Frame 510: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 511: prediction = -68
+Frame 511: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 512: prediction = -68
+Frame 512: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 513: prediction = -69
+Frame 513: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 514: predicFrame 514: prediction = -69
+tion = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 515: prediction = -67
+Frame 515: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame Frame 516: prediction = -68
+516: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 517: prediction = -70
+Frame 517: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 518: prediction = -69
+Frame 518: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 519: prediction = -66
+Frame 519: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 520: prediction = -67
+Frame 520: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 521: predictFrame 521: prediction = -68
+ion = -68
+CSP_Main: 560/2048 bytes used (1488 bytes unused headroom)
+Camera: 744/1536 bytes used (792 bytes unused headroom, 198 words HWM)
+Inference: 472/1024 bytes used (552 bytes unused headroom, 138 words HWM)
+Console: 360/1024 bytes used (664 bytes unused headroom, 166 words HWM)
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 522: prediction = -67
+Frame 522: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame Frame 523: prediction = -68
+523: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 524: prediction = -68
+Frame 524: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 525: prediction = -70
+Frame 525: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 526: prediction = -69
+Frame 526: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 527: prediction = -68
+Frame 527: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 528: predictFrame 528: prediction = -69
+on = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 529: prediction = -67
+Frame 529: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 5Frame 530: prediction = -68
+30: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 531: prediction = -68
+Frame 531: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 532: prediction = -69
+Frame 532: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 533: prediction = -65
+Frame 533: prediction = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 534: prediction = -69
+Frame 534: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 535: predictiFrame 535: prediction = -69
+on = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 536: prediction = -66
+Frame 536: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 53Frame 537: prediction = -68
+7: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 538: prediction = -68
+Frame 538: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 539: prediction = -68
+Frame 539: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 540: prediction = -68
+Frame 540: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 541: prediction = -67
+Frame 541: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 542: predictioFrame 542: prediction = -68
+n = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 543: prediction = -69
+Frame 543: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 54Frame 544: prediction = -68
+4: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 545: prediction = -67
+Frame 545: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 546: prediction = -69
+Frame 546: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 547: prediction = -67
+Frame 547: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 548: prediction = -68
+Frame 548: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 549: predictionFrame 549: prediction = -67
+ = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 550: prediction = -69
+Frame 550: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 551Frame 551: prediction = -69
+: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 552: prediction = -68
+Frame 552: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 553: prediction = -70
+Frame 553: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 554: prediction = -66
+Frame 554: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 555: prediction = -71
+Frame 555: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 556: predictionFrame 556: prediction = -67
+ = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 557: prediction = -68
+Frame 557: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 558:Frame 558: prediction = -68
+ prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 559: prediction = -69
+Frame 559: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 560: prediction = -68
+Frame 560: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 561: prediction = -68
+Frame 561: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 562: prediction = -68
+Frame 562: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 563: prediction Frame 563: prediction = -68
+= -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 564: prediction = -70
+Frame 564: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 565:Frame 565: prediction = -67
+ prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 566: prediction = -68
+Frame 566: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 567: prediction = -68
+Frame 567: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 568: prediction = -66
+Frame 568: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 569: prediction = -70
+Frame 569: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 570: prediction =Frame 570: prediction = -65
+ -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 571: prediction = -68
+Frame 571: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 572: Frame 572: prediction = -67
+prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 573: prediction = -68
+Frame 573: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 574: prediction = -69
+Frame 574: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 575: prediction = -67
+Frame 575: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 576: prediction = -71
+Frame 576: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 577: prediction =Frame 577: prediction = -68
+ -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 578: prediction = -69
+Frame 578: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 579: pFrame 579: prediction = -71
+rediction = -71
+Camera: retrigger hardware for next fCSP_Main: 560/2048 bytes used (1488 bytes unused headroom)
+Camera: 744/1536 bytes used (792 bytes unused headroom, 198 words HWM)
+Inference: 472/1024 bytes used (552 bytes unused headroom, 138 words HWM)
+Console: 360/1024 bytes used (664 bytes unused headroom, 166 words HWM)
+rame
+invoke pass
+person_score:-68
+Frame 580: predFrame 580: prediction = -68
+iction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 581: prediction = -65
+Frame 581: prediction = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 582: prediction = -69
+Frame 582: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 583: prediction = -67
+Frame 583: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 584: prediction = Frame 584: prediction = -68
+-68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 585: prediction = -66
+Frame 585: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 586: pFrame 586: prediction = -69
+rediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 587: prediction = -69
+Frame 587: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+FFrame 588: prediction = -67
+rame 588: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 589: prediction = -66
+Frame 589: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 590: prediction = -67
+Frame 590: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 591: prediction = -Frame 591: prediction = -70
+70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 592: prediction = -68
+Frame 592: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 593: prFrame 593: prediction = -67
+ediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 594: prediction = -65
+Frame 594: prediction = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+FrFrame 595: prediction = -68
+ame 595: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 596: prediction = -67
+Frame 596: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 597: prediction = -68
+Frame 597: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 598: prediction = -Frame 598: prediction = -67
+67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 599: prediction = -67
+Frame 599: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 600: preFrame 600: prediction = -69
+diction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 601: prediction = -67
+Frame 601: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+FrFrame 602: prediction = -68
+ame 602: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 603: prediction = -68
+Frame 603: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 604: prediction = -69
+Frame 604: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 605: prediction = -6Frame 605: prediction = -67
+7
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 606: prediction = -67
+Frame 606: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 607: preFrame 607: prediction = -67
+diction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 608: prediction = -68
+Frame 608: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+FraFrame 609: prediction = -69
+me 609: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 610: prediction = -69
+Frame 610: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 611: prediction = -68
+Frame 611: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 612: prediction = -68
+Frame 612: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 613: prediction = -68
+Frame 613: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 614: predFrame 614: prediction = -68
+iction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 615: prediction = -67
+Frame 615: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+FramFrame 616: prediction = -68
+e 616: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 617: prediction = -67
+Frame 617: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 618: prediction = -68
+Frame 618: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 619: prediction = -67
+Frame 619: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 620: prediction = -68
+Frame 620: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 621: prediFrame 621: prediction = -69
+ction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 622: prediction = -68
+Frame 622: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+FramFrame 623: prediction = -67
+e 623: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 624: prediction = -68
+Frame 624: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 625: prediction = -67
+Frame 625: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 626: prediction = -69
+Frame 626: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 627: prediction = -69
+Frame 627: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 628: predicFrame 628: prediction = -68
+tion = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 629: prediction = -69
+Frame 629: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+FrameFrame 630: prediction = -68
+ 630: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 631: prediction = -68
+Frame 631: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 632: prediction = -68
+Frame 632: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 633: prediction = -68
+Frame 633: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 634: prediction = -66
+Frame 634: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 635: predicFrame 635: prediction = -68
+tion = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 636: prediction = -67
+Frame 636: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame Frame 637: prediction = -69
+637: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 638: prediction = -69
+Frame 638: prediction = -69
+CSP_Main: 560/2048 bytes used (1488 bytes unused headroom)
+Camera: 744/1536 bytes used (792 bytes unused headroom, 198 words HWM)
+Inference: 472/1024 bytes used (552 bytes unused headroom, 138 words HWM)
+Console: 360/1024 bytes used (664 bytes unused headroom, 166 words HWM)
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 639: prediction = -70
+Frame 639: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 640: prediction = -68
+Frame 640: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 641: prediction = -68
+Frame 641: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 642: predictFrame 642: prediction = -67
+ion = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 643: prediction = -68
+Frame 643: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame Frame 644: prediction = -68
+644: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 645: prediction = -69
+Frame 645: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 646: prediction = -67
+Frame 646: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 647: prediction = -67
+Frame 647: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 648: prediction = -70
+Frame 648: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 649: predictiFrame 649: prediction = -67
+on = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 650: prediction = -70
+Frame 650: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 6Frame 651: prediction = -68
+51: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 652: prediction = -67
+Frame 652: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 653: prediction = -66
+Frame 653: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 654: prediction = -67
+Frame 654: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 655: prediction = -67
+Frame 655: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 656: predictiFrame 656: prediction = -66
+on = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 657: prediction = -68
+Frame 657: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 65Frame 658: prediction = -66
+8: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 659: prediction = -71
+Frame 659: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 660: prediction = -67
+Frame 660: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 661: prediction = -67
+Frame 661: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 662: prediction = -68
+Frame 662: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 663: predictioFrame 663: prediction = -67
+n = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 664: prediction = -66
+Frame 664: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 66Frame 665: prediction = -69
+5: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-64
+Frame 666: prediction = -64
+Frame 666: prediction = -64
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 667: prediction = -67
+Frame 667: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 668: prediction = -68
+Frame 668: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 669: prediction = -65
+Frame 669: prediction = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 670: predictionFrame 670: prediction = -68
+ = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 671: prediction = -67
+Frame 671: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 672Frame 672: prediction = -66
+: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 673: prediction = -66
+Frame 673: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 674: prediction = -68
+Frame 674: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 675: prediction = -67
+Frame 675: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 676: prediction = -69
+Frame 676: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 677: predictionFrame 677: prediction = -65
+ = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-64
+Frame 678: prediction = -64
+Frame 678: prediction = -64
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 679:Frame 679: prediction = -69
+ prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 680: prediction = -69
+Frame 680: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 681: prediction = -65
+Frame 681: prediction = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 682: prediction = -65
+Frame 682: prediction = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 683: prediction = -66
+Frame 683: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 684: prediction Frame 684: prediction = -69
+= -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 685: prediction = -67
+Frame 685: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 686:Frame 686: prediction = -70
+ prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 687: prediction = -67
+Frame 687: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 688: prediction = -70
+Frame 688: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 689: prediction = -67
+Frame 689: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 690: prediction = -70
+Frame 690: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 691: prediction =Frame 691: prediction = -67
+ -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 692: prediction = -67
+Frame 692: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 693: Frame 693: prediction = -67
+prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-64
+Frame 694: prediction = -64
+Frame 694: prediction = -64
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 695: prediction = -69
+Frame 695: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 696: prediction = -68
+Frame 696: prediction = -68
+CSP_Main: 560/2048 bytes used (1488 bytes unused headroom)
+Camera: 744/1536 bytes used (792 bytes unused headroom, 198 words HWM)
+Inference: 472/1024 bytes used (552 bytes unused headroom, 138 words HWM)
+Console: 360/1024 bytes used (664 bytes unused headroom, 166 words HWM)
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 697: prediction = -68
+Frame 697: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 698: prediction =Frame 698: prediction = -68
+ -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 699: prediction = -67
+Frame 699: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 700: pFrame 700: prediction = -68
+rediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 701: prediction = -68
+Frame 701: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 702: prediction = -65
+Frame 702: prediction = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 703: prediction = -68
+Frame 703: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 704: prediction = -67
+Frame 704: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 705: prediction = Frame 705: prediction = -68
+-68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 706: prediction = -68
+Frame 706: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 707: pFrame 707: prediction = -67
+rediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 708: prediction = -68
+Frame 708: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+FFrame 709: prediction = -68
+rame 709: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 710: prediction = -66
+Frame 710: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 711: prediction = -67
+Frame 711: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 712: prediction = -Frame 712: prediction = -68
+68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 713: prediction = -69
+Frame 713: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 714: prFrame 714: prediction = -69
+ediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 715: prediction = -65
+Frame 715: prediction = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+FrFrame 716: prediction = -68
+ame 716: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-65
+Frame 717: prediction = -65
+Frame 717: prediction = -65
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 718: prediction = -67
+Frame 718: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 719: prediction = -Frame 719: prediction = -70
+70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+Frame 720: prediction = -70
+Frame 720: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 721: preFrame 721: prediction = -68
+diction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 722: prediction = -69
+Frame 722: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+FrFrame 723: prediction = -68
+ame 723: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 724: prediction = -69
+Frame 724: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 725: prediction = -68
+Frame 725: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 726: prediction = -6Frame 726: prediction = -69
+9
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 727: prediction = -69
+Frame 727: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 728: preFrame 728: prediction = -67
+diction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 729: prediction = -66
+Frame 729: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+FraFrame 730: prediction = -68
+me 730: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 731: prediction = -67
+Frame 731: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 732: prediction = -68
+Frame 732: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 733: prediction = -69
+Frame 733: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 734: prediction = -68
+Frame 734: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 735: predFrame 735: prediction = -68
+iction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 736: prediction = -69
+Frame 736: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+FramFrame 737: prediction = -70
+e 737: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 738: prediction = -67
+Frame 738: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 739: prediction = -67
+Frame 739: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 740: prediction = -67
+Frame 740: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 741: prediction = -69
+Frame 741: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 742: prediFrame 742: prediction = -68
+ction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 743: prediction = -69
+Frame 743: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-70
+FramFrame 744: prediction = -70
+e 744: prediction = -70
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 745: prediction = -66
+Frame 745: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 746: prediction = -68
+Frame 746: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 747: prediction = -69
+Frame 747: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 748: prediction = -69
+Frame 748: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 749: prediFrame 749: prediction = -71
+ction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 750: prediction = -67
+Frame 750: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+FrameFrame 751: prediction = -67
+ 751: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-66
+Frame 752: prediction = -66
+Frame 752: prediction = -66
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 753: prediction = -68
+Frame 753: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 754: prediction = -69
+Frame 754: prediction = -69
+CSP_Main: 560/2048 bytes used (1488 bytes unused headroom)
+Camera: 744/1536 bytes used (792 bytes unused headroom, 198 words HWM)
+Inference: 472/1024 bytes used (552 bytes unused headroom, 138 words HWM)
+Console: 360/1024 bytes used (664 bytes unused headroom, 166 words HWM)
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 755: prediction = -68
+Frame 755: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 756: predicFrame 756: prediction = -68
+tion = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame 757: prediction = -68
+Frame 757: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-68
+Frame Frame 758: prediction = -68
+758: prediction = -68
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-69
+Frame 759: prediction = -69
+Frame 759: prediction = -69
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 760: prediction = -67
+Frame 760: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-71
+Frame 761: prediction = -71
+Frame 761: prediction = -71
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 762: prediction = -67
+Frame 762: prediction = -67
+Camera: retrigger hardware for next frame
+invoke pass
+person_score:-67
+Frame 763: predictFrame 763: prediction = -67
+ion = -67

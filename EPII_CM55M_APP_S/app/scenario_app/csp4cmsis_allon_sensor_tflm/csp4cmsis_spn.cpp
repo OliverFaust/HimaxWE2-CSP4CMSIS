@@ -3,6 +3,8 @@
 #include "inference_process.h"
 #include "console_process.h"
 #include "xprintf.h"
+#include "cmsis_os2.h"
+#include "FreeRTOS.h"  // StaticTask_t: the control block of a statically created thread
 
 using namespace csp;
 
@@ -15,15 +17,22 @@ using namespace csp;
 #define CSP_STACK_REPORT_INTERVAL_MS (3000)
 #endif
 
-// MainApp_Task isn't a CSProcess, so its stack isn't sized via
-// CSProcessStatic<N> -- it's given explicitly here.
-#define MAIN_APP_STACK_WORDS 512
+// Priorities keep the pre-2.0 order: MainApp (was tskIDLE_PRIORITY + 3) above the
+// network (was + 2), so Run(..., StaticNetwork) creates all processes before any runs.
+static constexpr osPriority_t MAIN_APP_PRIORITY = osPriorityLow3;
+static constexpr osPriority_t NETWORK_PRIORITY  = osPriorityLow2;
 
-static TaskHandle_t s_main_app_task_handle = NULL;
+// MainApp_Task isn't a CSProcess, so its stack isn't sized via
+// CSProcessStatic<N> -- it's given explicitly here, statically, like its
+// control block: creating the thread takes no heap. CMSIS-RTOS2 counts the
+// stack in bytes (2048 = the previous 512 words).
+alignas(8) static uint8_t mainAppStack[2048];
+static StaticTask_t mainAppControlBlock;
 
 void MainApp_Task(void* params)
 {
-    vTaskDelay(pdMS_TO_TICKS(500));
+    (void)params;
+    SleepFor(500);  // 500 ms (1000 Hz tick)
 
     static Channel<frame_t>  frame_chan;      // unbuffered
     static Channel<result_t> result_chan;
@@ -36,30 +45,28 @@ void MainApp_Task(void* params)
     // ParallelHelper still holds references to camera/inference/console
     // after Run() returns, which the report loop below needs.
     auto network = InParallel(camera, inference, console);
-    Run(network, ExecutionMode::StaticNetwork);
+    Run(network, ExecutionMode::StaticNetwork, NETWORK_PRIORITY);
 
     xprintf("*** MainApp_Task: Run() returned, entering report loop ***\r\n");
 
     while (true) {
-        vTaskDelay(pdMS_TO_TICKS(CSP_STACK_REPORT_INTERVAL_MS));
+        SleepFor(CSP_STACK_REPORT_INTERVAL_MS);  // ticks = ms at 1000 Hz
 
-        if (s_main_app_task_handle != NULL) {
-            UBaseType_t hwm = uxTaskGetStackHighWaterMark(s_main_app_task_handle);
-            size_t unused_bytes = hwm * sizeof(StackType_t);
-            xprintf("CSP_Main: %u bytes unused headroom (%u words HWM, of %u allocated)\r\n",
-                    (unsigned)unused_bytes, (unsigned)hwm, (unsigned)MAIN_APP_STACK_WORDS);
-        }
+        uint32_t unused_bytes = osThreadGetStackSpace(osThreadGetId());
+        xprintf("CSP_Main: %u/%u bytes used (%u bytes unused headroom)\r\n",
+                (unsigned)(sizeof(mainAppStack) - unused_bytes),
+                (unsigned)sizeof(mainAppStack), (unsigned)unused_bytes);
 
         network.forEachProcess([](CSProcess& p) {
             size_t allocated_words = p.stackWords();
-            size_t allocated_bytes = allocated_words * sizeof(StackType_t);
+            size_t allocated_bytes = allocated_words * sizeof(uint32_t);
 
-            UBaseType_t hwm = p.stackHighWaterMarkWords();
+            uint32_t hwm = p.stackHighWaterMarkWords();
             if (hwm == CSP_STACK_HWM_UNAVAILABLE) {
                 xprintf("%s: allocated = %u words (%u bytes), HWM unavailable\r\n",
                         p.name(), (unsigned)allocated_words, (unsigned)allocated_bytes);
             } else {
-                size_t unused_bytes = hwm * sizeof(StackType_t);
+                size_t unused_bytes = hwm * sizeof(uint32_t);
                 size_t used_bytes = (unused_bytes <= allocated_bytes)
                                         ? allocated_bytes - unused_bytes
                                         : 0;
@@ -71,27 +78,16 @@ void MainApp_Task(void* params)
     }
 }
 
-// MainApp_Task isn't a CSProcess, so its stack and TCB are supplied
-// directly, the same way FreeRTOS's idle/timer task hooks do.
-static StackType_t s_main_app_stack[MAIN_APP_STACK_WORDS];
-static StaticTask_t s_main_app_tcb;
-
 extern "C" void RunProcessingChainTest(void)
 {
-    TaskHandle_t handle = xTaskCreateStatic(
-        MainApp_Task,
-        "CSP_Main",
-        MAIN_APP_STACK_WORDS,
-        NULL,
-        tskIDLE_PRIORITY + 3,
-        s_main_app_stack,
-        &s_main_app_tcb
-    );
-
-    s_main_app_task_handle = handle; // NULL on failure -- report loop guards for that
-
-    if (handle == NULL) {
-        xprintf("FATAL ERROR: Failed to create MainApp_Task "
-                "(xTaskCreateStatic returned NULL -- check stack/TCB buffers).\r\n");
+    osThreadAttr_t attr = {};
+    attr.name       = "CSP_Main";
+    attr.stack_mem  = mainAppStack;
+    attr.stack_size = sizeof(mainAppStack);
+    attr.cb_mem     = &mainAppControlBlock;
+    attr.cb_size    = sizeof(mainAppControlBlock);
+    attr.priority   = MAIN_APP_PRIORITY;
+    if (osThreadNew(MainApp_Task, NULL, &attr) == NULL) {
+        xprintf("ERROR: MainApp_Task creation failed!\r\n");
     }
 }

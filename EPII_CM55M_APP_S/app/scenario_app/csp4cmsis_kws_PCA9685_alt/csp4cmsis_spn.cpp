@@ -3,8 +3,8 @@
 #include <cstring>
 #include <cstdint>
 
-#include "FreeRTOS.h"
-#include "task.h"
+#include "cmsis_os2.h"
+#include "FreeRTOS.h"  // StaticTask_t: the control block of a statically created thread
 
 #include "WE2_core.h"
 #include "csp4cmsis_kws_PCA9685_alt.h"
@@ -79,10 +79,22 @@ struct KwsReportMsg {
 static SamplingBufferedChannel<KwsReportMsg, 8, BufferPolicy::KeepNewest> g_reportChan;
 
 // --- I2C hardware synchronization for PCA9685 ---
-static Channel<bool> g_pca9685_i2c_isr_chan;
+// The I2C completion interrupt signals the actuator process through a one-slot
+// buffered channel: an interrupt cannot wait for a partner, so it writes via
+// isrWriter(), and the slot keeps a completion that arrives before the process
+// waits for it (a rendezvous would lose it). The process starts one transfer
+// at a time, so at most one completion can be pending; a second one means a
+// driver bug. Runs in the I2C interrupt (priority set in the app's .c file).
+static BufferedChannel<bool, 1> g_pca9685_i2c_isr_chan;
 
 extern "C" void pca9685_i2c_callback(void) {
-    g_pca9685_i2c_isr_chan.writer().putFromISR(true);
+    if (!g_pca9685_i2c_isr_chan.isrWriter().putFromISR(true)) {
+        // A second completion before the first was read: stop here instead of
+        // losing it. Polled UART output works with interrupts disabled.
+        __disable_irq();
+        xprintf("\r\nFATAL: I2C completion lost (the previous one was not read yet)\r\n");
+        for (;;) { }
+    }
 }
 
 // Channel to pass executed commands from the FSM to the hardware controller
@@ -118,7 +130,7 @@ class ReporterProcess : public CSProcessStatic<1024> {
     Chanin<KwsReportMsg> in;
 public:
     explicit ReporterProcess(Chanin<KwsReportMsg> r) : in(r) {}
-    UBaseType_t taskPriority() const override { return tskIDLE_PRIORITY + 0; }
+    osPriority_t taskPriority() const override { return osPriorityLow; }  // was tskIDLE_PRIORITY + 0
     void run() override {
         KwsReportMsg msg;
         while (true) {
@@ -361,7 +373,7 @@ class ConsoleInputProcess : public CSProcessStatic<512> {
 
 public:
     explicit ConsoleInputProcess(Chanout<KwsTokenMsg> w) : out(w) {}
-    UBaseType_t taskPriority() const override { return tskIDLE_PRIORITY + 1; }
+    osPriority_t taskPriority() const override { return osPriorityLow1; }  // was tskIDLE_PRIORITY + 1
 
     void run() override {
         uart_dev = hx_drv_uart_get_dev(kConsoleUartId);
@@ -371,7 +383,7 @@ public:
 
         while (true) {
             if (uart_dev == nullptr) {
-                vTaskDelay(pdMS_TO_TICKS(1000)); // device unavailable, just idle
+                SleepFor(1000); // device unavailable, just idle
                 continue;
             }
 
@@ -379,11 +391,11 @@ public:
             // uart_read_nonblock() returns the byte count actually read
             // (0 if none waiting) rather than blocking, so this can be
             // polled directly -- same shape as AcquisitionProcess
-            // polling w_buf_idx, short vTaskDelay between checks so this
+            // polling w_buf_idx, short SleepFor between checks so this
             // task doesn't spin the core.
             int32_t n = uart_dev->uart_read_nonblock(&c, 1);
             if (n <= 0) {
-                vTaskDelay(1);
+                SleepFor(1);
                 continue;
             }
 
@@ -466,7 +478,7 @@ class Pca9685Process : public CSProcessStatic<1024> {
         write_reg(PCA9685_MODE2, MODE2_OUTDRV);            // push-pull outputs
         write_reg(PCA9685_PRESCALE, PCA9685_PRESCALE_50HZ); // OK: chip is asleep at POR
         write_reg(PCA9685_MODE1, MODE1_AI);                 // auto-increment on, wakes oscillator (SLEEP=0)
-        vTaskDelay(pdMS_TO_TICKS(1));                        // datasheet: wait >=500us after waking osc.
+        SleepFor(1);                        // datasheet: wait >=500us after waking osc.
 
         // Initialise both servos to the middle position.
         set_position(0, position[0]);
@@ -506,7 +518,7 @@ public:
     Pca9685Process(Chanin<bool> sync_in, Chanin<KwsTokenMsg> hw_cmd_in,
                    Chanin<KwsTokenMsg> console_cmd_in, Chanout<KwsReportMsg> rep_out)
         : i2c_sync(sync_in), in_hw(hw_cmd_in), in_console(console_cmd_in), report_out(rep_out) {}
-    UBaseType_t taskPriority() const override { return tskIDLE_PRIORITY + 0; }
+    osPriority_t taskPriority() const override { return osPriorityLow; }  // was tskIDLE_PRIORITY + 0
 
     void run() override {
         init();
@@ -551,7 +563,7 @@ class FilterProcess : public CSProcessStatic<512> {
 
 public:
     FilterProcess(Chanin<KwsTokenMsg> r, Chanout<KwsTokenMsg> w) : in(r), out(w) {}
-    UBaseType_t taskPriority() const override { return tskIDLE_PRIORITY + 1; }
+    osPriority_t taskPriority() const override { return osPriorityLow1; }  // was tskIDLE_PRIORITY + 1
 
     void run() override {
         char lastLabel[16] = {0};
@@ -586,7 +598,7 @@ public:
     FsmProcess(Chanin<KwsTokenMsg> r, Chanout<KwsReportMsg> w_rep, Chanout<KwsTokenMsg> w_hw) 
         : in(r), out_report(w_rep), out_hw(w_hw) {}
         
-    UBaseType_t taskPriority() const override { return tskIDLE_PRIORITY + 1; }
+    osPriority_t taskPriority() const override { return osPriorityLow1; }  // was tskIDLE_PRIORITY + 1
 
     void run() override {
         enum class State { Idle, Go };
@@ -651,12 +663,12 @@ class InferenceProcess : public CSProcessStatic<4 * 2048> {
     Chanin<FeatureTensorMsg> in;
 public:
     explicit InferenceProcess(Chanin<FeatureTensorMsg> r) : in(r) {}
-    UBaseType_t taskPriority() const override { return tskIDLE_PRIORITY + 2; }
+    osPriority_t taskPriority() const override { return osPriorityLow2; }  // was tskIDLE_PRIORITY + 2
 
     void run() override {
         int32_t processed = 0;
         uint32_t copy_ms_accum = 0; uint32_t invoke_ms_accum = 0; uint32_t postproc_ms_accum = 0;
-        TickType_t windowStartTick = xTaskGetTickCount();
+        uint32_t windowStartTick = osKernelGetTickCount();
 
         while (true) {
             FeatureTensorMsg msg;
@@ -669,12 +681,12 @@ public:
             processed++;
 
 		if (processed % 20 == 0) {
-		    TickType_t now = xTaskGetTickCount();
-		    uint32_t elapsedMs = (now - windowStartTick) * portTICK_PERIOD_MS;
+		    uint32_t now = osKernelGetTickCount();
+		    uint32_t elapsedMs = ticksToMs(now - windowStartTick);
 		    float realtimeFactor = elapsedMs > 0 ? (kReportWindowMs / (float)elapsedMs) : 0.0f;
 		    kws_report_infer_stats(processed, copy_ms_accum, invoke_ms_accum, postproc_ms_accum, elapsedMs, realtimeFactor);
 		    kws_report_sem_stats(g_ethosu_sem_take_count, g_ethosu_sem_give_count);  // NEW
-		    g_infer_stack_hwm_words = uxTaskGetStackHighWaterMark(NULL);
+		    g_infer_stack_hwm_words = (osThreadGetStackSpace(osThreadGetId()) / sizeof(uint32_t));
 		    copy_ms_accum = 0; invoke_ms_accum = 0; postproc_ms_accum = 0;
 		    windowStartTick = now;
 		}
@@ -687,7 +699,7 @@ class PreprocessingProcess : public CSProcessStatic<2 * 2048> {
     Chanout<FeatureTensorMsg> out;
 public:
     PreprocessingProcess(Chanin<AudioChunkMsg> r, Chanout<FeatureTensorMsg> w) : in(r), out(w) {}
-    UBaseType_t taskPriority() const override { return tskIDLE_PRIORITY + 3; }
+    osPriority_t taskPriority() const override { return osPriorityLow3; }  // was tskIDLE_PRIORITY + 3
     // 2*2048 words (was: 256-word CSP4CMSIS composition default from the
     // v1.2 API, which was very tight given this calls through nested
     // std::vector / std::function MFCC code 50 frames deep every cycle).
@@ -695,7 +707,7 @@ public:
     void run() override {
         int32_t processed = 0; int32_t priming_step = 0;
         uint32_t mfcc_ms_accum = 0; uint32_t chan_send_wait_ms_accum = 0;
-        TickType_t windowStartTick = xTaskGetTickCount();
+        uint32_t windowStartTick = osKernelGetTickCount();
 
         while (true) {
             AudioChunkMsg msg;
@@ -706,10 +718,10 @@ public:
 
             if (tensor != nullptr) {
                 FeatureTensorMsg out_msg{ tensor };
-                TickType_t sendStart = xTaskGetTickCount();
+                uint32_t sendStart = osKernelGetTickCount();
                 out << out_msg;
-                TickType_t sendEnd = xTaskGetTickCount();
-                chan_send_wait_ms_accum += (sendEnd - sendStart) * portTICK_PERIOD_MS;
+                uint32_t sendEnd = osKernelGetTickCount();
+                chan_send_wait_ms_accum += ticksToMs(sendEnd - sendStart);
             } else {
                 priming_step++;
                 kws_report_priming(priming_step);
@@ -717,11 +729,11 @@ public:
 
             processed++;
             if (processed % 20 == 0) {
-                TickType_t now = xTaskGetTickCount();
-                uint32_t elapsedMs = (now - windowStartTick) * portTICK_PERIOD_MS;
+                uint32_t now = osKernelGetTickCount();
+                uint32_t elapsedMs = ticksToMs(now - windowStartTick);
                 float realtimeFactor = elapsedMs > 0 ? (kReportWindowMs / (float)elapsedMs) : 0.0f;
                 kws_report_prep_stats(processed, mfcc_ms_accum, chan_send_wait_ms_accum, elapsedMs, realtimeFactor);
-                g_prep_stack_hwm_words = uxTaskGetStackHighWaterMark(NULL);
+                g_prep_stack_hwm_words = (osThreadGetStackSpace(osThreadGetId()) / sizeof(uint32_t));
                 mfcc_ms_accum = 0; chan_send_wait_ms_accum = 0;
                 windowStartTick = now;
             }
@@ -733,7 +745,7 @@ class AcquisitionProcess : public CSProcessStatic<2048> {
     Chanout<AudioChunkMsg> out;
 public:
     explicit AcquisitionProcess(Chanout<AudioChunkMsg> w) : out(w) {}
-    UBaseType_t taskPriority() const override { return tskIDLE_PRIORITY + 4; }
+    osPriority_t taskPriority() const override { return osPriorityLow4; }  // was tskIDLE_PRIORITY + 4
     void run() override {
         int32_t last_current_buf = -1; int32_t miss_inf = 0;
         int32_t last_w_buf_idx = -1; // separate from last_current_buf: tracks the RAW
@@ -745,16 +757,16 @@ public:
                                       // became visible once the native cadence diverged from
                                       // downstream's incidental processing rate at BLK_NUM=2.
         uint32_t dma_wait_ms_accum = 0; uint32_t buf_asm_ms_accum = 0; uint32_t chan_send_wait_ms_accum = 0;
-        TickType_t windowStartTick = xTaskGetTickCount();
+        uint32_t windowStartTick = osKernelGetTickCount();
         const uint32_t kHopBudgetMs = (BLK_NUM * QUARTER_SECOND_MONO_BYTES / 2) * 1000UL / 16000UL;
 
         while (true) {
-            TickType_t iterStart = xTaskGetTickCount();
-            TickType_t dmaWaitStart = xTaskGetTickCount();
-            while (!kws_processing_complete) { vTaskDelay(1); }
-            while (w_buf_idx == last_w_buf_idx) { vTaskDelay(1); }
-            TickType_t dmaWaitEnd = xTaskGetTickCount();
-            dma_wait_ms_accum += (dmaWaitEnd - dmaWaitStart) * portTICK_PERIOD_MS;
+            uint32_t iterStart = osKernelGetTickCount();
+            uint32_t dmaWaitStart = osKernelGetTickCount();
+            while (!kws_processing_complete) { SleepFor(1); }
+            while (w_buf_idx == last_w_buf_idx) { SleepFor(1); }
+            uint32_t dmaWaitEnd = osKernelGetTickCount();
+            dma_wait_ms_accum += ticksToMs(dmaWaitEnd - dmaWaitStart);
 
             // Snapshot once: the rest of this iteration (memcpy/cache-invalidate/
             // channel send) can take longer than one native hop, so re-reading
@@ -772,24 +784,24 @@ public:
                 }
             }
 
-            TickType_t bufAsmStart = xTaskGetTickCount();
+            uint32_t bufAsmStart = osKernelGetTickCount();
             SCB_InvalidateDCache_by_Addr((uint32_t*)audio_buf[current_buf], BLK_NUM * QUARTER_SECOND_MONO_BYTES);
-            TickType_t bufAsmEnd = xTaskGetTickCount();
-            buf_asm_ms_accum += (bufAsmEnd - bufAsmStart) * portTICK_PERIOD_MS;
+            uint32_t bufAsmEnd = osKernelGetTickCount();
+            buf_asm_ms_accum += ticksToMs(bufAsmEnd - bufAsmStart);
 
             AudioChunkMsg msg{ audio_buf[current_buf] };
-            TickType_t sendStart = xTaskGetTickCount();
+            uint32_t sendStart = osKernelGetTickCount();
             out << msg;
-            TickType_t sendEnd = xTaskGetTickCount();
-            chan_send_wait_ms_accum += (sendEnd - sendStart) * portTICK_PERIOD_MS;
+            uint32_t sendEnd = osKernelGetTickCount();
+            chan_send_wait_ms_accum += ticksToMs(sendEnd - sendStart);
 
             last_current_buf = current_buf;
             last_w_buf_idx = observedWBufIdx;
             r_buf_idx++;
 
             if (r_buf_idx % 20 == 0) {
-                TickType_t now = xTaskGetTickCount();
-                uint32_t elapsedMs = (now - windowStartTick) * portTICK_PERIOD_MS;
+                uint32_t now = osKernelGetTickCount();
+                uint32_t elapsedMs = ticksToMs(now - windowStartTick);
                 float realtimeFactor = elapsedMs > 0 ? (kReportWindowMs / (float)elapsedMs) : 0.0f;
                 kws_report_acq_stats(miss_inf, r_buf_idx, dma_wait_ms_accum, buf_asm_ms_accum, chan_send_wait_ms_accum, elapsedMs, realtimeFactor);
 
@@ -805,6 +817,8 @@ public:
                 uint32_t avgIntervalMs = intervalCount > 0 ? (intervalAccum / intervalCount) : 0;
                 kws_report_dma_cb_stats(dmaCbCount, avgIntervalMs);
 
+                // FreeRTOS heap statistics (native: CMSIS-RTOS2 has no equivalent);
+                // only the Ethos-U semaphore lives in this heap since 2.0.
                 kws_report_mem_stats((uint32_t)xPortGetFreeHeapSize(),
                                       (uint32_t)xPortGetMinimumEverFreeHeapSize(),
                                       g_prep_stack_hwm_words, g_infer_stack_hwm_words);
@@ -813,19 +827,32 @@ public:
                 windowStartTick = now;
             }
 
-            uint32_t elapsedThisIterMs = (xTaskGetTickCount() - iterStart) * portTICK_PERIOD_MS;
-            if (elapsedThisIterMs + 1 < kHopBudgetMs) { vTaskDelay(1); }
+            uint32_t elapsedThisIterMs = ticksToMs(osKernelGetTickCount() - iterStart);
+            if (elapsedThisIterMs + 1 < kHopBudgetMs) { SleepFor(1); }
         }
     }
 };
 
+// Priorities keep the pre-2.0 order (D5: tskIDLE_PRIORITY + 0..4 -> osPriorityLow..Low4,
+// see each process's taskPriority()): MainApp (was + 4) above the network default
+// (was + 2), so Run(..., StaticNetwork) creates all processes before any runs.
+static constexpr osPriority_t MAIN_APP_PRIORITY = osPriorityLow4;
+static constexpr osPriority_t NETWORK_PRIORITY  = osPriorityLow2;
+
+// MainApp's stack and control block are static: creating the thread takes no heap.
+// CMSIS-RTOS2 counts the stack in bytes. Provisional (was 4*2048 words); to be
+// right-sized from measurements.
+alignas(8) static uint8_t mainAppStack[4096];
+static StaticTask_t mainAppControlBlock;
+
 void MainApp_Task(void* params) {
-    vTaskDelay(pdMS_TO_TICKS(10));
+    (void)params;
+    SleepFor(10);  // 10 ms (1000 Hz tick)
     xprintf("\r\n--- KWS Pipeline starting (incl. PCA9685 I2C servo control) ---\r\n");
 
     if (cv_kws_preprocess_init() != 0) {
         xprintf("ERROR: cv_kws_preprocess_init failed!\r\n");
-        return;
+        osThreadExit();  // a thread must not return from its function
     }
 
     static AcquisitionProcess   acquisition(g_audioChan.writer());
@@ -851,16 +878,23 @@ void MainApp_Task(void* params) {
     // Execute the network (now 8 processes)
     Run(
         InParallel(acquisition, preprocessing, inference, filter, fsm, reporter, pca9685_hw, console_in),
-        ExecutionMode::StaticNetwork
+        ExecutionMode::StaticNetwork,
+        NETWORK_PRIORITY
     );
 
-    vTaskDelete(NULL);
+    osThreadExit();
 }
 
 extern "C" void RunProcessingChainTest(void)
 {
-    BaseType_t status = xTaskCreate(MainApp_Task, "MainApp", 4*2048, NULL, tskIDLE_PRIORITY + 4, NULL);
-    if (status != pdPASS) {
+    osThreadAttr_t attr = {};
+    attr.name       = "MainApp";
+    attr.stack_mem  = mainAppStack;
+    attr.stack_size = sizeof(mainAppStack);
+    attr.cb_mem     = &mainAppControlBlock;
+    attr.cb_size    = sizeof(mainAppControlBlock);
+    attr.priority   = MAIN_APP_PRIORITY;
+    if (osThreadNew(MainApp_Task, NULL, &attr) == NULL) {
         xprintf("ERROR: MainApp_Task creation failed!\r\n");
     }
 }

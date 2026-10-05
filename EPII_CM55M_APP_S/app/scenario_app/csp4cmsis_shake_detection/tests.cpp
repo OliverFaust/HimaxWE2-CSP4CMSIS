@@ -1,13 +1,14 @@
 #include "csp/csp4cmsis.h"
 #include <cstdio>
 #include <cstdlib> // For abs()
-#include "FreeRTOS.h"
-#include "task.h"
+#include "cmsis_os2.h"
+#include "FreeRTOS.h"  // StaticTask_t: the control block of a statically created thread
 
 // Bring in the Himax C drivers
 extern "C" {
 #include "hx_drv_scu.h"
 #include "hx_drv_iic.h"
+#include "xprintf.h"
 }
 
 using namespace csp;
@@ -20,12 +21,22 @@ struct AccelData {
 };
 
 // --- Hardware Synchronization Setup ---
-// Create a channel specifically for the I2C interrupt to signal completion
-static Channel<bool> i2c_isr_chan;
+// The I2C completion interrupt signals the reader through a one-slot buffered
+// channel: an interrupt cannot wait for a partner, so it writes via isrWriter(),
+// and the slot keeps a completion that arrives before the reader waits for it
+// (a rendezvous would lose it). The reader starts one transfer at a time, so at
+// most one completion can be pending; a second one means a driver bug.
+static BufferedChannel<bool, 1> i2c_isr_chan;
 
-// The hardware interrupt callback simply pushes a token into the channel
+// Runs in the I2C interrupt (priority set in csp4cmsis_shake_detection.c).
 extern "C" void i2c_callback(void) {
-    i2c_isr_chan.writer().putFromISR(true);
+    if (!i2c_isr_chan.isrWriter().putFromISR(true)) {
+        // A second completion before the first was read: stop here instead of
+        // losing it. Polled UART output works with interrupts disabled.
+        __disable_irq();
+        xprintf("\r\nFATAL: I2C completion lost (the previous one was not read yet)\r\n");
+        for (;;) { }
+    }
 }
 
 // --- 1. ADXL345 Reader Process ---
@@ -37,7 +48,7 @@ class Adxl345Reader : public CSProcessStatic<256> {
     // Blocks the process until the hardware ISR fires
     void wait_for_i2c_isr() {
         bool dummy;
-        i2c_sync >> dummy; // This naturally blocks the FreeRTOS task
+        i2c_sync >> dummy; // blocks this process until the interrupt has written
     }
 
     // Helper method to write to a single register
@@ -88,7 +99,7 @@ public:
             out << reading;
 
             // Poll at ~20Hz
-            vTaskDelay(pdMS_TO_TICKS(50)); 
+            SleepFor(50);  // 50 ms (1000 Hz tick)
         }
     }
 };
@@ -154,8 +165,20 @@ public:
 };
 
 // --- 4. Main App Task ---
+// Priorities keep the pre-2.0 order: MainApp (was tskIDLE_PRIORITY + 3) above the
+// network (was + 2), so Run(..., StaticNetwork) creates all processes before any runs.
+static constexpr osPriority_t MAIN_APP_PRIORITY = osPriorityLow3;
+static constexpr osPriority_t NETWORK_PRIORITY  = osPriorityLow2;
+
+// MainApp's stack and control block are static: creating the thread takes no heap.
+// CMSIS-RTOS2 counts the stack in bytes. Provisional (was 4096 words); to be right-sized
+// from measurements.
+alignas(8) static uint8_t mainAppStack[4096];
+static StaticTask_t mainAppControlBlock;
+
 void MainApp_Task(void* params) {
-    vTaskDelay(pdMS_TO_TICKS(500));
+    (void)params;
+    SleepFor(500);  // 500 ms (1000 Hz tick)
     
     // Create the connecting channels
     static Channel<AccelData> c_accel_data;
@@ -170,14 +193,24 @@ void MainApp_Task(void* params) {
     // Execute the network
     Run(
         InParallel(proc_reader, proc_logic, proc_consumer),
-        ExecutionMode::StaticNetwork
+        ExecutionMode::StaticNetwork,
+        NETWORK_PRIORITY
     );
 
-    // Run() returns immediately in StaticNetwork mode; the task must
-    // delete itself rather than fall off the end of the function.
-    vTaskDelete(NULL);
+    // Run() returns immediately in StaticNetwork mode; the thread must
+    // end itself rather than fall off the end of the function.
+    osThreadExit();
 }
 
 void RunProcessingChainTest(void) {
-    xTaskCreate(MainApp_Task, "MainApp", 4096, NULL, tskIDLE_PRIORITY + 3, NULL);
+    osThreadAttr_t attr = {};
+    attr.name       = "MainApp";
+    attr.stack_mem  = mainAppStack;
+    attr.stack_size = sizeof(mainAppStack);
+    attr.cb_mem     = &mainAppControlBlock;
+    attr.cb_size    = sizeof(mainAppControlBlock);
+    attr.priority   = MAIN_APP_PRIORITY;
+    if (osThreadNew(MainApp_Task, NULL, &attr) == NULL) {
+        printf("ERROR: MainApp_Task creation failed!\r\n");
+    }
 }
