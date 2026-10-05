@@ -31,8 +31,7 @@
 #include "hx_drv_scu.h"
 #include "csp4cmsis_spn.h"
 
-#include "FreeRTOS.h"
-#include "task.h"
+#include "cmsis_os2.h"
 
 #include <vector>
 #include <functional>
@@ -119,6 +118,12 @@ static void _arm_npu_irq_init(void)
     EPII_NVIC_SetVector(ethosu_irqnum, (uint32_t)_arm_npu_irq_handler);
 
     /* Enable the IRQ */
+    // An ISR that calls CSP4CMSIS or FreeRTOS must run at priority 5..7: at or
+    // below CSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY (5; 3 priority bits), so that
+    // the RTOS's and the library's critical sections mask it. The SDK leaves it
+    // at 0 (the highest). The NPU interrupt gives the FreeRTOS semaphore of the
+    // Ethos-U override (ethosu_rtos_semaphore.c), so set it before enabling.
+    NVIC_SetPriority(ethosu_irqnum, CSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY);
     NVIC_EnableIRQ(ethosu_irqnum);
 
 }
@@ -579,14 +584,14 @@ int cv_kws_run(struct_kws_algoResult *algoresult_kws_pdm_record, int16_t *audio_
             // keeping the same measurement method for all three phases avoids
             // mixing units in the ledger and keeps this code simple to compare
             // against the buffer-assembly/DMA-wait timing added in KwsProcess.
-            TickType_t mfccStartTick = xTaskGetTickCount();
+            uint32_t mfccStartTick = osKernelGetTickCount();
             while (audioMFCCWindowSlider.HasNext()) {
                 const int16_t *mfccWindow = audioMFCCWindowSlider.Next();
                 std::vector<int16_t> mfccAudioData = std::vector<int16_t>(mfccWindow, mfccWindow + mfccWindowSize);
                 mfccFeatureCalc(mfccAudioData, audioMFCCWindowSlider.Index(), useCache, nMfccVectorsInAudioStride);
             }
-            TickType_t mfccEndTick = xTaskGetTickCount();
-            g_kws_mfcc_ms += (mfccEndTick - mfccStartTick) * portTICK_PERIOD_MS;
+            uint32_t mfccEndTick = osKernelGetTickCount();
+            g_kws_mfcc_ms += ticksToMs(mfccEndTick - mfccStartTick);
 
             #ifdef EACH_STEP_TICK						
                 SystemGetTick(&systick_2, &loop_cnt_2);
@@ -603,16 +608,16 @@ int cv_kws_run(struct_kws_algoResult *algoresult_kws_pdm_record, int16_t *audio_
             // is NOT safe across that kind of wait (it wrapped to ~UINT32_MAX
             // in testing, consistent with FreeRTOS tickless idle reprogramming
             // SysTick's reload value, or a torn read racing the NPU IRQ, right
-            // at this exact boundary). xTaskGetTickCount() is the FreeRTOS-
+            // at this exact boundary). osKernelGetTickCount() is the RTOS-
             // supported way to measure elapsed time across a blocking wait.
-            TickType_t invokeStartTick = xTaskGetTickCount();
+            uint32_t invokeStartTick = osKernelGetTickCount();
             TfLiteStatus invoke_status = kws_int_ptr->Invoke();
             if(invoke_status != kTfLiteOk) {
                 printf("kws detect invoke fail\n");
                 return -1;
             }
-            TickType_t invokeEndTick = xTaskGetTickCount();
-            g_kws_invoke_ms += (invokeEndTick - invokeStartTick) * portTICK_PERIOD_MS;
+            uint32_t invokeEndTick = osKernelGetTickCount();
+            g_kws_invoke_ms += ticksToMs(invokeEndTick - invokeStartTick);
             #if KWS_DBG_APP_LOG
             else {
                 printf("kws detect invoke pass\n");
@@ -632,7 +637,7 @@ int cv_kws_run(struct_kws_algoResult *algoresult_kws_pdm_record, int16_t *audio_
                 SystemGetTick(&systick_1, &loop_cnt_1);
             #endif
 
-            TickType_t postprocStartTick = xTaskGetTickCount();
+            uint32_t postprocStartTick = osKernelGetTickCount();
             std::vector<MyClassificationResult> vecResults;
 
             GetClassificationResults(kws_output, vecResults, kwtLabels, 1, true);
@@ -653,8 +658,8 @@ int cv_kws_run(struct_kws_algoResult *algoresult_kws_pdm_record, int16_t *audio_
 	{
 	    kws_report_none();
 	}
-            TickType_t postprocEndTick = xTaskGetTickCount();
-            g_kws_postproc_ms += (postprocEndTick - postprocStartTick) * portTICK_PERIOD_MS;
+            uint32_t postprocEndTick = osKernelGetTickCount();
+            g_kws_postproc_ms += ticksToMs(postprocEndTick - postprocStartTick);
 
             // xprintf("-----------------------------------------------------------------------------\n");
 
@@ -847,10 +852,10 @@ void* cv_kws_preprocess_step(const int16_t *newQuarterBuffer) {
     }
     std::memcpy(scratch + kPPTailSamples, newQuarterBuffer, kPPNewSamplesPerStep * sizeof(int16_t));
 
-    TickType_t t1 = xTaskGetTickCount();
+    uint32_t t1 = osKernelGetTickCount();
     ShiftAndAppendFrames(scratch);
-    TickType_t t2 = xTaskGetTickCount();
-    g_kws_mfcc_ms = (t2 - t1) * portTICK_PERIOD_MS;
+    uint32_t t2 = osKernelGetTickCount();
+    g_kws_mfcc_ms = ticksToMs(t2 - t1);
 
     // Save the new tail for next time: the last kPPTailSamples of THIS step's
     // new audio (not the old tail).
@@ -872,22 +877,22 @@ int cv_kws_infer_step(void *featureTensor) {
         return -1;
     }
 
-    TickType_t t1 = xTaskGetTickCount();
+    uint32_t t1 = osKernelGetTickCount();
     uint8_t *dst = tflite::GetTensorData<uint8_t>(kws_input);
     std::memcpy(dst, featureTensor, g_pp_tensor_bytes);
-    TickType_t t2 = xTaskGetTickCount();
-    g_kws_copy_ms = (t2 - t1) * portTICK_PERIOD_MS;
+    uint32_t t2 = osKernelGetTickCount();
+    g_kws_copy_ms = ticksToMs(t2 - t1);
 
-    t1 = xTaskGetTickCount();
+    t1 = osKernelGetTickCount();
     TfLiteStatus invoke_status = kws_int_ptr->Invoke();
-    t2 = xTaskGetTickCount();
-    g_kws_invoke_ms = (t2 - t1) * portTICK_PERIOD_MS;
+    t2 = osKernelGetTickCount();
+    g_kws_invoke_ms = ticksToMs(t2 - t1);
     if (invoke_status != kTfLiteOk) {
         printf("kws detect invoke fail\n");
         return -1;
     }
 
-    t1 = xTaskGetTickCount();
+    t1 = osKernelGetTickCount();
     std::vector<MyClassificationResult> vecResults;
     GetClassificationResults(kws_output, vecResults, kwtLabels, 1, true);
 
@@ -898,8 +903,8 @@ int cv_kws_infer_step(void *featureTensor) {
     } else {
         kws_report_none();
     }
-    t2 = xTaskGetTickCount();
-    g_kws_postproc_ms = (t2 - t1) * portTICK_PERIOD_MS;
+    t2 = osKernelGetTickCount();
+    g_kws_postproc_ms = ticksToMs(t2 - t1);
 
     return 0;
 }

@@ -140,9 +140,9 @@ static volatile uint32_t g_dma_cb_last_tick = 0;
 
 void app_pdm_dma_rx_cb()
 {
-    TickType_t now = xTaskGetTickCountFromISR();
+    uint32_t now = osKernelGetTickCount();   // callable from an ISR
     if (g_dma_cb_last_tick != 0) {
-        uint32_t delta_ms = (uint32_t)(now - g_dma_cb_last_tick) * portTICK_PERIOD_MS;
+        uint32_t delta_ms = ticksToMs(now - g_dma_cb_last_tick);
         g_dma_cb_interval_accum_ms += delta_ms;
         g_dma_cb_interval_count++;
     }
@@ -406,6 +406,17 @@ int kws_pdm_record_app(void)
     // Configure Pinmux lines for I2C Master 0
     hx_drv_scu_set_PA2_pinmux(SCU_PA2_PINMUX_I2C_M_SCL, 1);
     hx_drv_scu_set_PA3_pinmux(SCU_PA3_PINMUX_I2C_M_SDA, 1);
+
+    // An ISR that calls CSP4CMSIS or FreeRTOS must run at priority 5..7: at or
+    // below CSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY (5; 3 priority bits), so
+    // that the RTOS's and the library's critical sections mask it. Neither the
+    // SDK nor the drivers set a priority (the reset value 0 is the highest), so
+    // set them here, before the drivers are started:
+    //  - I2C master 0: the completion callback writes to a CSP4CMSIS channel;
+    //  - DMA controller 2 (PDM audio): app_pdm_dma_rx_cb() reads the RTOS tick.
+    // (The NPU interrupt is set in cvapp_kws.cpp, where it is enabled.)
+    NVIC_SetPriority(I2C_MST_0_intr_IRQn, CSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY);
+    NVIC_SetPriority(DMAC2_DMACINTR_IRQn, CSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY);
 
     // Initialize Master interface
     int i2c_status = hx_drv_i2cm_init(USE_DW_IIC_0, HX_I2C_HOST_MST_0_BASE, DW_IIC_SPEED_FAST);
