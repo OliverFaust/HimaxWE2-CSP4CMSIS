@@ -50,7 +50,11 @@ extern uint32_t SystemCoreClock;
 /* Constants that describe the hardware and memory usage. */
 #define configCPU_CLOCK_HZ                    (SystemCoreClock)
 #define configTICK_RATE_HZ                    ((TickType_t)1000)
-#define configTOTAL_HEAP_SIZE                 ((size_t)16*4096)
+/* Measured on the board with CSP4CMSIS 2.0.1 (40 s): no FreeRTOS heap allocations
+   at all -- threads, their stacks and the library's RTOS objects are static, and
+   C++ new/malloc use the C library heap (__HEAP_SIZE in the .ld; 2.1 of 64 KB used).
+   Was 64 KB. */
+#define configTOTAL_HEAP_SIZE                 ((size_t)1024)
 #define configMINIMAL_STACK_SIZE              ((uint16_t)256)
 #define configSUPPORT_DYNAMIC_ALLOCATION      1
 #if defined(FREERTOS_OSHAL)

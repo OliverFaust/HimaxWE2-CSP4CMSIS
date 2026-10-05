@@ -32,7 +32,7 @@ In the standard version, every philosopher reaches for their left fork simultane
 Symmetry is often the enemy of concurrency. By changing the acquisition order for just one process (`p4`), we ensure that $N$ philosophers cannot simultaneously hold $N$ forks. This is a classic example of **Formal Verification** principles applied to CSP.
 
 ### 2. Random Thinking Delays
-The test uses `std::srand` and `vTaskDelay` to simulate non-deterministic behavior. This stress-tests the framework’s ability to handle asynchronous requests and ensures that the lack of deadlock isn't just a result of "lucky" timing, but a result of sound architectural design.
+The test uses `std::srand` and `SleepFor` to simulate non-deterministic behavior. This stress-tests the framework’s ability to handle asynchronous requests and ensures that the lack of deadlock isn't just a result of "lucky" timing, but a result of sound architectural design.
 
 ### 3. Execution Stability
 The test uses `Run(InParallel(...))` in its default mode. Because all processes are declared `static`, the memory footprint is constant. This allows the test to run for days or weeks without any degradation in performance or memory leakage.
@@ -43,7 +43,7 @@ The test uses `Run(InParallel(...))` in its default mode. Because all processes 
 
 ### Prerequisites
 * **Hardware:** Himax WE2 (Cortex-M55).
-* **Environment:** FreeRTOS.
+* **Library and RTOS:** CSP4CMSIS 2.0.1 on FreeRTOS 10.5.1 through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`); the app starts the kernel with `osKernelInitialize()`/`osKernelStart()`.
 * **Make environment** in `CSP4CMSIS/EPII_CM55M_APP_S/makefile` set `APP_TYPE = csp4cmsis_asymmetric_philosophers`.
 
 ### Expected UART Output
