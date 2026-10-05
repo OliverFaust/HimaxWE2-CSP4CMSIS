@@ -1,0 +1,96 @@
+[MEAS 3s] heap total=65536 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 3s] C heap (newlib) used=46408 of 65536
+[MEAS 3s] task meas prio=54 unused=3920 B
+[MEAS 3s] task Snd7 prio=10 unused=1808 B
+[MEAS 3s] task Snd8 prio=10 unused=1800 B
+[MEAS 3s] task Snd9 prio=10 unused=1808 B
+[MEAS 3s] task Snd10 prio=10 unused=1800 B
+[MEAS 3s] task Snd11 prio=10 unused=1808 B
+[MEAS 3s] task Snd12 prio=10 unused=1808 B
+[MEAS 3s] task Snd13 prio=10 unused=1808 B
+[MEAS 3s] task Receiver prio=10 unused=7016 B
+[MEAS 3s] task Snd6 prio=10 unused=1808 B
+[MEAS 3s] task IDLE prio=0 unused=1256 B
+[MEAS 3s] task MainApp prio=11 unused=7284 B
+[MEAS 3s] task Snd14 prio=10 unused=1808 B
+[MEAS 3s] task Snd15 prio=10 unused=1808 B
+[MEAS 3s] task Snd16 prio=10 unused=1808 B
+[MEAS 3s] task Snd1 prio=10 unused=1808 B
+[MEAS 3s] task Snd2 prio=10 unused=1808 B
+[MEAS 3s] task Snd3 prio=10 unused=1808 B
+[MEAS 3s] task Snd4 prio=10 unused=1808 B
+[MEAS 3s] task Snd5 prio=10 unused=1808 B
+[MEAS 3s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 3s] mainAppStack used=908 B of 8192
+[MEAS 10s] heap total=65536 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 10s] C heap (newlib) used=46408 of 65536
+[MEAS 10s] task meas prio=54 unused=3688 B
+[MEAS 10s] task Snd3 prio=10 unused=1808 B
+[MEAS 10s] task Snd4 prio=10 unused=1808 B
+[MEAS 10s] task Snd5 prio=10 unused=1808 B
+[MEAS 10s] task Snd6 prio=10 unused=1808 B
+[MEAS 10s] task Snd7 prio=10 unused=1808 B
+[MEAS 10s] task Snd8 prio=10 unused=1800 B
+[MEAS 10s] task Snd9 prio=10 unused=1808 B
+[MEAS 10s] task Snd10 prio=10 unused=1800 B
+[MEAS 10s] task Snd11 prio=10 unused=1808 B
+[MEAS 10s] task Snd12 prio=10 unused=1808 B
+[MEAS 10s] task Receiver prio=10 unused=7016 B
+[MEAS 10s] task Snd2 prio=10 unused=1808 B
+[MEAS 10s] task IDLE prio=0 unused=1256 B
+[MEAS 10s] task MainApp prio=11 unused=7104 B
+[MEAS 10s] task Snd14 prio=10 unused=1808 B
+[MEAS 10s] task Snd15 prio=10 unused=1808 B
+[MEAS 10s] task Snd16 prio=10 unused=1808 B
+[MEAS 10s] task Snd1 prio=10 unused=1808 B
+[MEAS 10s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 10s] task Snd13 prio=10 unused=1808 B
+[MEAS 10s] mainAppStack used=1088 B of 8192
+[MEAS 25s] heap total=65536 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 25s] C heap (newlib) used=46408 of 65536
+[MEAS 25s] task meas prio=54 unused=3688 B
+[MEAS 25s] task IDLE prio=0 unused=1256 B
+[MEAS 25s] task MainApp prio=11 unused=7104 B
+[MEAS 25s] task Snd10 prio=10 unused=1800 B
+[MEAS 25s] task Snd16 prio=10 unused=1808 B
+[MEAS 25s] task Snd4 prio=10 unused=1808 B
+[MEAS 25s] task Snd7 prio=10 unused=1808 B
+[MEAS 25s] task Snd11 prio=10 unused=1808 B
+[MEAS 25s] task Snd2 prio=10 unused=1808 B
+[MEAS 25s] task Snd14 prio=10 unused=1808 B
+[MEAS 25s] task Snd8 prio=10 unused=1800 B
+[MEAS 25s] task Snd13 prio=10 unused=1808 B
+[MEAS 25s] task Snd3 prio=10 unused=1808 B
+[MEAS 25s] task Snd6 prio=10 unused=1808 B
+[MEAS 25s] task Snd9 prio=10 unused=1808 B
+[MEAS 25s] task Snd5 prio=10 unused=1808 B
+[MEAS 25s] task Snd1 prio=10 unused=1808 B
+[MEAS 25s] task Snd12 prio=10 unused=1808 B
+[MEAS 25s] task Receiver prio=10 unused=7016 B
+[MEAS 25s] task Snd15 prio=10 unused=1808 B
+[MEAS 25s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 25s] mainAppStack used=1088 B of 8192
+[MEAS 40s] heap total=65536 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 40s] C heap (newlib) used=46408 of 65536
+[MEAS 40s] task meas prio=54 unused=3672 B
+[MEAS 40s] task IDLE prio=0 unused=1256 B
+[MEAS 40s] task MainApp prio=11 unused=7104 B
+[MEAS 40s] task Snd16 prio=10 unused=1808 B
+[MEAS 40s] task Snd4 prio=10 unused=1808 B
+[MEAS 40s] task Snd7 prio=10 unused=1808 B
+[MEAS 40s] task Snd11 prio=10 unused=1808 B
+[MEAS 40s] task Snd2 prio=10 unused=1808 B
+[MEAS 40s] task Snd14 prio=10 unused=1808 B
+[MEAS 40s] task Snd8 prio=10 unused=1800 B
+[MEAS 40s] task Snd13 prio=10 unused=1808 B
+[MEAS 40s] task Snd3 prio=10 unused=1808 B
+[MEAS 40s] task Snd6 prio=10 unused=1808 B
+[MEAS 40s] task Snd9 prio=10 unused=1808 B
+[MEAS 40s] task Snd5 prio=10 unused=1808 B
+[MEAS 40s] task Snd1 prio=10 unused=1808 B
+[MEAS 40s] task Snd12 prio=10 unused=1808 B
+[MEAS 40s] task Receiver prio=10 unused=7016 B
+[MEAS 40s] task Snd15 prio=10 unused=1808 B
+[MEAS 40s] task Snd10 prio=10 unused=1800 B
+[MEAS 40s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 40s] mainAppStack used=1088 B of 8192

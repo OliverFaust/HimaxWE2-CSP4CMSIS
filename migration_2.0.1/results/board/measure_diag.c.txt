@@ -1,0 +1,39 @@
+
+/* ---- scratch measurement (not committed): stacks of all tasks, FreeRTOS heap ---- */
+#include "xprintf.h"
+extern uint8_t mainAppStack[] __attribute__((weak));
+extern unsigned char __HeapBase[], __HeapLimit[];
+extern void *_sbrk(ptrdiff_t incr);
+#define MEAS_MAINAPP_STACK 8192
+static TaskStatus_t meas_status[40];
+static void meas_dump(const char *tag) {
+	UBaseType_t n = uxTaskGetSystemState(meas_status, 40, NULL);
+	HeapStats_t hs; vPortGetHeapStats(&hs);
+	xprintf("\r\n[MEAS %s] heap total=%d free=%d min_ever_free=%d allocs=%d frees=%d\r\n", tag,
+	        (int)configTOTAL_HEAP_SIZE, (int)xPortGetFreeHeapSize(), (int)xPortGetMinimumEverFreeHeapSize(),
+	        (int)hs.xNumberOfSuccessfulAllocations, (int)hs.xNumberOfSuccessfulFrees);
+	xprintf("[MEAS %s] C heap (newlib) used=%d of %d\r\n", tag,
+	        (int)((unsigned char *)_sbrk(0) - __HeapBase), (int)(__HeapLimit - __HeapBase));
+	for (UBaseType_t i = 0; i < n; i++) {
+		xprintf("[MEAS %s] task %s prio=%d unused=%d B\r\n", tag, meas_status[i].pcTaskName,
+		        (int)meas_status[i].uxCurrentPriority, (int)(meas_status[i].usStackHighWaterMark * sizeof(StackType_t)));
+	}
+	if (mainAppStack) {
+		int unused = 0;
+		while (unused < MEAS_MAINAPP_STACK && mainAppStack[unused] == 0xA5) unused++;
+		xprintf("[MEAS %s] mainAppStack used=%d B of %d\r\n", tag, MEAS_MAINAPP_STACK - unused, MEAS_MAINAPP_STACK);
+	}
+}
+static void meas_task(void *p) {
+	(void)p;
+	vTaskDelay(3000); meas_dump("3s");
+	vTaskDelay(7000); meas_dump("10s");
+	vTaskDelay(15000); meas_dump("25s");
+	vTaskDelay(15000); meas_dump("40s");
+	vTaskDelete(NULL);
+}
+static StackType_t meas_stack[1024];
+static StaticTask_t meas_tcb;
+__attribute__((constructor)) static void meas_create(void) {
+	xTaskCreateStatic(meas_task, "meas", 1024, NULL, configMAX_PRIORITIES - 2, meas_stack, &meas_tcb);
+}

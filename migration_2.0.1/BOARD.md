@@ -61,3 +61,56 @@ after the apps' drivers have started (`results/board/nvic_readout_main.txt`):
 
 MainApp needs < 1 KB; the 4 KB launcher stacks can be reduced (e.g. 2 KB) when the remaining apps are
 migrated.
+
+## Remaining A-apps (branch `csp4cmsis-2.0.1`, 2026-10-05)
+
+Migrated as the pilots: launcher on `osThreadNew()` with a static 4 KB stack, `osThreadExit()`,
+`SleepFor()`, `osKernelGetTickCount()`, named priorities in the old order (MainApp `osPriorityLow3`
+above the network `osPriorityLow2`; `kws_pdm_record`'s Inference `osPriorityLow3`), current channel
+names. Built with Arm GNU 13.2.rel1: no new warnings in app code (`results/phaseB2_build_summary.txt`).
+Logs: `results/board/migrated_<app>.txt` (final build), `results/board/measure_<app>.txt`.
+
+| App | 2.0.1 vs `main` baseline | Class |
+|---|---|---|
+| `alt_test_max` | 1 600 000 messages verified, no errors, SUCCESS (the 25 s baseline capture reached 1.1 M). Fairness: spread 0–17 messages, drift ≤ 0.4 % (mostly 0.0 %); baseline: spread up to ~2000, drift ~2.9 % | (a) `fairSelect()` fairness fixed |
+| `comstime` | 22.7 µs/cycle (227 ms per 10 000), baseline 22.3 µs/cycle: +0.4 µs (1.8 %); trigger events identical (24 in 25 s) | (b) different channel/RTOS layer; small, not a functional change |
+| `chain_test` | output identical | — |
+| `matrix_multiplication` | results and line order identical; PE stacks 8–40 B smaller | — |
+| `dining_philosophers` | output identical, same deadlock after 10 meals | — |
+| `asymmetric_philosophers` | output identical (628 meals in 25 s, no deadlock) | — |
+| `lossy_policy_test` | KeepNewest 999 990…999 999, KeepOldest 0…9, sums 9 999 945 / 45, `PASS`; baseline was timing-dependent (drained mid-burst) | (a) via the "done" rendezvous (test design) |
+| `kws_pdm_record` | first build: `std::bad_alloc` after the banner (`migrated_kws_pdm_record_before_heap_fix.txt`); final build: output matches the baseline over the whole baseline capture (on-board microphone, quiet room: "None"; timing reports equal within 1 ms; only the tensor-arena address differs) | (b), see below |
+
+**Why `kws_pdm_record` threw `std::bad_alloc`:** the pre-2.0 library overrode the global
+`operator new`/`delete` with `pvPortMalloc`/`vPortFree`; 2.0 removed that (`glue.cpp`). The KWS code's
+C++ allocations (~30 KB) therefore moved from the FreeRTOS heap to the C library heap (`__HEAP_SIZE`
+in the app's `.ld`, 0x7000 = 28 KB), which overflowed. Measured with the same diagnostic on both
+builds (`measure_kws_pdm_record_baseline_main.txt` vs `measure_kws_pdm_record.txt`): baseline
+FreeRTOS heap minimum-ever-free 1384 of 65 536 B, C heap 4616 B; 2.0.1 FreeRTOS heap 0 allocations,
+C heap 34 840 B. Fix: `__HEAP_SIZE` 0xB000 (44 KB, +16 KB), FreeRTOS heap 1 KB (−63 KB) — net 47 KB less RAM.
+
+**Ethos-U semaphore:** `kws_pdm_record` has no RTOS override (only `kws_iic`, `kws_PCA9685`,
+`kws_PCA9685_alt` carry `ethosu_rtos_semaphore.c`); it uses the driver's weak default, a
+`__WFE()` loop, so `Invoke()` does not block in the RTOS — unchanged from `main`.
+
+### Stack and heap measurements (2.0.1)
+
+Scratch builds with a diagnostic thread (`results/board/measure_diag.c.txt`, not committed to any
+app): every thread's stack high-water mark, the launcher stack (scanned for the fill pattern after
+it exited; 8 KB in these builds), FreeRTOS heap statistics and the C library heap, at 3/10/25/40 s.
+
+| App | Launcher used (of 4096 B) | Process stacks: most used / allocated (B) | FreeRTOS heap allocations | C heap used / `__HEAP_SIZE` |
+|---|---|---|---|---|
+| `alt_test_max` | 1088 | Receiver 1176/8192, Snd 248/2048 | 0 | 46 408 / 65 536 (16 Senders via `new`) |
+| `comstime` | 904 | Consumer 952/4096, others 232/2048 | 0 | 3456 / 65 536 |
+| `chain_test` | 352 | Relay 224/1024 (sender and checker finish before the first read-out) | 0 | 3936 / 65 536 |
+| `matrix_multiplication` | 2256 | PE 856/4096, feeders/sinks 248/2048 | 0 | 3760 / 16 384 |
+| `dining_philosophers` | 440 | Philosopher 800/1024, Fork 224/1024 | 0 | 2304 / 65 536 |
+| `asymmetric_philosophers` | 456 | Philosopher 840/1024, Fork 224/1024 | 0 | 2136 / 65 536 |
+| `lossy_policy_test` | 336 | (both processes finish before the first read-out) | 0 | 3312 / 65 536 |
+| `kws_pdm_record` | 456 | Inference 1256/32 768, Preprocessing 792/1024, Acquisition 512/1024, Reporter 544/1024 | 0 | 34 840 / 45 056 (after the fix) |
+
+Consequences, applied: `configTOTAL_HEAP_SIZE` 64 KB → 1 KB in all eight (comment with these values);
+`kws_pdm_record` `__HEAP_SIZE` 0x7000 → 0xB000. RAM (`.bss`) per app ~60 KB smaller. Not changed
+(stack sizes were not part of this step): the philosophers' 1 KB stacks have 184–224 B headroom,
+Preprocessing 232 B (as on `main`); Inference's 32 KB stack uses 1.3 KB.

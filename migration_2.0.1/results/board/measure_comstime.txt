@@ -1,0 +1,48 @@
+[MEAS 3s] heap total=65536 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 3s] C heap (newlib) used=3456 of 65536
+[MEAS 3s] task meas prio=54 unused=3920 B
+[MEAS 3s] task Successor prio=10 unused=1824 B
+[MEAS 3s] task IDLE prio=0 unused=1256 B
+[MEAS 3s] task Trigger prio=10 unused=1824 B
+[MEAS 3s] task ComsMain prio=11 unused=7800 B
+[MEAS 3s] task Prefix prio=10 unused=1824 B
+[MEAS 3s] task ComstimeC prio=10 unused=3184 B
+[MEAS 3s] task Delta prio=10 unused=1816 B
+[MEAS 3s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 3s] mainAppStack used=392 B of 8192
+[MEAS 10s] heap total=65536 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 10s] C heap (newlib) used=3456 of 65536
+[MEAS 10s] task meas prio=54 unused=3688 B
+[MEAS 10s] task Successor prio=10 unused=1816 B
+[MEAS 10s] task IDLE prio=0 unused=1256 B
+[MEAS 10s] task ComsMain prio=11 unused=7288 B
+[MEAS 10s] task Trigger prio=10 unused=1824 B
+[MEAS 10s] task ComstimeC prio=10 unused=3144 B
+[MEAS 10s] task Delta prio=10 unused=1816 B
+[MEAS 10s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 10s] task Prefix prio=10 unused=1816 B
+[MEAS 10s] mainAppStack used=904 B of 8192
+[MEAS 25s] heap total=65536 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 25s] C heap (newlib) used=3456 of 65536
+[MEAS 25s] task meas prio=54 unused=3688 B
+[MEAS 25s] task ComstimeC prio=10 unused=3144 B
+[MEAS 25s] task Delta prio=10 unused=1816 B
+[MEAS 25s] task IDLE prio=0 unused=1256 B
+[MEAS 25s] task ComsMain prio=11 unused=7288 B
+[MEAS 25s] task Trigger prio=10 unused=1824 B
+[MEAS 25s] task Successor prio=10 unused=1816 B
+[MEAS 25s] task Prefix prio=10 unused=1816 B
+[MEAS 25s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 25s] mainAppStack used=904 B of 8192
+[MEAS 40s] heap total=65536 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 40s] C heap (newlib) used=3456 of 65536
+[MEAS 40s] task meas prio=54 unused=3688 B
+[MEAS 40s] task ComstimeC prio=10 unused=3144 B
+[MEAS 40s] task IDLE prio=0 unused=1256 B
+[MEAS 40s] task ComsMain prio=11 unused=7288 B
+[MEAS 40s] task Trigger prio=10 unused=1824 B
+[MEAS 40s] task Prefix prio=10 unused=1816 B
+[MEAS 40s] task Delta prio=10 unused=1816 B
+[MEAS 40s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 40s] task Successor prio=10 unused=1816 B
+[MEAS 40s] mainAppStack used=904 B of 8192
