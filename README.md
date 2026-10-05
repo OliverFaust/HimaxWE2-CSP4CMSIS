@@ -70,6 +70,13 @@ Finally, teach you how to restore to the original factory settings and run [Sens
 
 - [FAQ](https://github.com/HimaxWiseEyePlus/Seeed_Grove_Vision_AI_Module_V2/blob/main/FAQ.md)
 
+## Interrupt priorities (CSP4CMSIS apps)
+Rule: **every interrupt whose handler calls CSP4CMSIS or FreeRTOS** (`isrWriter().putFromISR()`, `xSemaphoreGiveFromISR()`, `osKernelGetTickCount()`, ...) **must run at priority 5, 6 or 7.** The WE2 has 3 priority bits (0 = highest, 7 = lowest); `CSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY=5` (each app's `.mk`) and `configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY 5` (its `FreeRTOSConfig.h`) make the critical sections of FreeRTOS and CSP4CMSIS mask priorities 5..7 only. A handler at 0..4 can run in the middle of such a section and corrupt it.
+
+Neither the SDK nor the prebuilt drivers set a priority: read back on the board, every enabled interrupt was at 0, the highest. Each app therefore calls `NVIC_SetPriority(<irq>, CSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY)` for each such interrupt before it is enabled or its driver is started (with a comment at the call). Interrupts in use: `TIMER1INT_IRQn` (`csp4cmsis_irq`), `I2C_MST_0_intr_IRQn` (I2C completion: `csp4cmsis_shake_detection`, the three I2C KWS apps), `U55_IRQn` (NPU, where an RTOS semaphore override is used) and `DMAC2_DMACINTR_IRQn` (PDM audio DMA, where its callback reads the RTOS tick). Interrupts whose handlers make no RTOS or CSP4CMSIS call can stay where they are.
+
+Also: application code must not call RTOS functions while it has raised BASEPRI itself; the SDK's CMSIS-RTOS2 adapter checks only PRIMASK on the Cortex-M55 when deciding whether it is in a masked section.
+
 ## How to build the firmware?
 This part explains how you can build the firmware for Grove Vision AI Module V2.
 ### Build the firmware at Linux environment
