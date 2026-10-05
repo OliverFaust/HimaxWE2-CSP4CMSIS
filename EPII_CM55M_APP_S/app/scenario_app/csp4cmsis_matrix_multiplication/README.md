@@ -47,7 +47,7 @@ To align the correct row and column elements, the `Feeder` processes can "stagge
 
 ### Prerequisites
 * **Hardware:** Himax WE2 (Cortex-M55).
-* **Configuration:** FreeRTOS task limit must support at least 22 tasks (Main + 21 CSP tasks).
+* **Library and RTOS:** CSP4CMSIS 2.0.1 on FreeRTOS 10.5.1 through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`); the app starts the kernel with `osKernelInitialize()`/`osKernelStart()`. The 21 CSP threads and the launcher have static stacks.
 * **Make environment** in `CSP4CMSIS/EPII_CM55M_APP_S/makefile` set `APP_TYPE = csp4cmsis_matrix_multiplication`.
 
 ### Expected UART Output
