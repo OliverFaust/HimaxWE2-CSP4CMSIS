@@ -77,6 +77,9 @@ Neither the SDK nor the prebuilt drivers set a priority: read back on the board,
 
 Also: application code must not call RTOS functions while it has raised BASEPRI itself; the SDK's CMSIS-RTOS2 adapter checks only PRIMASK on the Cortex-M55 when deciding whether it is in a masked section.
 
+## Follow-up items
+- **IMX219 start-up fails intermittently** (`csp4cmsis_allon_sensor_tflm`; pre-existing, seen with both the pre-2.0 and the CSP4CMSIS 2.0.1 build): the sensor's first I2C register write fails (`dw_iic_write err_code:-60`, `IMX219 off by app fail`, then `Camera: sensor init failed`), and the camera never starts. On 2026-10-05 it happened in 3 of 5 runs of the pre-2.0 build and 1 of 6 of the 2.0.1 build, each time right after another camera run; after a non-camera app, or a second reset, the camera started. The IMX219 keeps its state across a WE2 reset. Candidate fix: before configuring the sensor, put it into a known state -- a software reset (register 0x0103) or a power cycle via its shutdown pin (`xshutdown_pin`) -- and retry the configuration a few times before giving up. Workaround: run the app again.
+
 ## How to build the firmware?
 This part explains how you can build the firmware for Grove Vision AI Module V2.
 ### Build the firmware at Linux environment
