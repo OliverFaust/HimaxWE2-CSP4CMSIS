@@ -5,12 +5,10 @@
 #include "common_types.h"
 #include "cisdp_sensor.h"
 
-// API 1.3: stack depth (words) is now fixed at compile time via
-// CSProcessStatic<N> -- 256 matches the value this process previously
-// received as CSP_LEGACY_PARALLEL_STACK_WORDS's dynamic fallback, so
-// its memory footprint is unchanged; only where it lives (static
-// storage vs. heap) has changed.
-class Camera : public csp::CSProcessStatic<256> {
+// Stack depth in words, fixed at compile time via CSProcessStatic<N>.
+// Measured on the board with CSP4CMSIS 2.0.1: 744 bytes used (as before 2.0,
+// when it had 1024 bytes and 280 left). 384 words = 1.5 KB leaves about 800.
+class Camera : public csp::CSProcessStatic<384> {
 public:
     Camera(csp::Chanout<frame_t> out);
     void run() override;
