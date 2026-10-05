@@ -1,0 +1,36 @@
+[MEAS 3s] heap total=65536 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 3s] C heap (newlib) used=4048 of 65536
+[MEAS 3s] task meas prio=54 unused=3920 B
+[MEAS 3s] task IDLE prio=0 unused=1256 B
+[MEAS 3s] task PrimeFilt prio=10 unused=304 B
+[MEAS 3s] task PrimeFilt prio=10 unused=240 B
+[MEAS 3s] task PrimeFilt prio=10 unused=240 B
+[MEAS 3s] task PrimeFilt prio=10 unused=304 B
+[MEAS 3s] task PrimeFilt prio=10 unused=304 B
+[MEAS 3s] task PrimeSink prio=10 unused=200 B
+[MEAS 3s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 3s] mainAppStack used=352 B of 8192
+[MEAS 10s] heap total=65536 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 10s] C heap (newlib) used=4048 of 65536
+[MEAS 10s] task meas prio=54 unused=3672 B
+[MEAS 10s] task IDLE prio=0 unused=1256 B
+[MEAS 10s] task PrimeFilt prio=10 unused=240 B
+[MEAS 10s] task PrimeFilt prio=10 unused=240 B
+[MEAS 10s] task PrimeFilt prio=10 unused=304 B
+[MEAS 10s] task PrimeFilt prio=10 unused=304 B
+[MEAS 10s] task PrimeSink prio=10 unused=200 B
+[MEAS 10s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 10s] task PrimeFilt prio=10 unused=304 B
+[MEAS 10s] mainAppStack used=352 B of 8192
+[MEAS 25s] heap total=65536 free=0 min_ever_free=0 allocs=0 frees=0
+[MEAS 25s] C heap (newlib) used=4048 of 65536
+[MEAS 25s] task meas prio=54 unused=3672 B
+[MEAS 25s] task IDLE prio=0 unused=1256 B
+[MEAS 25s] task PrimeFilt prio=10 unused=240 B
+[MEAS 25s] task PrimeFilt prio=10 unused=304 B
+[MEAS 25s] task PrimeFilt prio=10 unused=304 B
+[MEAS 25s] task PrimeSink prio=10 unused=200 B
+[MEAS 25s] task Tmr Svc prio=2 unused=1912 B
+[MEAS 25s] task PrimeFilt prio=10 unused=304 B
+[MEAS 25s] task PrimeFilt prio=10 unused=240 B
+[MEAS 25s] mainAppStack used=352 B of 8192

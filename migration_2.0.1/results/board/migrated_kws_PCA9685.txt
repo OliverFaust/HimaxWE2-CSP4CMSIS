@@ -1,0 +1,42 @@
+1st BL Modem Build DATE=Nov 30 2023, 0x0002000b
+Please input any key to enter X-Modem mode in 100 ms 
+waiting input key...
+slot flash_offset 0x00100000
+New MemDesp himax_sec_SB_image_process PASS
+set_memory_s_ns
+bl_status = 0x800000, HX_DSP_FLAG 1
+bl_status = 0x800000
+jump_addr=0x10000000
+Compiler Version: ARM GNU, 13.2.1 20231009
+ori_clk src info, 0x56100030=4077
+ori_clk src info, 0x56100034=0
+ori_clk src info, 0x56100038=c1a4
+clk src info, 0x56100030=4037
+clk src info, 0x56100034=0
+clk src info, 0x56100038=c1b8
+start KWS exmample now recording
+TA[34056d40]
+Ethos-U55 device initialised
+kws model's schema version 3
+Arm NPU support added to op resolver.
+MicroInterpreter kws_static_interpreter 1
+initial done
+KWS init done, handing audio processing off to the CSP4CMSIS task
+
+--- KWS Pipeline starting (incl. PCA9685 I2C servo control) ---
+Preprocessing state initialised: tensor_bytes=3920 type=9
+Preprocessing: priming step 1/1 (window n[PCA9685] Initializing PWM driver, centering both servos...
+ot yet fully real)
+[PCA9685] Ch0 (up/down) -> Middle | Ch1 (left/right) -> Middle
+[Acq]  Missed 0/20 | ms: dma_wait=9682 buf_asm=0 chan_send_wait=0 | elapsed=9684ms rtf=1.03
+[DMA]  cb_count=19 avg_interval=512ms (ground truth, ISR-measured)
+[Mem]  free_heap=824 min_ever_free=824 | stack_hwm(words): prep=0 infer=0
+[Prep] Processed 20 | ms: mfcc=121 chan_send_wait=0 | elapsed=9690ms rtf=1.03
+[Inf]  Processed 20 | ms: copy=0 invoke=4817 post=2 | elapsed=10436ms rtf=0.95
+[Sem]  take=980 give=1960
+[Acq]  Missed 0/40 | ms: dma_wait=10240 buf_asm=0 chan_send_wait=0 | elapsed=10240ms rtf=0.97
+[DMA]  cb_count=39 avg_interval=512ms (ground truth, ISR-measured)
+[Mem]  free_heap=824 min_ever_free=824 | stack_hwm(words): prep=3896 infer=7876
+[Prep] Processed 40 | ms: mfcc=120 chan_send_wait=0 | elapsed=10240ms rtf=0.97
+[Inf]  Processed 40 | ms: copy=0 invoke=4818 post=1 | elapsed=10240ms rtf=0.97
+[Sem]  take=1960 give=3920

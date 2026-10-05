@@ -114,3 +114,58 @@ Consequences, applied: `configTOTAL_HEAP_SIZE` 64 KB → 1 KB in all eight (comm
 `kws_pdm_record` `__HEAP_SIZE` 0x7000 → 0xB000. RAM (`.bss`) per app ~60 KB smaller. Not changed
 (stack sizes were not part of this step): the philosophers' 1 KB stacks have 184–224 B headroom,
 Preprocessing 232 B (as on `main`); Inference's 32 KB stack uses 1.3 KB.
+
+## Apps needing decisions (branch `csp4cmsis-2.0.1`, 2026-10-05)
+
+Hardware: Grove Vision AI V2 with the on-board microphone and the IMX219 camera; **no ADXL345,
+PCF8574 or PCA9685** (none listed). Builds: no new warnings in app code
+(`results/phaseB3_build_summary.txt`).
+
+### Pilot heaps
+`csp4cmsis_sieve`, `csp4cmsis_alt_test`: 0 FreeRTOS heap allocations (C heap 4.0 / 1.1 KB) →
+`configTOTAL_HEAP_SIZE` 1 KB (`measure_sieve.txt`, `measure_alt_test.txt`).
+
+### Interrupt priorities
+Read on `main` with the drivers running (static diagnostic thread, `nvic_readout_diag2.c.txt`;
+`nvic_readout_main_drivers_running.txt`): **every enabled interrupt at priority 0** in all seven
+interrupt-using apps, including those the neurochannel enables with the camera attached:
+`SC_trigger_timeout_IRQn` 84, `SC_sen_nframe_end_IRQn` 85, `edm_int_out_IRQn` 143, `WDMA2_int_IRQn`
+154/155, `WDMA3_int_IRQn` 156/157, besides `TIMER3INT_IRQn` 37, I2C 92/93/112 and `U55_IRQn` 192.
+
+Interrupts whose handler calls CSP4CMSIS or FreeRTOS, now set to 5 with `NVIC_SetPriority(…,
+CSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY)` before they are enabled or the driver starts (comment at
+each call; rule in the top-level README):
+
+| App | Interrupt | Handler's RTOS/CSP call | Read back after migration |
+|---|---|---|---|
+| `irq` | `TIMER1INT_IRQn` 35 | `isrWriter().putFromISR()` | 5 |
+| `shake_detection` | `I2C_MST_0_intr_IRQn` 93 | `isrWriter().putFromISR()` | 5 |
+| `kws_iic`, `kws_PCA9685`, `kws_PCA9685_alt` | `I2C_MST_0_intr_IRQn` 93 | `isrWriter().putFromISR()` | 5 |
+| | `DMAC2_DMACINTR_IRQn` 66 (PDM DMA) | tick read (`osKernelGetTickCount()`, was `xTaskGetTickCountFromISR()`) | 5 |
+| | `U55_IRQn` 192 (NPU) | `xSemaphoreGiveFromISR()` (Ethos-U override) | 5 |
+
+`kws_pdm_record` needs none: its NPU handler uses the driver's bare-metal semaphore and its PDM DMA
+callback makes no RTOS call. The neurochannel's camera interrupt is for its own step.
+
+### Results
+
+| App | 2.0.1 vs `main` | Class |
+|---|---|---|
+| `irq` (D7) | count 1…23 in 25 s, no gaps (`main`: 1…22; the ISR wrote to a rendezvous with `putFromISR()`, dropping ticks whenever TimerProcess was not waiting) | (a) ISR path no longer drops ticks silently; a miss would now show as a gap |
+| `shake_detection` (D6) | start-up output identical; measured ~40 I2C completions/s for 25 s (driver completes unacknowledged transfers), none lost | — (sensor not available) |
+| `kws_iic`, `kws_PCA9685`, `kws_PCA9685_alt` (D6, D5) | audio path matches over the whole baseline capture: no missed buffers, rtf 0.97; MFCC 120 vs 140 ms per 20 steps (C++ allocations now in newlib instead of the FreeRTOS heap), Invoke 0.1–1 ms slower per call, `[Mem] free_heap` reports the new 1 KB FreeRTOS heap; print interleaving and two ambient "yes" detections differ between runs | (b) |
+
+Not tested: the I2C devices themselves (README of each app says so).
+
+### Heaps (measured, then set)
+
+| App | FreeRTOS heap: allocations / used | → `configTOTAL_HEAP_SIZE` | C heap used | → `__HEAP_SIZE` |
+|---|---|---|---|---|
+| `irq` | 0 | 64 KB → 1 KB | 2.1 KB | 64 KB (unchanged) |
+| `shake_detection` | 0 | 64 KB → 1 KB | 2.8 KB | 28 KB (unchanged) |
+| `kws_iic`, `kws_PCA9685` | 2 / 200 B (Ethos-U semaphore) | 300 KB → 1 KB | 34.7 KB | 28 → 44 KB |
+| `kws_PCA9685_alt` | 2 / 200 B | 300 KB → 1 KB | 32.0 KB | 28 → 44 KB |
+
+Stacks (`measure_<app>.txt`): launchers 228–552 B of 4096; irq TimerProcess 712/1024 B; shake
+processes ≤ 368/1024 B; KWS Acquisition 464/8192, Preprocessing 800/16 384, Inference 1264/32 768,
+Filter/FSM/Console ≤ 400/2048, Reporter and the I2C process ≤ 608/4096 B.
