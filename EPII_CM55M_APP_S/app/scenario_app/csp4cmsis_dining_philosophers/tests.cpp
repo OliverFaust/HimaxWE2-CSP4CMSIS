@@ -50,16 +50,16 @@ public:
             // Generates a delay between 10ms and 110ms
             int thinking_time = 10 + (std::rand() % 100);
             printf("Phil %d: Thinking for %d ms...\r\n", id, thinking_time);
-            SleepFor(thinking_time);  // ticks = ms at 1000 Hz
+            SleepFor(Milliseconds(thinking_time));
             
             printf("Phil %d: Hungry! Picking up LEFT fork...\r\n", id);
             left_p << id;
-            SleepFor(50);
+            SleepFor(Milliseconds(50));
             printf("Phil %d: Picking up RIGHT fork...\r\n", id);
             right_p << id;
 
             printf("Phil %d: EATING!\r\n", id);
-            SleepFor(50);
+            SleepFor(Milliseconds(50));
 
             printf("Phil %d: Putting down forks...\r\n", id);
             left_d << id;
@@ -84,7 +84,7 @@ static StaticTask_t mainAppControlBlock;
 
 void MainApp_Task(void* params) {    
     (void)params;
-    SleepFor(500);  // 500 ms (1000 Hz tick)
+    SleepFor(Milliseconds(500));
     const int N = 5;
     
     static Channel<int> pick[N];

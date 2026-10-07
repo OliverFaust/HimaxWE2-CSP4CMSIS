@@ -32,7 +32,7 @@ static StaticTask_t mainAppControlBlock;
 void MainApp_Task(void* params)
 {
     (void)params;
-    SleepFor(500);  // 500 ms (1000 Hz tick)
+    SleepFor(Milliseconds(500));
 
     static Channel<frame_t>  frame_chan;      // unbuffered
     static Channel<result_t> result_chan;
@@ -50,7 +50,7 @@ void MainApp_Task(void* params)
     xprintf("*** MainApp_Task: Run() returned, entering report loop ***\r\n");
 
     while (true) {
-        SleepFor(CSP_STACK_REPORT_INTERVAL_MS);  // ticks = ms at 1000 Hz
+        SleepFor(Milliseconds(CSP_STACK_REPORT_INTERVAL_MS));
 
         uint32_t unused_bytes = osThreadGetStackSpace(osThreadGetId());
         xprintf("CSP_Main: %u/%u bytes used (%u bytes unused headroom)\r\n",

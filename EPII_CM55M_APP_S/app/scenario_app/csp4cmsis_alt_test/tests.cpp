@@ -12,7 +12,7 @@ using namespace csp;
 
 // How often to print a stack-usage report for the whole network. This is a
 // *live* reading (CSProcess::stackHighWaterMarkWords()), not a one-shot
-// end-of-run report -- Sender/Receiver both idle in SleepFor(osWaitForever)
+// end-of-run report -- Sender/Receiver both idle in SleepFor(Forever)
 // after finishing rather than exiting (an exited thread's handle can't be queried), so the report loop below keeps
 // running for the life of the task. Read the HWM columns to right-size the
 // provisional CSProcessStatic<N> values on Sender/Receiver below -- those
@@ -38,7 +38,7 @@ struct Message {
 };
 
 // --- 1. Define Channels ---
-// 'Channel' or 'One2OneChannel' now represents a Rendezvous (capacity 0) sync point.
+// 'Channel' is a rendezvous (capacity 0) sync point.
 using AltChannel = Channel<Message>;
 
 // CSProcess is abstract: stackWords()/stackBuffer()/taskBuffer() are pure
@@ -68,7 +68,7 @@ public:
         }
         printf("[Sender %d] Finished.\r\n", id);
         while (true) {
-            SleepFor(osWaitForever);
+            SleepFor(Forever);
         }
     }
 };
@@ -85,7 +85,7 @@ public:
     const char* name() const override { return "Receiver"; }
 
     void run() override {
-        SleepFor(10);  // ticks; configTICK_RATE_HZ is 1000, so 10 ms
+        SleepFor(Milliseconds(10));
         printf("[Receiver] Task running. Using Resident-Guard ALT.\r\n");
 
         Message msgA, msgB; 
@@ -130,7 +130,7 @@ public:
             printf("[Receiver] SUCCESS: %d messages verified heap-free.\r\n", count);
         }
         while (true) {
-            SleepFor(osWaitForever);
+            SleepFor(Forever);
         }
     }
 };
@@ -138,7 +138,7 @@ public:
 // --- 3. The Main Application Task ---
 void MainApp_Task(void* params) {
     (void)params;
-    SleepFor(500);  // 500 ms
+    SleepFor(Milliseconds(500));
 
     printf("\r\n--- BOli2 Launching CSP Static Network (Zero-Heap) ---\r\n");
     
@@ -158,10 +158,10 @@ void MainApp_Task(void* params) {
     printf("*** MainApp_Task: Run() returned, entering stack-report loop ***\r\n");
 
     // Sender/Receiver never return from run() (both drop into
-    // SleepFor(osWaitForever) once done), so there's no "network
+    // SleepFor(Forever) once done), so there's no "network
     // finished" point to report stack usage at -- report periodically.
     while (true) {
-        SleepFor(CSP_STACK_REPORT_INTERVAL_MS);  // ticks = ms at 1000 Hz
+        SleepFor(Milliseconds(CSP_STACK_REPORT_INTERVAL_MS));
 
         uint32_t unused_bytes = osThreadGetStackSpace(osThreadGetId());
         printf("MainApp: %u/%u bytes used (%u bytes unused headroom)\r\n",

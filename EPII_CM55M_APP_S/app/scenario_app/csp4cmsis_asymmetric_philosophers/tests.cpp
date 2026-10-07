@@ -51,8 +51,8 @@ public:
             // Generates a delay between 10ms and 110ms
             int thinking_time = 10 + (std::rand() % 100);
             printf("Phil %d: Thinking for %d ms...\r\n", id, thinking_time);
-            SleepFor(thinking_time);  // ticks = ms at 1000 Hz
-            SleepFor(50);
+            SleepFor(Milliseconds(thinking_time));
+            SleepFor(Milliseconds(50));
             printf("Phil %d: Picking up RIGHT fork...\r\n", id);
             right_p << id;
             
@@ -60,7 +60,7 @@ public:
             left_p << id;
 
             printf("Phil %d: EATING!\r\n", id);
-            SleepFor(50);
+            SleepFor(Milliseconds(50));
 
             printf("Phil %d: Putting down forks...\r\n", id);
             left_d << id;
@@ -91,16 +91,16 @@ public:
             // Generates a delay between 10ms and 110ms
             int thinking_time = 10 + (std::rand() % 100);
             printf("Phil %d: Thinking for %d ms...\r\n", id, thinking_time);
-            SleepFor(thinking_time);  // ticks = ms at 1000 Hz
+            SleepFor(Milliseconds(thinking_time));
             
             printf("Phil %d: Hungry! Picking up LEFT fork...\r\n", id);
             left_p << id;
-            SleepFor(50);
+            SleepFor(Milliseconds(50));
             printf("Phil %d: Picking up RIGHT fork...\r\n", id);
             right_p << id;
 
             printf("Phil %d: EATING!\r\n", id);
-            SleepFor(50);
+            SleepFor(Milliseconds(50));
 
             printf("Phil %d: Putting down forks...\r\n", id);
             left_d << id;
@@ -125,7 +125,7 @@ static StaticTask_t mainAppControlBlock;
 
 void MainApp_Task(void* params) {    
     (void)params;
-    SleepFor(500);  // 500 ms (1000 Hz tick)
+    SleepFor(Milliseconds(500));
     const int N = 5;
     
     static Channel<int> pick[N];
@@ -149,14 +149,14 @@ void MainApp_Task(void* params) {
     printf("\n=== CSP4CMSIS Asymmetric Philosophers (Liveness Test) ===\r\n");
     printf("This test should run infinitely without deadlocking.\r\n\n");
 
-    // Deliberately using the default (TerminatingNetwork) Run() overload,
-    // not ExecutionMode::StaticNetwork: since every process loops forever,
+    // Deliberately ExecutionMode::TerminatingNetwork, not StaticNetwork:
+    // since every process loops forever,
     // Run() blocks here indefinitely waiting on the completion semaphore
     // that will never be signalled. MainApp_Task therefore never falls off
     // the end of its function, so no osThreadExit() is needed -- unlike
     // the StaticNetwork examples elsewhere, control simply never returns.
     Run(InParallel(forks[0], forks[1], forks[2], forks[3], forks[4], p0, p1, p2, p3, p4),
-        NETWORK_PRIORITY);
+        ExecutionMode::TerminatingNetwork, NETWORK_PRIORITY);
 }
 
 extern "C" void RunProcessingChainTest(void) {

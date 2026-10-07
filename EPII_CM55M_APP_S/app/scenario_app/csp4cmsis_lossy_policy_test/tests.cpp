@@ -13,8 +13,8 @@ struct Message {
 // Two buffered channels, each with 10 slots, and a rendezvous on which the
 // sender reports that both bursts are written.
 #define SLOTS 10
-using NewestChan = SamplingBufferedChannel<Message, SLOTS, BufferPolicy::KeepNewest>;
-using OldestChan = SamplingBufferedChannel<Message, SLOTS, BufferPolicy::KeepOldest>;
+using NewestChan = BufferedChannel<Message, SLOTS, BufferPolicy::KeepNewest>;
+using OldestChan = BufferedChannel<Message, SLOTS, BufferPolicy::KeepOldest>;
 
 #define TEST_COUNT 1000000
 
@@ -115,7 +115,7 @@ static StaticTask_t mainAppControlBlock;
 
 void MainApp_Task(void* params) {
     (void)params;
-    SleepFor(500);  // 500 ms (1000 Hz tick)
+    SleepFor(Milliseconds(500));
     printf("\r\n--- Launching Policy Comparison Test ---\r\n");
 
     static NewestChan chan_n;

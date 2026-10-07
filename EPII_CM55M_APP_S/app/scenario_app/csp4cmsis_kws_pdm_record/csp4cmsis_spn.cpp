@@ -18,7 +18,7 @@ using namespace csp;
  *
  *   AcquisitionProcess --[Channel<AudioChunkMsg>, rendezvous]--> PreprocessingProcess
  *   PreprocessingProcess --[Channel<FeatureTensorMsg>, rendezvous]--> InferenceProcess
- *   All three of the above --[SamplingBufferedChannel<KwsReportMsg>, lossy]--> ReporterProcess
+ *   All three of the above --[BufferedChannel<KwsReportMsg>, lossy]--> ReporterProcess
  *
  * This supersedes the earlier three-process design (Acquisition | Inference |
  * Reporter), which recomputed the full 98-frame MFCC tensor from scratch
@@ -104,7 +104,7 @@ struct KwsReportMsg {
 
 // 8-slot lossy buffer. Plenty of headroom for a burst of detections; if it
 // ever fills, we drop the oldest queued print rather than block any sender.
-static SamplingBufferedChannel<KwsReportMsg, 8, BufferPolicy::KeepNewest> g_reportChan;
+static BufferedChannel<KwsReportMsg, 8, BufferPolicy::KeepNewest> g_reportChan;
 
 class ReporterProcess : public CSProcessStatic<256> {
     Chanin<KwsReportMsg> in;
@@ -388,10 +388,10 @@ public:
 
             uint32_t dmaWaitStart = osKernelGetTickCount();
             while (!kws_processing_complete) {
-                SleepFor(1);
+                SleepFor(Ticks(1));
             }
             while (w_buf_idx == last_current_buf) {
-                SleepFor(1);
+                SleepFor(Ticks(1));
             }
             uint32_t dmaWaitEnd = osKernelGetTickCount();
             dma_wait_ms_accum += ticksToMs(dmaWaitEnd - dmaWaitStart);
@@ -441,7 +441,7 @@ public:
             // than risk pushing this iteration past the next DMA buffer.
             uint32_t elapsedThisIterMs = ticksToMs(osKernelGetTickCount() - iterStart);
             if (elapsedThisIterMs + 1 < kHopBudgetMs) {
-                SleepFor(1);
+                SleepFor(Milliseconds(1));
             }
         }
     }
@@ -460,7 +460,7 @@ static StaticTask_t mainAppControlBlock;
 
 void MainApp_Task(void* params) {
     (void)params;
-    SleepFor(10);  // 10 ms (1000 Hz tick)
+    SleepFor(Milliseconds(10));
     xprintf("\r\n--- KWS Processing (4-process pipeline: Acquisition | Preprocessing | Inference | Reporter) ---\r\n");
 
     if (cv_kws_preprocess_init() != 0) {

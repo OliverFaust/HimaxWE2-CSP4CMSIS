@@ -17,7 +17,7 @@ using namespace csp;
 // KeepNewest with one slot keeps only the latest count: if TimerProcess has
 // not read the previous one yet, it is overwritten, and the missed tick shows
 // up as a gap in the printed count instead of stalling anything.
-static SamplingBufferedChannel<uint32_t, 1, BufferPolicy::KeepNewest> timerChannel;
+static BufferedChannel<uint32_t, 1, BufferPolicy::KeepNewest> timerChannel;
 
 extern "C" void timer1_callback(uint32_t event) {
     hx_drv_timer_ClearIRQ(TIMER_ID_1);
@@ -50,7 +50,7 @@ public:
     void run() override {
         while(true) {
             // Do some background AI or Logic
-            SleepFor(500);  // 500 ms (1000 Hz tick)
+            SleepFor(Milliseconds(500));
             printf("Logic Heartbeat...\n");
         }
     }
@@ -69,7 +69,7 @@ static StaticTask_t mainAppControlBlock;
 
 void MainApp_Task(void* params) {
     (void)params;
-    SleepFor(2000);  // 2 s (1000 Hz tick)
+    SleepFor(Milliseconds(2000));
     printf("\r\n--- CSP4CMSIS Manual Channel Test ---\r\n");
 
     // Hardware Init

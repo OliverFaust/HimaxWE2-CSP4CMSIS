@@ -26,7 +26,7 @@ using namespace csp;
  *   PreprocessingProcess --[Channel<FeatureTensorMsg>]---> InferenceProcess
  *   InferenceProcess (hooks) --[Channel<KwsTokenMsg>]---> FilterProcess (New!)
  *   FilterProcess --[Channel<KwsTokenMsg>]---> FsmProcess
- *   All Producers --[SamplingBufferedChannel<KwsReportMsg>]---> ReporterProcess
+ *   All Producers --[BufferedChannel<KwsReportMsg>]---> ReporterProcess
  ******************************************************************************/
 
 struct AudioChunkMsg {
@@ -74,7 +74,7 @@ struct KwsReportMsg {
     uint32_t dmaCbAvgIntervalMs; // NEW: real ISR-measured avg interval between callbacks
 };
 
-static SamplingBufferedChannel<KwsReportMsg, 8, BufferPolicy::KeepNewest> g_reportChan;
+static BufferedChannel<KwsReportMsg, 8, BufferPolicy::KeepNewest> g_reportChan;
 
 // --- I2C hardware synchronization for PCA9685 ---
 // The I2C completion interrupt signals the actuator process through a one-slot
@@ -374,7 +374,7 @@ class Pca9685Process : public CSProcessStatic<1024> {
         write_reg(PCA9685_MODE2, MODE2_OUTDRV);            // push-pull outputs
         write_reg(PCA9685_PRESCALE, PCA9685_PRESCALE_50HZ); // OK: chip is asleep at POR
         write_reg(PCA9685_MODE1, MODE1_AI);                 // auto-increment on, wakes oscillator (SLEEP=0)
-        SleepFor(1);                        // datasheet: wait >=500us after waking osc.
+        SleepFor(Milliseconds(1));                        // datasheet: wait >=500us after waking osc.
 
         // Initialise both servos to the middle position.
         set_position(0, position[0]);
@@ -649,8 +649,8 @@ public:
         while (true) {
             uint32_t iterStart = osKernelGetTickCount();
             uint32_t dmaWaitStart = osKernelGetTickCount();
-            while (!kws_processing_complete) { SleepFor(1); }
-            while (w_buf_idx == last_w_buf_idx) { SleepFor(1); }
+            while (!kws_processing_complete) { SleepFor(Ticks(1)); }
+            while (w_buf_idx == last_w_buf_idx) { SleepFor(Ticks(1)); }
             uint32_t dmaWaitEnd = osKernelGetTickCount();
             dma_wait_ms_accum += ticksToMs(dmaWaitEnd - dmaWaitStart);
 
@@ -714,7 +714,7 @@ public:
             }
 
             uint32_t elapsedThisIterMs = ticksToMs(osKernelGetTickCount() - iterStart);
-            if (elapsedThisIterMs + 1 < kHopBudgetMs) { SleepFor(1); }
+            if (elapsedThisIterMs + 1 < kHopBudgetMs) { SleepFor(Milliseconds(1)); }
         }
     }
 };
@@ -733,7 +733,7 @@ static StaticTask_t mainAppControlBlock;
 
 void MainApp_Task(void* params) {
     (void)params;
-    SleepFor(10);  // 10 ms (1000 Hz tick)
+    SleepFor(Milliseconds(10));
     xprintf("\r\n--- KWS Pipeline starting (incl. PCA9685 I2C servo control) ---\r\n");
 
     if (cv_kws_preprocess_init() != 0) {

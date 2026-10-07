@@ -88,7 +88,7 @@ static StaticTask_t mainAppControlBlock;
 
 void MainApp_Task(void* params) {
     (void)params;
-    SleepFor(500);  // ticks; configTICK_RATE_HZ is 1000, so 500 ms
+    SleepFor(Milliseconds(500));
     printf("\r\n--- Launching Prime Sieve Daisy Chain ---\r\n");
 
     // We need NUM_FILTERS + 1 channels to connect the stages
