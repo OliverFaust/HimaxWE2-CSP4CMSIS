@@ -1,6 +1,6 @@
 # CSP-based Person Detection on Himax WE2
 
-This project implements a robust, lossless image processing pipeline using **Communicating Sequential Processes (CSP)** patterns on the Himax WE2 (Grove Vision AI V2) hardware. It uses CSP4CMSIS 2.0.1 on FreeRTOS 10.5.1, through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`; the kernel is started with `osKernelInitialize()`/`osKernelStart()`), and the Ethos-U55 NPU to perform real-time person detection.
+This project implements a robust, lossless image processing pipeline using **Communicating Sequential Processes (CSP)** patterns on the Himax WE2 (Grove Vision AI V2) hardware. It uses CSP4CMSIS 3.0.0 on FreeRTOS 10.5.1, through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`; the kernel is started with `osKernelInitialize()`/`osKernelStart()`), and the Ethos-U55 NPU to perform real-time person detection.
 
 
 
@@ -105,7 +105,7 @@ void MainApp_Task(void* params) {
     // walks the network and reports FreeRTOS stack high-water-mark
     // usage for every process, plus its own.
     while (true) {
-        SleepFor(CSP_STACK_REPORT_INTERVAL_MS);
+        SleepFor(Milliseconds(CSP_STACK_REPORT_INTERVAL_MS));
         // ... report CSP_Main HWM, then network.forEachProcess(...) ...
     }
 }

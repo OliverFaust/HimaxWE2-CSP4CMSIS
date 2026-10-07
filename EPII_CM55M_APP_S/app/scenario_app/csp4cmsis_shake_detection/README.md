@@ -36,7 +36,7 @@ An interrupt cannot wait for a partner, so it never writes to a rendezvous chann
 An interrupt whose handler calls CSP4CMSIS or FreeRTOS must run at priority 5..7 (at or below `CSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY` = 5, 3 priority bits). The SDK leaves every interrupt at 0, the highest, so `app_main()` sets `I2C_MST_0_intr_IRQn` to 5 before the I2C driver is started.
 
 ### Library and RTOS
-CSP4CMSIS 2.0.1 on FreeRTOS 10.5.1 through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`); the app starts the kernel with `osKernelInitialize()`/`osKernelStart()`. All threads and stacks are static; the FreeRTOS heap is not used (`configTOTAL_HEAP_SIZE` 1 KB).
+CSP4CMSIS 3.0.0 on FreeRTOS 10.5.1 through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`); the app starts the kernel with `osKernelInitialize()`/`osKernelStart()`. All threads and stacks are static; the FreeRTOS heap is not used (`configTOTAL_HEAP_SIZE` 1 KB).
 
 ## 🚀 How to Run
 
@@ -57,4 +57,4 @@ Application tasks created successfully.
 ```
 
 ### Test status (CSP4CMSIS 2.0.1)
-The I2C part is migrated but **not tested with an ADXL345**. On the board without the sensor, the app starts, and the driver still completes every (unacknowledged) transfer: the completion path ran about 40 times per second for 25 s without a lost completion. No shake can be detected without the sensor.
+The I2C part is migrated but **not tested with an ADXL345**. On the board without the sensor, the app starts, and the driver still completes every (unacknowledged) transfer: the completion path ran about 40 times per second for 25 s without a lost completion. No shake can be detected without the sensor. With CSP4CMSIS 3.0.0 the start-up output is identical; the completion rate above was measured with 2.0.1.

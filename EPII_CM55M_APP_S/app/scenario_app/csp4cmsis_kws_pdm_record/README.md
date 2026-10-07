@@ -14,7 +14,7 @@ This repository extends the original single-task `kws_pdm_record` app into a **c
 
 The original app ran audio acquisition, feature extraction, and NPU inference sequentially in a single task: capture → MFCC → `Invoke()` → report, in strict order, once per cycle. That single-threaded design leaves the CPU idle while the NPU runs, and leaves the NPU idle while the CPU captures and featurizes the next window.
 
-This version restructures the app as a **four-process CSP network**, using [CSP4CMSIS](https://oliverfaust.github.io/CSP4CMSIS/)'s Communicating Sequential Processes model (CSP4CMSIS 2.0.1) on top of FreeRTOS 10.5.1, through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`; the app starts the kernel with `osKernelInitialize()`/`osKernelStart()`). Each process is an independent, statically-allocated thread communicating exclusively through typed channels — no shared mutable state, no manual locking:
+This version restructures the app as a **four-process CSP network**, using [CSP4CMSIS](https://oliverfaust.github.io/CSP4CMSIS/)'s Communicating Sequential Processes model (CSP4CMSIS 3.0.0) on top of FreeRTOS 10.5.1, through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`; the app starts the kernel with `osKernelInitialize()`/`osKernelStart()`). Each process is an independent, statically-allocated thread communicating exclusively through typed channels — no shared mutable state, no manual locking:
 
 | Process | Responsibility |
 |---|---|
@@ -27,7 +27,7 @@ This version restructures the app as a **four-process CSP network**, using [CSP4
 
 ![CSP4CMSIS Process Network](./images/csp_pipeline_diagram.png)
 
-Acquisition → Preprocessing and Preprocessing → Inference are **zero-capacity rendezvous channels**: each side blocks until the other is ready, and a pointer — not a copy — is handed across. Both of those two processes, plus Inference, report diagnostics to Reporter over a shared **lossy, buffered channel** (`SamplingBufferedChannel`, keep-newest policy), so a burst of print activity can never propagate backpressure into the acquisition/inference path.
+Acquisition → Preprocessing and Preprocessing → Inference are **zero-capacity rendezvous channels**: each side blocks until the other is ready, and a pointer — not a copy — is handed across. Both of those two processes, plus Inference, report diagnostics to Reporter over a shared **lossy, buffered channel** (`BufferedChannel` with the keep-newest policy), so a burst of print activity can never propagate backpressure into the acquisition/inference path.
 
 Double buffering is what makes the pipelining safe: PreprocessingProcess can start building the *next* feature tensor while InferenceProcess is still blocked inside the *current* `Invoke()` call, because the two sides ping-pong between two statically-allocated tensor buffers — the same technique originally used for whole audio windows, applied one level finer to feature extraction itself.
 
@@ -96,7 +96,7 @@ class AcquisitionProcess : public CSProcessStatic<256> {
 public:
     void run() override {
         while (true) {
-            while (w_buf_idx == last_current_buf) { SleepFor(1); }
+            while (w_buf_idx == last_current_buf) { SleepFor(Ticks(1)); }
             int32_t current_buf = w_buf_idx;
 
             SCB_InvalidateDCache_by_Addr((uint32_t*)audio_buf[current_buf], QUARTER_SECOND_MONO_BYTES);
@@ -242,7 +242,7 @@ app/scenario_app/csp4cmsis_kws_pdm_record/
 
 ## 🐛 Troubleshooting
 
-* **Reporter process never prints anything, but the app doesn't crash** — Priority starvation. InferenceProcess runs at `osPriorityLow3`, above the other three processes (`osPriorityLow2`); a spin-wait in a higher-priority process (e.g. `while(!flag);`) never yields to a strictly lower-priority one. Use `SleepFor(1)`, not a yield (which only rotates same-priority threads).
+* **Reporter process never prints anything, but the app doesn't crash** — Priority starvation. InferenceProcess runs at `osPriorityLow3`, above the other three processes (`osPriorityLow2`); a spin-wait in a higher-priority process (e.g. `while(!flag);`) never yields to a strictly lower-priority one. Use `SleepFor(Ticks(1))`, not a yield (which only rotates same-priority threads).
 * **Timing measurements wrap to a huge (~4 billion) value** — A raw `SysTick`-based cycle counter was used across a long wait (e.g. around `Invoke()`). Use `osKernelGetTickCount()` and `ticksToMs()` (in `cvapp_kws.h`) for any measurement that spans such a wait; raw cycle counters are only safe for short phases.
 * **`std::bad_alloc` right after the pipeline banner** — The C library heap is too small. Since CSP4CMSIS 2.0, C++ `new` uses the C library heap (`__HEAP_SIZE` in `csp4cmsis_kws_pdm_record.ld`, 44 KB; about 35 KB is in use); before, the library routed it to the FreeRTOS heap, which this app no longer uses (`configTOTAL_HEAP_SIZE` is 1 KB).
 * **Classification results look wrong / model seems to be fed stale audio** — Check that `BLK_NUM` (in `csp4cmsis_kws_pdm_record.h`) and the window-assembly logic agree on how many samples one DMA chunk actually represents. A mismatch here silently feeds the model a partly-stale window without any compile or runtime error.

@@ -26,7 +26,7 @@ The test utilizes a `StaticNetwork` execution mode to run two concurrent process
 ## 🛠 Technical Details
 
 ### 1. Zero-Heap Synchronization
-The `timerChannel` (`SamplingBufferedChannel<uint32_t, 1, BufferPolicy::KeepNewest>`) is declared as a static resource. This ensures that the communication path between the hardware interrupt and the consumer task is established at compile-time, adhering to the framework's **Zero-Heap** philosophy.
+The `timerChannel` (`BufferedChannel<uint32_t, 1, BufferPolicy::KeepNewest>`) is declared as a static resource. This ensures that the communication path between the hardware interrupt and the consumer task is established at compile-time, adhering to the framework's **Zero-Heap** philosophy.
 
 ### 2. Context Transitioning
 Communication follows a strict sequence to ensure thread safety:
@@ -48,7 +48,7 @@ While the `TimerProcess` is waiting for hardware, the `LogicProcess` continues t
 * **Hardware:** Himax WE2 (Cortex-M55) evaluation board.
 * **Toolchain:** Arm GNU Toolchain (eabi).
 * **Dependencies:** `hx_drv_timer` and `hx_drv_scu` libraries.
-* **Library and RTOS:** CSP4CMSIS 2.0.1 on FreeRTOS 10.5.1 through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`); the app starts the kernel with `osKernelInitialize()`/`osKernelStart()`.
+* **Library and RTOS:** CSP4CMSIS 3.0.0 on FreeRTOS 10.5.1 through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`); the app starts the kernel with `osKernelInitialize()`/`osKernelStart()`.
 * **Make environment** in `CSP4CMSIS/EPII_CM55M_APP_S/makefile` set `APP_TYPE = csp4cmsis_irq`.
 
 ### Expected UART Output
