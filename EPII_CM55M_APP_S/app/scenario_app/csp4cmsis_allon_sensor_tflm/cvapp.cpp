@@ -149,11 +149,8 @@ static int _arm_npu_init(bool security_enable, bool privilege_enable)
                             0, /* Fast mem region size. */
 							security_enable,                       /* Security enable. */
 							privilege_enable))) {                   /* Privilege enable. */
-    	xprintf("failed to initalise Ethos-U device\n");
             return err;
         }
-
-    xprintf("Ethos-U55 device initialised\n");
 
     return 0;
 }
@@ -172,40 +169,29 @@ int cv_init(bool security_enable, bool privilege_enable)
 #endif
 
 	if (model->version() != TFLITE_SCHEMA_VERSION) {
-		xprintf(
-			"[ERROR] model's schema version %d is not equal "
-			"to supported version %d\n",
-			model->version(), TFLITE_SCHEMA_VERSION);
-		return -1;
-	}
-	else {
-		xprintf("model's schema version %d\n", model->version());
+		return -2;
 	}
 
 	static tflite::MicroErrorReporter micro_error_reporter;
 	static tflite::MicroMutableOpResolver<1> op_resolver;
 
 	if (kTfLiteOk != op_resolver.AddEthosU()){
-		xprintf("Failed to add Arm NPU support to op resolver.");
-		return false;
+		return -3;
 	}
 
 	static tflite::MicroInterpreter static_interpreter(model, op_resolver, (uint8_t*)tensor_arena, tensor_arena_size, &micro_error_reporter);
 
 	if(static_interpreter.AllocateTensors()!= kTfLiteOk) {
-		return false;
+		return -4;
 	}
 	int_ptr = &static_interpreter;
 	input = static_interpreter.input(0);
 	output = static_interpreter.output(0);
 
-	xprintf("initial done\n");
-
 	return ercode;
 }
 
-int cv_run() {
-	int ercode = 0;
+int cv_run(int8_t* person_score_out, int8_t* no_person_score_out) {
 
 	//give image to input tensor
 	img_rescale((uint8_t*)app_get_raw_addr(), app_get_raw_width(), app_get_raw_height(), INPUT_SIZE_X, INPUT_SIZE_Y,
@@ -215,22 +201,16 @@ int cv_run() {
 
 	if(invoke_status != kTfLiteOk)
 	{
-		xprintf("invoke fail\n");
 		return -1;
 	}
-	else
-		xprintf("invoke pass\n");
 
 	//retrieve output data
 	int8_t person_score = output->data.int8[1];
 	int8_t no_person_score = output->data.int8[0];
 
-	xprintf("person_score:%d\n",person_score);
-	//error_reporter->Report(
-	//	   "person score: %d, no person score: %d\n", person_score,
-	//	   no_person_score);
-
-	return person_score;
+	*person_score_out = person_score;
+	*no_person_score_out = no_person_score;
+	return 0;
 }
 
 int cv_deinit()

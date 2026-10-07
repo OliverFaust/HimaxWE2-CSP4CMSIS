@@ -32,14 +32,20 @@ void os_app_dplib_cb(SENSORDPLIB_STATUS_E event) {
   }
 }
 
-Camera::Camera(Chanout < frame_t > out): m_frame_out(out), m_frame_counter(0) {}
+Camera::Camera(Chanout < frame_t > out, Chanout < report_t > report): m_frame_out(out), m_report_out(report), m_frame_counter(0) {}
 
+// Camera does not print: it reports to the Reporter (the camera driver prints its own
+// start-up log during cisdp_sensor_init() and cisdp_dp_init(); nothing else can print then:
+// Inference waits for the first frame, and the Reporter has nothing to print yet).
 void Camera::run() {
   trigger_t t;
   auto trigger_reader = g_trigger_chan.reader();
-  xprintf("Camera: initializing sensor\r\n");
+  report_t r = {};
+  r.source = ReportSource::Camera;
   if (cisdp_sensor_init(true) < 0) {
-    dbg_printf(DBG_LESS_INFO, "Camera: sensor init failed\r\n");
+    r.kind = ReportKind::Failed;
+    r.code = 1;  // sensor initialisation
+    m_report_out.write(r);
     return;
   }
 
@@ -58,11 +64,15 @@ void Camera::run() {
       os_app_dplib_cb,
       0,
       APP_DP_RES_YUV640x480_INP_SUBSAMPLE_1X) < 0) {
-    dbg_printf(DBG_LESS_INFO, "Camera: data path init failed\r\n");
+    r.kind = ReportKind::Failed;
+    r.code = 2;  // data path initialisation
+    m_report_out.write(r);
     return;
   }
 
   cisdp_sensor_start();
+  r.kind = ReportKind::Started;
+  m_report_out.write(r);
 
   while (true) {
     trigger_reader.read(t);
@@ -76,7 +86,6 @@ void Camera::run() {
     f.jpeg_sz = jpeg_sz;
 
     m_frame_out.write(f);
-    dbg_printf(DBG_MORE_INFO, "Camera: retrigger hardware for next frame\r\n");
     sensordplib_retrigger_capture();
   }
 }
