@@ -99,7 +99,7 @@ public:
             out << reading;
 
             // Poll at ~20Hz
-            SleepFor(50);  // 50 ms (1000 Hz tick)
+            SleepFor(Milliseconds(50));
         }
     }
 };
@@ -178,7 +178,7 @@ static StaticTask_t mainAppControlBlock;
 
 void MainApp_Task(void* params) {
     (void)params;
-    SleepFor(500);  // 500 ms (1000 Hz tick)
+    SleepFor(Milliseconds(500));
     
     // Create the connecting channels
     static Channel<AccelData> c_accel_data;

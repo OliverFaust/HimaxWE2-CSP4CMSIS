@@ -106,7 +106,7 @@ static StaticTask_t mainAppControlBlock;
 
 void MainApp_Task(void* params) {
     (void)params;
-    SleepFor(500);  // 500 ms (1000 Hz tick)
+    SleepFor(Milliseconds(500));
     printf("\r\n--- Launching CSP Relay Chain (SPN Principle) ---\r\n");
 
     /**

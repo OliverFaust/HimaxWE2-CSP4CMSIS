@@ -1,0 +1,35 @@
+# Arm GNU Toolchain 13.2.rel1, make APP_TYPE=<app> on a copy of the tracked files; warnings: total / in the app's folder
+# 2.0.1 (main 7646dfb):
+  csp4cmsis_allon_sensor_tflm exit=0 warnings=41 app-warnings=25 size=435072/2976/661660
+  csp4cmsis_alt_test exit=0 warnings=8 app-warnings=2 size=112916/2144/31624
+  csp4cmsis_alt_test_max exit=0 warnings=8 app-warnings=2 size=162176/2144/34260
+  csp4cmsis_asymmetric_philosophers exit=0 warnings=8 app-warnings=2 size=105840/2136/39252
+  csp4cmsis_chain_test exit=0 warnings=8 app-warnings=2 size=104340/2144/33392
+  csp4cmsis_comstime exit=0 warnings=8 app-warnings=2 size=106676/2128/37420
+  csp4cmsis_dining_philosophers exit=0 warnings=8 app-warnings=2 size=105548/2144/39152
+  csp4cmsis_irq exit=0 warnings=8 app-warnings=2 size=103820/2188/24692
+  csp4cmsis_kws_iic exit=0 warnings=79 app-warnings=43 size=365900/46112/379828
+  csp4cmsis_kws_PCA9685 exit=0 warnings=79 app-warnings=43 size=366936/46104/379836
+  csp4cmsis_kws_PCA9685_alt exit=0 warnings=79 app-warnings=43 size=370052/46104/382612
+  csp4cmsis_kws_pdm_record exit=0 warnings=75 app-warnings=39 size=356784/46128/271568
+  csp4cmsis_lossy_policy_test exit=0 warnings=8 app-warnings=2 size=106552/2136/25216
+  csp4cmsis_matrix_multiplication exit=0 warnings=8 app-warnings=2 size=120976/2120/98940
+  csp4cmsis_shake_detection exit=0 warnings=7 app-warnings=1 size=106032/2140/26784
+  csp4cmsis_sieve exit=0 warnings=8 app-warnings=2 size=103848/2136/33408
+# 3.0.0 (branch csp4cmsis-3.0.0, final):
+  csp4cmsis_allon_sensor_tflm exit=0 warnings=41 app-warnings=25 size=434956/2968/661660
+  csp4cmsis_alt_test exit=0 warnings=8 app-warnings=2 size=113444/2136/31624
+  csp4cmsis_alt_test_max exit=0 warnings=8 app-warnings=2 size=162120/2136/34260
+  csp4cmsis_asymmetric_philosophers exit=0 warnings=8 app-warnings=2 size=106516/2128/39252
+  csp4cmsis_chain_test exit=0 warnings=8 app-warnings=2 size=104872/2136/33392
+  csp4cmsis_comstime exit=0 warnings=8 app-warnings=2 size=107380/2128/37420
+  csp4cmsis_dining_philosophers exit=0 warnings=8 app-warnings=2 size=106092/2136/39152
+  csp4cmsis_irq exit=0 warnings=8 app-warnings=2 size=104576/2188/24692
+  csp4cmsis_kws_iic exit=0 warnings=79 app-warnings=43 size=365824/46120/379828
+  csp4cmsis_kws_PCA9685 exit=0 warnings=79 app-warnings=43 size=366888/46112/379836
+  csp4cmsis_kws_PCA9685_alt exit=0 warnings=79 app-warnings=43 size=369860/46120/382612
+  csp4cmsis_kws_pdm_record exit=0 warnings=75 app-warnings=39 size=356620/46128/271568
+  csp4cmsis_lossy_policy_test exit=0 warnings=8 app-warnings=2 size=107260/2128/25216
+  csp4cmsis_matrix_multiplication exit=0 warnings=8 app-warnings=2 size=121016/2120/98940
+  csp4cmsis_shake_detection exit=0 warnings=7 app-warnings=1 size=106740/2132/26784
+  csp4cmsis_sieve exit=0 warnings=8 app-warnings=2 size=104408/2128/33408

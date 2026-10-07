@@ -43,7 +43,7 @@ The test uses `Run(InParallel(...))` in its default mode. Because all processes 
 
 ### Prerequisites
 * **Hardware:** Himax WE2 (Cortex-M55).
-* **Library and RTOS:** CSP4CMSIS 2.0.1 on FreeRTOS 10.5.1 through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`); the app starts the kernel with `osKernelInitialize()`/`osKernelStart()`.
+* **Library and RTOS:** CSP4CMSIS 3.0.0 on FreeRTOS 10.5.1 through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`); the app starts the kernel with `osKernelInitialize()`/`osKernelStart()`.
 * **Make environment** in `CSP4CMSIS/EPII_CM55M_APP_S/makefile` set `APP_TYPE = csp4cmsis_asymmetric_philosophers`.
 
 ### Expected UART Output

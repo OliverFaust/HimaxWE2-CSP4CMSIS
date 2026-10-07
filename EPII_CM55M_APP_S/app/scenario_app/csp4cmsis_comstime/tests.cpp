@@ -134,7 +134,7 @@ public:
     const char* name() const override { return "Trigger"; }
     void run() override {
         while (true) {
-            SleepFor(1000);  // 1 s (1000 Hz tick)
+            SleepFor(Milliseconds(1000));
             bool dummy = true;
             out << dummy;
         }
@@ -145,7 +145,7 @@ public:
 
 void MainApp_Task(void* params) {
     (void)params;
-    SleepFor(500);  // 500 ms (1000 Hz tick)
+    SleepFor(Milliseconds(500));
     
     // Channels
     static Channel<int> c1, c2, c3, c4;
@@ -167,7 +167,7 @@ void MainApp_Task(void* params) {
     // "network finished" point to report stack usage at -- report
     // periodically instead.
     while (true) {
-        SleepFor(CSP_STACK_REPORT_INTERVAL_MS);  // ticks = ms at 1000 Hz
+        SleepFor(Milliseconds(CSP_STACK_REPORT_INTERVAL_MS));
 
         uint32_t unused_bytes = osThreadGetStackSpace(osThreadGetId());
         printf("MainApp: %u/%u bytes used (%u bytes unused headroom)\r\n",

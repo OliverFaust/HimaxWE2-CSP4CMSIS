@@ -15,7 +15,7 @@ using namespace csp;
 
 // How often to print a stack-usage report for the whole network. This is a
 // *live* reading (CSProcess::stackHighWaterMarkWords()), not a one-shot
-// end-of-run report -- every process here parks in SleepFor(osWaitForever)
+// end-of-run report -- every process here parks in SleepFor(Forever)
 // once its TOTAL_PULSES are done rather than exiting (an exited thread's handle can't be queried), so the report loop
 // below keeps running for the life of the task. Read the HWM columns to
 // right-size the provisional CSProcessStatic<N> values below -- those
@@ -80,7 +80,7 @@ public:
 
         printf(">>> [PE %d,%d] COMPLETED. Final: %d\r\n", row, col, accumulator);
         
-        while (true) SleepFor(osWaitForever);
+        while (true) SleepFor(Forever);
     }
 };
 
@@ -110,7 +110,7 @@ public:
         int remaining = TOTAL_PULSES - DIM - stagger;
         for (int i = 0; i < remaining; ++i) out << 0;
 
-        while (true) SleepFor(osWaitForever);
+        while (true) SleepFor(Forever);
     }
 };
 
@@ -129,14 +129,14 @@ public:
         for (int i = 0; i < TOTAL_PULSES; ++i) {
             in >> trash;
         }
-        while (true) SleepFor(osWaitForever);
+        while (true) SleepFor(Forever);
     }
 };
 
 // --- 4. Main Application ---
 void MainApp_Task(void* params) {
     (void)params;
-    SleepFor(1000);  // 1000 ms (1000 Hz tick)
+    SleepFor(Milliseconds(1000));
     printf("\r\n--- Systolic Array 3x3: A * Identity ---\r\n");
 
     // Static channels for the grid
@@ -182,11 +182,11 @@ void MainApp_Task(void* params) {
 
     printf("*** MainApp_Task: Run() returned, entering stack-report loop ***\r\n");
 
-    // Every process here parks in SleepFor(osWaitForever) once it's done
+    // Every process here parks in SleepFor(Forever) once it's done
     // with its TOTAL_PULSES rather than exiting, so there's no "network
     // finished" point to report stack usage at -- report periodically.
     while (true) {
-        SleepFor(CSP_STACK_REPORT_INTERVAL_MS);  // ticks = ms at 1000 Hz
+        SleepFor(Milliseconds(CSP_STACK_REPORT_INTERVAL_MS));
 
         uint32_t unused_bytes = osThreadGetStackSpace(osThreadGetId());
         printf("MainApp: %u/%u bytes used (%u bytes unused headroom)\r\n",

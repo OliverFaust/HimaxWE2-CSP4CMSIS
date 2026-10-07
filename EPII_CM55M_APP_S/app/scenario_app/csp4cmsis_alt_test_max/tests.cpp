@@ -13,7 +13,7 @@ using namespace csp;
 
 // How often to print a stack-usage report for the whole network. This is a
 // *live* reading (CSProcess::stackHighWaterMarkWords()), not a one-shot
-// end-of-run report -- Sender/Receiver both idle in SleepFor(osWaitForever)
+// end-of-run report -- Sender/Receiver both idle in SleepFor(Forever)
 // after finishing rather than exiting (an exited thread's handle can't be queried), so the report loop below keeps
 // running for the life of the task. Read the HWM columns to right-size the
 // provisional CSProcessStatic<N> values on Sender/Receiver above -- the
@@ -63,7 +63,7 @@ public:
         for (int i = 0; i < TOTAL_MESSAGES_PER_SENDER; ++i) {
             out << Message{id, i}; 
         }
-        while (true) SleepFor(osWaitForever);
+        while (true) SleepFor(Forever);
     }
 };
 
@@ -131,14 +131,14 @@ public:
         }
 
         printf("[Receiver] SUCCESS: All %d messages verified with fair round-robin.\r\n", total_count);
-        while (true) SleepFor(osWaitForever);
+        while (true) SleepFor(Forever);
     }
 };
 
 // --- Main Application Task ---
 void MainApp_Task(void* params) {
     (void)params;
-    SleepFor(500);  // 500 ms (1000 Hz tick)
+    SleepFor(Milliseconds(500));
     printf("--- Launching 16-Sender CSP Network ---\r\n");
 
     // 1. Static storage for channels
@@ -172,11 +172,11 @@ void MainApp_Task(void* params) {
     printf("*** MainApp_Task: Run() returned, entering stack-report loop ***\r\n");
 
     // Sender/Receiver never return from run() (both drop into
-    // SleepFor(osWaitForever) once done), so there's no "network
+    // SleepFor(Forever) once done), so there's no "network
     // finished" point to report stack usage at -- report periodically
     // instead, same as the KWS pipeline's report loop.
     while (true) {
-        SleepFor(CSP_STACK_REPORT_INTERVAL_MS);  // ticks = ms at 1000 Hz
+        SleepFor(Milliseconds(CSP_STACK_REPORT_INTERVAL_MS));
 
         uint32_t unused_bytes = osThreadGetStackSpace(osThreadGetId());
         printf("MainApp: %u/%u bytes used (%u bytes unused headroom)\r\n",

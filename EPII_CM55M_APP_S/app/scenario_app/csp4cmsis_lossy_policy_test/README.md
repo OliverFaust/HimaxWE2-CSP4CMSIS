@@ -18,7 +18,7 @@ The test creates a "Race Condition" by design, pairing a high-speed Burst Sender
 * KeepOldest should act as a "First-In-First-Out" gate that locks after the first 10 items.
 * KeepNewest should act as a "Sliding Window" that always contains the most recent 10 items.
 ### 2. Implementation Logic
-  The test uses the << operator for high-speed transmission into two `SamplingBufferedChannel<Message, 10, BufferPolicy::KeepNewest>` / `<..., KeepOldest>` channels. Because these policies never block the writer, the PolicySender writes both bursts without waiting for the receiver; it then sends `true` on the "done" rendezvous. The receiver drains only after that rendezvous, so the result does not depend on timing (the pre-2.0 version waited a fixed 100 ms instead, and on the board drained in the middle of the first burst).
+  The test uses the << operator for high-speed transmission into two `BufferedChannel<Message, 10, BufferPolicy::KeepNewest>` / `<..., KeepOldest>` channels. Because these policies never block the writer, the PolicySender writes both bursts without waiting for the receiver; it then sends `true` on the "done" rendezvous. The receiver drains only after that rendezvous, so the result does not depend on timing (the pre-2.0 version waited a fixed 100 ms instead, and on the board drained in the middle of the first burst).
 ### 3. Accumulation Verification
 The receiver calculates the sum of the `seq_num` for the remaining 10 items in each buffer.
 * KeepOldest Sum: $\sum_{i=0}^{9} i = 45$
@@ -28,7 +28,7 @@ The receiver calculates the sum of the `seq_num` for the remaining 10 items in e
 ### Prerequisites
 * Hardware: Himax WE2 (Cortex-M55).
 * Toolchain: Arm GNU Toolchain (GCC 13.2.1+).
-* Library and RTOS: CSP4CMSIS 2.0.1 on FreeRTOS 10.5.1 through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`); the app starts the kernel with `osKernelInitialize()`/`osKernelStart()`.
+* Library and RTOS: CSP4CMSIS 3.0.0 on FreeRTOS 10.5.1 through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`); the app starts the kernel with `osKernelInitialize()`/`osKernelStart()`.
 * Build Config: In `EPII_CM55M_APP_S/makefile`, set:`APP_TYPE = csp4cmsis_lossy_policy_test`
 
 ### Expected UART Output

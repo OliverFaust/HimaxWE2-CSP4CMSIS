@@ -1,0 +1,723 @@
+1st BL Modem Build DATE=Nov 30 2023, 0x0002000b
+Please input any key to enter X-Modem mode in 100 ms 
+waiting input key...
+slot flash_offset 0x00000000
+New MemDesp himax_sec_SB_image_process PASS
+set_memory_s_ns
+bl_status = 0x800000, HX_DSP_FLAG 1
+bl_status = 0x800000
+jump_addr=0x10000000
+Compiler Version: ARM GNU, 13.2.1 20231009
+Task creation C++ CSP wrapper test.
+Application initialization (via csp_app_main_init) started.
+Application tasks created successfully.
+*** MainApp_Task: Run() returned, entering stack-report loop ***
+[Comstime] Benchmark starting. Measuring 10000 cycles...
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 9999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 19999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 29999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 39999
+------------------------
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 49999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 59999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 69999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 79999
+------------------------
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 89999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 99999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 109999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 119999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 129999
+------------------------
+MainApp: 392/4096 bytes used (3704 bytes unused headroom)
+Successor: 224/2048 bytes used (1824 bytes unused headroom, 456 words HWM)
+Prefix: 224/2048 bytes used (1824 bytes unused headroom, 456 words HWM)
+Delta: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+ComstimeConsumer: 912/4096 bytes used (3184 bytes unused headroom, 796 words HWM)
+Trigger: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 233.00 ms
+Avg Latency: 23.30 us/cycle
+Last Value: 139999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 149999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 159999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 169999
+------------------------
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 179999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 189999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 199999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 209999
+------------------------
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 219999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 229999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 239999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 249999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 259999
+------------------------
+MainApp: 904/4096 bytes used (3192 bytes unused headroom)
+Successor: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+Prefix: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+Delta: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+ComstimeConsumer: 952/4096 bytes used (3144 bytes unused headroom, 786 words HWM)
+Trigger: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 233.00 ms
+Avg Latency: 23.30 us/cycle
+Last Value: 269999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 279999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 289999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 299999
+------------------------
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 309999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 319999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 329999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 339999
+------------------------
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 349999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 359999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 369999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 379999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 389999
+------------------------
+MainApp: 904/4096 bytes used (3192 bytes unused headroom)
+Successor: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+Prefix: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+Delta: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+ComstimeConsumer: 952/4096 bytes used (3144 bytes unused headroom, 786 words HWM)
+Trigger: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 233.00 ms
+Avg Latency: 23.30 us/cycle
+Last Value: 399999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 409999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 419999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 429999
+------------------------
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 439999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 449999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 459999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 469999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 479999
+------------------------
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 489999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 499999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 509999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 519999
+------------------------
+MainApp: 904/4096 bytes used (3192 bytes unused headroom)
+Successor: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+Prefix: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+Delta: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+ComstimeConsumer: 952/4096 bytes used (3144 bytes unused headroom, 786 words HWM)
+Trigger: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 233.00 ms
+Avg Latency: 23.30 us/cycle
+Last Value: 529999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 539999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 549999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 559999
+------------------------
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 569999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 579999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 589999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 599999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 609999
+------------------------
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 619999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 629999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 639999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 649999
+------------------------
+MainApp: 904/4096 bytes used (3192 bytes unused headroom)
+Successor: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+Prefix: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+Delta: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+ComstimeConsumer: 952/4096 bytes used (3144 bytes unused headroom, 786 words HWM)
+Trigger: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 233.00 ms
+Avg Latency: 23.30 us/cycle
+Last Value: 659999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 669999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 679999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 689999
+------------------------
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 699999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 709999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 719999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 729999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 739999
+------------------------
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 749999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 759999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 769999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 779999
+------------------------
+MainApp: 904/4096 bytes used (3192 bytes unused headroom)
+Successor: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+Prefix: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+Delta: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+ComstimeConsumer: 952/4096 bytes used (3144 bytes unused headroom, 786 words HWM)
+Trigger: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 233.00 ms
+Avg Latency: 23.30 us/cycle
+Last Value: 789999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 799999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 809999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 819999
+------------------------
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 829999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 839999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 849999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 859999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 869999
+------------------------
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 879999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 889999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 899999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 909999
+------------------------
+MainApp: 904/4096 bytes used (3192 bytes unused headroom)
+Successor: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+Prefix: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+Delta: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+ComstimeConsumer: 952/4096 bytes used (3144 bytes unused headroom, 786 words HWM)
+Trigger: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 233.00 ms
+Avg Latency: 23.30 us/cycle
+Last Value: 919999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 929999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 939999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 949999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 959999
+------------------------
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 969999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 979999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 989999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 999999
+------------------------
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 1009999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 1019999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 228.00 ms
+Avg Latency: 22.80 us/cycle
+Last Value: 1029999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 1039999
+------------------------
+MainApp: 904/4096 bytes used (3192 bytes unused headroom)
+Successor: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+Prefix: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+Delta: 232/2048 bytes used (1816 bytes unused headroom, 454 words HWM)
+ComstimeConsumer: 952/4096 bytes used (3144 bytes unused headroom, 786 words HWM)
+Trigger: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+>>> [ALT] External Trigger Event Latency Check <<<
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 233.00 ms
+Avg Latency: 23.30 us/cycle
+Last Value: 1049999
+------------------------
+--- Comstime Results ---
+Iterations: 10000
+Total Time: 227.00 ms
+Avg Latency: 22.70 us/cycle
+Last Value: 1059999
+------------------------

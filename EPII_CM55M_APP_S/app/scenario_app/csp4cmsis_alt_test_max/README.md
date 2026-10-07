@@ -57,7 +57,7 @@ Every `CHECK_INTERVAL` messages (2,000), `Receiver::run()`:
 This gives a live, quantitative view of how evenly `fairSelect()` is servicing all 16 channels, rather than only confirming that every message eventually arrived.
 
 ### Observed Result
-With CSP4CMSIS 2.0.1 the spread stays within a few tens of messages for the whole run (drift at most 0.4%, mostly 0.0%) and returns to 0 once every sender has delivered its full quota:
+With CSP4CMSIS 2.0.1 and 3.0.0 the spread stays within a few tens of messages for the whole run (drift at most 0.4%, mostly 0.0%) and returns to 0 once every sender has delivered its full quota:
 
 ```text
 [Receiver] Progress: 2000 / 1600000 | Spread: 0 (Min: 125, Max: 125) | Drift: 0.0%
@@ -76,7 +76,7 @@ No `FAIRNESS VIOLATION` was logged at any point in the run. (With the pre-2.0 li
 
 The provisional stack sizes on `Sender` (`CSProcessStatic<512>`) and `Receiver` (`CSProcessStatic<2048>`) were picked before this test ever ran -- 512 words for Sender's tight send loop, and a larger 2048 for Receiver since it holds a 16-binding `Alternative`, a 16-entry `Message` buffer, and calls `printf` (which newlib can make stack-hungry). `MainApp_Task` itself isn't a `CSProcess`, so its stack (a static 4096-byte array) is supplied directly to `osThreadNew`.
 
-Once the network starts, `MainApp_Task` becomes a monitoring loop: every `CSP_STACK_REPORT_INTERVAL_MS` (default 3000 ms) it reads its own high-water-mark plus, via `network.forEachProcess(...)`, the allocated size, bytes used, unused headroom, and HWM (in words) for every Sender and the Receiver. Sender and Receiver both idle in `SleepFor(osWaitForever)` once they finish rather than exiting (an exited thread's stack can no longer be queried), so -- as with the stack reporting added to the KWS pipeline -- there's no natural "network finished" point to take a single reading at; this loop keeps reporting live for the life of the task instead.
+Once the network starts, `MainApp_Task` becomes a monitoring loop: every `CSP_STACK_REPORT_INTERVAL_MS` (default 3000 ms) it reads its own high-water-mark plus, via `network.forEachProcess(...)`, the allocated size, bytes used, unused headroom, and HWM (in words) for every Sender and the Receiver. Sender and Receiver both idle in `SleepFor(Forever)` once they finish rather than exiting (an exited thread's stack can no longer be queried), so -- as with the stack reporting added to the KWS pipeline -- there's no natural "network finished" point to take a single reading at; this loop keeps reporting live for the life of the task instead.
 
 ### Observed Result (CSP4CMSIS 2.0.1)
 ```text
@@ -95,7 +95,7 @@ Both provisional sizes turned out to be generous: every Sender uses at most 248/
 
 ### Prerequisites
 * **Hardware:** Himax WE2 (Cortex-M55). 
-* **Library and RTOS:** CSP4CMSIS 2.0.1 on FreeRTOS 10.5.1 through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`); the app starts the kernel with `osKernelInitialize()`/`osKernelStart()`. The 16 Senders are created with `new`, so their objects (including their stacks) come from the C library heap (`__HEAP_SIZE` in the `.ld`, 46 KB of 64 KB used); the FreeRTOS heap is not used.
+* **Library and RTOS:** CSP4CMSIS 3.0.0 on FreeRTOS 10.5.1 through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`); the app starts the kernel with `osKernelInitialize()`/`osKernelStart()`. The 16 Senders are created with `new`, so their objects (including their stacks) come from the C library heap (`__HEAP_SIZE` in the `.ld`, 46 KB of 64 KB used); the FreeRTOS heap is not used.
 * **Make environment** in `CSP4CMSIS/EPII_CM55M_APP_S/makefile` set `APP_TYPE = csp4cmsis_alt_test_max`.
 
 ### Expected UART Output
