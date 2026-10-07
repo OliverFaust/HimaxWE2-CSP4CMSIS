@@ -53,3 +53,26 @@ count (SDK code and the apps' existing `.c` files; none from the changed code).
 
 Logs: `results/board/v300_<app>.txt` (one capture per app from boot: 25 s; `alt_test_max` 120 s,
 the KWS apps 30 s, the neurochannel 40 s).
+
+## Neurochannel: one console owner (branch `reporter`, 2026-10-07)
+
+`allon_sensor_tflm` printed each result twice (Inference's `dbg_printf` and the Console process), plus
+`invoke pass` / `person_score` from `cv_run()` and Camera's per-frame `retrigger` line, and lines from
+different processes tore mid-string (`xprintf()` has no locking). Now the **Reporter** is the only process
+that prints while the network runs: Camera and Inference send fixed-size `report_t` messages (kind, source,
+code, index, `value[3]`; trivially copyable) over one rendezvous `Channel<report_t>` with two writers.
+`cv_init()`/`cv_run()` return codes instead of printing (two `cv_init()` failure paths returned 0, i.e.
+success, before). Inference initialises the model after its first frame, so the camera driver's own start-up
+log ends before anything else prints. MainApp ends after `Run()`; the Reporter prints the stack report.
+
+Board (Grove Vision AI V2, IMX219, nobody in view; 3 runs of 40 s from boot, identical):
+
+| | 3.0.0 before (`v300_allon_sensor_tflm.txt`) | Reporter |
+|---|---|---|
+| Frames in 40 s | 764 | 764, 764, 764 (frames 0..763, no gaps): fps unchanged |
+| Lines per frame | 5 (`invoke pass`, `person_score`, the result twice, `retrigger`), interleaved | 1: `Frame n: prediction = s` |
+| Lines not from the Reporter after `Camera: started` | many | 0 |
+| Stacks Camera / Inference / Reporter (Console) | 744 / 472 / (360) of 1536 / 1024 / 1024 B | 760 / 480 / 408 of 1536 / 1024 / 1024 B |
+| Build warnings (app) | 25 | 23 (two unused variables in `cvapp.cpp` gone) |
+
+Logs: `results/board/reporter_allon_sensor_tflm_run{1,2,3}.txt`.
