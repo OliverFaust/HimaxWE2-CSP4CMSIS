@@ -1,0 +1,1519 @@
+1st BL Modem Build DATE=Nov 30 2023, 0x0002000b
+Please input any key to enter X-Modem mode in 100 ms 
+waiting input key...
+slot flash_offset 0x00100000
+New MemDesp himax_sec_SB_image_process PASS
+set_memory_s_ns
+bl_status = 0x800000, HX_DSP_FLAG 1
+bl_status = 0x800000
+jump_addr=0x10000000
+Compiler Version: ARM GNU, 13.2.1 20231009
+Task creation C++ CSP wrapper test.
+Application initialization (via csp_app_main_init) started.
+Application tasks created successfully.
+--- Launching 16-Sender CSP Network ---
+*** MainApp_Task: Run() returned, entering stack-report loop ***
+[Receiver] Stress Test: Monitoring 16 Channels.
+[Receiver] Progress: 2000 / 1600000 | Spread: 0 (Min: 125, Max: 125) | Drift: 0.0%
+[Receiver] Progress: 4000 / 1600000 | Spread: 0 (Min: 250, Max: 250) | Drift: 0.0%
+[Receiver] Progress: 6000 / 1600000 | Spread: 0 (Min: 375, Max: 375) | Drift: 0.0%
+[Receiver] Progress: 8000 / 1600000 | Spread: 0 (Min: 500, Max: 500) | Drift: 0.0%
+[Receiver] Progress: 10000 / 1600000 | Spread: 0 (Min: 625, Max: 625) | Drift: 0.0%
+[Receiver] Progress: 12000 / 1600000 | Spread: 0 (Min: 750, Max: 750) | Drift: 0.0%
+[Receiver] Progress: 14000 / 1600000 | Spread: 0 (Min: 875, Max: 875) | Drift: 0.0%
+[Receiver] Progress: 16000 / 1600000 | Spread: 2 (Min: 999, Max: 1001) | Drift: 0.2%
+[Receiver] Progress: 18000 / 1600000 | Spread: 2 (Min: 1124, Max: 1126) | Drift: 0.2%
+[Receiver] Progress: 20000 / 1600000 | Spread: 3 (Min: 1248, Max: 1251) | Drift: 0.2%
+[Receiver] Progress: 22000 / 1600000 | Spread: 4 (Min: 1372, Max: 1376) | Drift: 0.3%
+[Receiver] Progress: 24000 / 1600000 | Spread: 5 (Min: 1496, Max: 1501) | Drift: 0.3%
+[Receiver] Progress: 26000 / 1600000 | Spread: 6 (Min: 1620, Max: 1626) | Drift: 0.4%
+[Receiver] Progress: 28000 / 1600000 | Spread: 7 (Min: 1744, Max: 1751) | Drift: 0.4%
+[Receiver] Progress: 30000 / 1600000 | Spread: 7 (Min: 1869, Max: 1876) | Drift: 0.4%
+[Receiver] Progress: 32000 / 1600000 | Spread: 7 (Min: 1994, Max: 2001) | Drift: 0.4%
+[Receiver] Progress: 34000 / 1600000 | Spread: 7 (Min: 2119, Max: 2126) | Drift: 0.3%
+[Receiver] Progress: 36000 / 1600000 | Spread: 7 (Min: 2244, Max: 2251) | Drift: 0.3%
+[Receiver] Progress: 38000 / 1600000 | Spread: 7 (Min: 2369, Max: 2376) | Drift: 0.3%
+[Receiver] Progress: 40000 / 1600000 | Spread: 7 (Min: 2494, Max: 2501) | Drift: 0.3%
+[Receiver] Progress: 42000 / 1600000 | Spread: 7 (Min: 2619, Max: 2626) | Drift: 0.3%
+[Receiver] Progress: 44000 / 1600000 | Spread: 7 (Min: 2744, Max: 2751) | Drift: 0.3%
+[Receiver] Progress: 46000 / 1600000 | Spread: 7 (Min: 2869, Max: 2876) | Drift: 0.2%
+[Receiver] Progress: 48000 / 1600000 | Spread: 7 (Min: 2994, Max: 3001) | Drift: 0.2%
+[Receiver] Progress: 50000 / 1600000 | Spread: 7 (Min: 3119, Max: 3126) | Drift: 0.2%
+[Receiver] Progress: 52000 / 1600000 | Spread: 7 (Min: 3244, Max: 3251) | Drift: 0.2%
+[Receiver] Progress: 54000 / 1600000 | Spread: 7 (Min: 3369, Max: 3376) | Drift: 0.2%
+[Receiver] Progress: 56000 / 1600000 | Spread: 7 (Min: 3494, Max: 3501) | Drift: 0.2%
+[Receiver] Progress: 58000 / 1600000 | Spread: 7 (Min: 3619, Max: 3626) | Drift: 0.2%
+[Receiver] Progress: 60000 / 1600000 | Spread: 7 (Min: 3744, Max: 3751) | Drift: 0.2%
+[Receiver] Progress: 62000 / 1600000 | Spread: 7 (Min: 3869, Max: 3876) | Drift: 0.2%
+[Receiver] Progress: 64000 / 1600000 | Spread: 7 (Min: 3994, Max: 4001) | Drift: 0.2%
+[Receiver] Progress: 66000 / 1600000 | Spread: 7 (Min: 4119, Max: 4126) | Drift: 0.2%
+[Receiver] Progress: 68000 / 1600000 | Spread: 7 (Min: 4244, Max: 4251) | Drift: 0.2%
+[Receiver] Progress: 70000 / 1600000 | Spread: 7 (Min: 4369, Max: 4376) | Drift: 0.2%
+[Receiver] Progress: 72000 / 1600000 | Spread: 7 (Min: 4494, Max: 4501) | Drift: 0.2%
+[Receiver] Progress: 74000 / 1600000 | Spread: 7 (Min: 4619, Max: 4626) | Drift: 0.2%
+[Receiver] Progress: 76000 / 1600000 | Spread: 7 (Min: 4744, Max: 4751) | Drift: 0.1%
+[Receiver] Progress: 78000 / 1600000 | Spread: 7 (Min: 4869, Max: 4876) | Drift: 0.1%
+[Receiver] Progress: 80000 / 1600000 | Spread: 6 (Min: 4995, Max: 5001) | Drift: 0.1%
+[Receiver] Progress: 82000 / 1600000 | Spread: 6 (Min: 5120, Max: 5126) | Drift: 0.1%
+[Receiver] Progress: 84000 / 1600000 | Spread: 6 (Min: 5245, Max: 5251) | Drift: 0.1%
+[Receiver] Progress: 86000 / 1600000 | Spread: 6 (Min: 5370, Max: 5376) | Drift: 0.1%
+[Receiver] Progress: 88000 / 1600000 | Spread: 6 (Min: 5495, Max: 5501) | Drift: 0.1%
+[Receiver] Progress: 90000 / 1600000 | Spread: 6 (Min: 5620, Max: 5626) | Drift: 0.1%
+[Receiver] Progress: 92000 / 1600000 | Spread: 6 (Min: 5745, Max: 5751) | Drift: 0.1%
+[Receiver] Progress: 94000 / 1600000 | Spread: 6 (Min: 5870, Max: 5876) | Drift: 0.1%
+[Receiver] Progress: 96000 / 1600000 | Spread: 6 (Min: 5995, Max: 6001) | Drift: 0.1%
+[Receiver] Progress: 98000 / 1600000 | Spread: 6 (Min: 6120, Max: 6126) | Drift: 0.1%
+[Receiver] Progress: 100000 / 1600000 | Spread: 6 (Min: 6245, Max: 6251) | Drift: 0.1%
+[Receiver] Progress: 102000 / 1600000 | Spread: 6 (Min: 6370, Max: 6376) | Drift: 0.1%
+[Receiver] Progress: 104000 / 1600000 | Spread: 6 (Min: 6495, Max: 6501) | Drift: 0.1%
+[Receiver] Progress: 106000 / 1600000 | Spread: 6 (Min: 6620, Max: 6626) | Drift: 0.1%
+[Receiver] Progress: 108000 / 1600000 | Spread: 6 (Min: 6745, Max: 6751) | Drift: 0.1%
+[Receiver] Progress: 110000 / 1600000 | Spread: 7 (Min: 6870, Max: 6877) | Drift: 0.1%
+[Receiver] Progress: 112000 / 1600000 | Spread: 7 (Min: 6995, Max: 7002) | Drift: 0.1%
+[Receiver] Progress: 114000 / 1600000 | Spread: 7 (Min: 7120, Max: 7127) | Drift: 0.1%
+[Receiver] Progress: 116000 / 1600000 | Spread: 7 (Min: 7245, Max: 7252) | Drift: 0.1%
+[Receiver] Progress: 118000 / 1600000 | Spread: 7 (Min: 7370, Max: 7377) | Drift: 0.1%
+[Receiver] Progress: 120000 / 1600000 | Spread: 7 (Min: 7495, Max: 7502) | Drift: 0.1%
+[Receiver] Progress: 122000 / 1600000 | Spread: 7 (Min: 7620, Max: 7627) | Drift: 0.1%
+[Receiver] Progress: 124000 / 1600000 | Spread: 7 (Min: 7745, Max: 7752) | Drift: 0.1%
+[Receiver] Progress: 126000 / 1600000 | Spread: 7 (Min: 7870, Max: 7877) | Drift: 0.1%
+[Receiver] Progress: 128000 / 1600000 | Spread: 7 (Min: 7995, Max: 8002) | Drift: 0.1%
+[Receiver] Progress: 130000 / 1600000 | Spread: 7 (Min: 8120, Max: 8127) | Drift: 0.1%
+[Receiver] Progress: 132000 / 1600000 | Spread: 7 (Min: 8245, Max: 8252) | Drift: 0.1%
+[Receiver] Progress: 134000 / 1600000 | Spread: 7 (Min: 8370, Max: 8377) | Drift: 0.1%
+[Receiver] Progress: 136000 / 1600000 | Spread: 7 (Min: 8495, Max: 8502) | Drift: 0.1%
+[Receiver] Progress: 138000 / 1600000 | Spread: 7 (Min: 8620, Max: 8627) | Drift: 0.1%
+[Receiver] Progress: 140000 / 1600000 | Spread: 7 (Min: 8745, Max: 8752) | Drift: 0.1%
+[Receiver] Progress: 142000 / 1600000 | Spread: 7 (Min: 8870, Max: 8877) | Drift: 0.1%
+[Receiver] Progress: 144000 / 1600000 | Spread: 7 (Min: 8995, Max: 9002) | Drift: 0.1%
+[Receiver] Progress: 146000 / 1600000 | Spread: 7 (Min: 9120, Max: 9127) | Drift: 0.1%
+[Receiver] Progress: 148000 / 1600000 | Spread: 7 (Min: 9245, Max: 9252) | Drift: 0.1%
+[Receiver] Progress: 150000 / 1600000 | Spread: 7 (Min: 9370, Max: 9377) | Drift: 0.1%
+[Receiver] Progress: 152000 / 1600000 | Spread: 7 (Min: 9495, Max: 9502) | Drift: 0.1%
+[Receiver] Progress: 154000 / 1600000 | Spread: 7 (Min: 9620, Max: 9627) | Drift: 0.1%
+[Receiver] Progress: 156000 / 1600000 | Spread: 7 (Min: 9745, Max: 9752) | Drift: 0.1%
+[Receiver] Progress: 158000 / 1600000 | Spread: 7 (Min: 9870, Max: 9877) | Drift: 0.1%
+[Receiver] Progress: 160000 / 1600000 | Spread: 7 (Min: 9995, Max: 10002) | Drift: 0.1%
+[Receiver] Progress: 162000 / 1600000 | Spread: 7 (Min: 10120, Max: 10127) | Drift: 0.1%
+[Receiver] Progress: 164000 / 1600000 | Spread: 7 (Min: 10245, Max: 10252) | Drift: 0.1%
+[Receiver] Progress: 166000 / 1600000 | Spread: 8 (Min: 10369, Max: 10377) | Drift: 0.1%
+[Receiver] Progress: 168000 / 1600000 | Spread: 8 (Min: 10494, Max: 10502) | Drift: 0.1%
+[Receiver] Progress: 170000 / 1600000 | Spread: 8 (Min: 10619, Max: 10627) | Drift: 0.1%
+[Receiver] Progress: 172000 / 1600000 | Spread: 8 (Min: 10744, Max: 10752) | Drift: 0.1%
+[Receiver] Progress: 174000 / 1600000 | Spread: 8 (Min: 10869, Max: 10877) | Drift: 0.1%
+[Receiver] Progress: 176000 / 1600000 | Spread: 8 (Min: 10994, Max: 11002) | Drift: 0.1%
+[Receiver] Progress: 178000 / 1600000 | Spread: 8 (Min: 11119, Max: 11127) | Drift: 0.1%
+[Receiver] Progress: 180000 / 1600000 | Spread: 8 (Min: 11244, Max: 11252) | Drift: 0.1%
+[Receiver] Progress: 182000 / 1600000 | Spread: 8 (Min: 11369, Max: 11377) | Drift: 0.1%
+[Receiver] Progress: 184000 / 1600000 | Spread: 8 (Min: 11494, Max: 11502) | Drift: 0.1%
+[Receiver] Progress: 186000 / 1600000 | Spread: 8 (Min: 11619, Max: 11627) | Drift: 0.1%
+[Receiver] Progress: 188000 / 1600000 | Spread: 8 (Min: 11744, Max: 11752) | Drift: 0.1%
+[Receiver] Progress: 190000 / 1600000 | Spread: 8 (Min: 11869, Max: 11877) | Drift: 0.1%
+[Receiver] Progress: 192000 / 1600000 | Spread: 8 (Min: 11994, Max: 12002) | Drift: 0.1%
+[Receiver] Progress: 194000 / 1600000 | Spread: 8 (Min: 12119, Max: 12127) | Drift: 0.1%
+[Receiver] Progress: 196000 / 1600000 | Spread: 8 (Min: 12244, Max: 12252) | Drift: 0.1%
+[Receiver] Progress: 198000 / 1600000 | Spread: 7 (Min: 12370, Max: 12377) | Drift: 0.1%
+[Receiver] Progress: 200000 / 1600000 | Spread: 7 (Min: 12495, Max: 12502) | Drift: 0.1%
+[Receiver] Progress: 202000 / 1600000 | Spread: 7 (Min: 12620, Max: 12627) | Drift: 0.1%
+[Receiver] Progress: 204000 / 1600000 | Spread: 7 (Min: 12745, Max: 12752) | Drift: 0.1%
+[Receiver] Progress: 206000 / 1600000 | Spread: 7 (Min: 12870, Max: 12877) | Drift: 0.1%
+[Receiver] Progress: 208000 / 1600000 | Spread: 7 (Min: 12995, Max: 13002) | Drift: 0.1%
+[Receiver] Progress: 210000 / 1600000 | Spread: 7 (Min: 13120, Max: 13127) | Drift: 0.1%
+[Receiver] Progress: 212000 / 1600000 | Spread: 7 (Min: 13245, Max: 13252) | Drift: 0.1%
+[Receiver] Progress: 214000 / 1600000 | Spread: 7 (Min: 13370, Max: 13377) | Drift: 0.1%
+[Receiver] Progress: 216000 / 1600000 | Spread: 7 (Min: 13495, Max: 13502) | Drift: 0.1%
+[Receiver] Progress: 218000 / 1600000 | Spread: 7 (Min: 13620, Max: 13627) | Drift: 0.1%
+[Receiver] Progress: 220000 / 1600000 | Spread: 7 (Min: 13745, Max: 13752) | Drift: 0.1%
+[Receiver] Progress: 222000 / 1600000 | Spread: 7 (Min: 13870, Max: 13877) | Drift: 0.1%
+[Receiver] Progress: 224000 / 1600000 | Spread: 7 (Min: 13995, Max: 14002) | Drift: 0.1%
+[Receiver] Progress: 226000 / 1600000 | Spread: 7 (Min: 14120, Max: 14127) | Drift: 0.0%
+[Receiver] Progress: 228000 / 1600000 | Spread: 7 (Min: 14245, Max: 14252) | Drift: 0.0%
+[Receiver] Progress: 230000 / 1600000 | Spread: 7 (Min: 14370, Max: 14377) | Drift: 0.0%
+[Receiver] Progress: 232000 / 1600000 | Spread: 7 (Min: 14495, Max: 14502) | Drift: 0.0%
+[Receiver] Progress: 234000 / 1600000 | Spread: 7 (Min: 14620, Max: 14627) | Drift: 0.0%
+[Receiver] Progress: 236000 / 1600000 | Spread: 7 (Min: 14745, Max: 14752) | Drift: 0.0%
+[Receiver] Progress: 238000 / 1600000 | Spread: 8 (Min: 14870, Max: 14878) | Drift: 0.1%
+[Receiver] Progress: 240000 / 1600000 | Spread: 8 (Min: 14995, Max: 15003) | Drift: 0.1%
+[Receiver] Progress: 242000 / 1600000 | Spread: 8 (Min: 15120, Max: 15128) | Drift: 0.1%
+[Receiver] Progress: 244000 / 1600000 | Spread: 8 (Min: 15245, Max: 15253) | Drift: 0.1%
+[Receiver] Progress: 246000 / 1600000 | Spread: 8 (Min: 15370, Max: 15378) | Drift: 0.1%
+[Receiver] Progress: 248000 / 1600000 | Spread: 8 (Min: 15495, Max: 15503) | Drift: 0.1%
+[Receiver] Progress: 250000 / 1600000 | Spread: 9 (Min: 15619, Max: 15628) | Drift: 0.1%
+[Receiver] Progress: 252000 / 1600000 | Spread: 9 (Min: 15744, Max: 15753) | Drift: 0.1%
+[Receiver] Progress: 254000 / 1600000 | Spread: 9 (Min: 15869, Max: 15878) | Drift: 0.1%
+[Receiver] Progress: 256000 / 1600000 | Spread: 9 (Min: 15994, Max: 16003) | Drift: 0.1%
+[Receiver] Progress: 258000 / 1600000 | Spread: 9 (Min: 16119, Max: 16128) | Drift: 0.1%
+[Receiver] Progress: 260000 / 1600000 | Spread: 9 (Min: 16244, Max: 16253) | Drift: 0.1%
+[Receiver] Progress: 262000 / 1600000 | Spread: 9 (Min: 16369, Max: 16378) | Drift: 0.1%
+[Receiver] Progress: 264000 / 1600000 | Spread: 9 (Min: 16494, Max: 16503) | Drift: 0.1%
+[Receiver] Progress: 266000 / 1600000 | Spread: 9 (Min: 16619, Max: 16628) | Drift: 0.1%
+[Receiver] Progress: 268000 / 1600000 | Spread: 9 (Min: 16744, Max: 16753) | Drift: 0.1%
+[Receiver] Progress: 270000 / 1600000 | Spread: 9 (Min: 16869, Max: 16878) | Drift: 0.1%
+[Receiver] Progress: 272000 / 1600000 | Spread: 9 (Min: 16994, Max: 17003) | Drift: 0.1%
+[Receiver] Progress: 274000 / 1600000 | Spread: 9 (Min: 17119, Max: 17128) | Drift: 0.1%
+[Receiver] Progress: 276000 / 1600000 | Spread: 9 (Min: 17244, Max: 17253) | Drift: 0.1%
+[Receiver] Progress: 278000 / 1600000 | Spread: 9 (Min: 17369, Max: 17378) | Drift: 0.1%
+[Receiver] Progress: 280000 / 1600000 | Spread: 9 (Min: 17494, Max: 17503) | Drift: 0.1%
+[Receiver] Progress: 282000 / 1600000 | Spread: 9 (Min: 17619, Max: 17628) | Drift: 0.1%
+[Receiver] Progress: 284000 / 1600000 | Spread: 9 (Min: 17744, Max: 17753) | Drift: 0.1%
+[Receiver] Progress: 286000 / 1600000 | Spread: 9 (Min: 17869, Max: 17878) | Drift: 0.1%
+[Receiver] Progress: 288000 / 1600000 | Spread: 9 (Min: 17994, Max: 18003) | Drift: 0.1%
+[Receiver] Progress: 290000 / 1600000 | Spread: 9 (Min: 18119, Max: 18128) | Drift: 0.0%
+[Receiver] Progress: 292000 / 1600000 | Spread: 8 (Min: 18245, Max: 18253) | Drift: 0.0%
+[Receiver] Progress: 294000 / 1600000 | Spread: 8 (Min: 18370, Max: 18378) | Drift: 0.0%
+[Receiver] Progress: 296000 / 1600000 | Spread: 8 (Min: 18495, Max: 18503) | Drift: 0.0%
+[Receiver] Progress: 298000 / 1600000 | Spread: 8 (Min: 18620, Max: 18628) | Drift: 0.0%
+[Receiver] Progress: 300000 / 1600000 | Spread: 8 (Min: 18745, Max: 18753) | Drift: 0.0%
+[Receiver] Progress: 302000 / 1600000 | Spread: 8 (Min: 18870, Max: 18878) | Drift: 0.0%
+[Receiver] Progress: 304000 / 1600000 | Spread: 8 (Min: 18995, Max: 19003) | Drift: 0.0%
+[Receiver] Progress: 306000 / 1600000 | Spread: 8 (Min: 19120, Max: 19128) | Drift: 0.0%
+[Receiver] Progress: 308000 / 1600000 | Spread: 8 (Min: 19245, Max: 19253) | Drift: 0.0%
+[Receiver] Progress: 310000 / 1600000 | Spread: 8 (Min: 19370, Max: 19378) | Drift: 0.0%
+[Receiver] Progress: 312000 / 1600000 | Spread: 8 (Min: 19495, Max: 19503) | Drift: 0.0%
+[Receiver] Progress: 314000 / 1600000 | Spread: 8 (Min: 19620, Max: 19628) | Drift: 0.0%
+[Receiver] Progress: 316000 / 1600000 | Spread: 8 (Min: 19745, Max: 19753) | Drift: 0.0%
+[Receiver] Progress: 318000 / 1600000 | Spread: 8 (Min: 19870, Max: 19878) | Drift: 0.0%
+[Receiver] Progress: 320000 / 1600000 | Spread: 8 (Min: 19995, Max: 20003) | Drift: 0.0%
+[Receiver] Progress: 322000 / 1600000 | Spread: 8 (Min: 20120, Max: 20128) | Drift: 0.0%
+[Receiver] Progress: 324000 / 1600000 | Spread: 8 (Min: 20245, Max: 20253) | Drift: 0.0%
+[Receiver] Progress: 326000 / 1600000 | Spread: 8 (Min: 20370, Max: 20378) | Drift: 0.0%
+[Receiver] Progress: 328000 / 1600000 | Spread: 9 (Min: 20495, Max: 20504) | Drift: 0.0%
+[Receiver] Progress: 330000 / 1600000 | Spread: 9 (Min: 20620, Max: 20629) | Drift: 0.0%
+[Receiver] Progress: 332000 / 1600000 | Spread: 10 (Min: 20744, Max: 20754) | Drift: 0.0%
+[Receiver] Progress: 334000 / 1600000 | Spread: 10 (Min: 20869, Max: 20879) | Drift: 0.0%
+[Receiver] Progress: 336000 / 1600000 | Spread: 10 (Min: 20994, Max: 21004) | Drift: 0.0%
+[Receiver] Progress: 338000 / 1600000 | Spread: 10 (Min: 21119, Max: 21129) | Drift: 0.0%
+[Receiver] Progress: 340000 / 1600000 | Spread: 10 (Min: 21244, Max: 21254) | Drift: 0.0%
+[Receiver] Progress: 342000 / 1600000 | Spread: 10 (Min: 21369, Max: 21379) | Drift: 0.0%
+[Receiver] Progress: 344000 / 1600000 | Spread: 10 (Min: 21494, Max: 21504) | Drift: 0.0%
+[Receiver] Progress: 346000 / 1600000 | Spread: 10 (Min: 21619, Max: 21629) | Drift: 0.0%
+[Receiver] Progress: 348000 / 1600000 | Spread: 10 (Min: 21744, Max: 21754) | Drift: 0.0%
+[Receiver] Progress: 350000 / 1600000 | Spread: 10 (Min: 21869, Max: 21879) | Drift: 0.0%
+[Receiver] Progress: 352000 / 1600000 | Spread: 10 (Min: 21994, Max: 22004) | Drift: 0.0%
+[Receiver] Progress: 354000 / 1600000 | Spread: 10 (Min: 22119, Max: 22129) | Drift: 0.0%
+[Receiver] Progress: 356000 / 1600000 | Spread: 10 (Min: 22244, Max: 22254) | Drift: 0.0%
+[Receiver] Progress: 358000 / 1600000 | Spread: 10 (Min: 22369, Max: 22379) | Drift: 0.0%
+[Receiver] Progress: 360000 / 1600000 | Spread: 10 (Min: 22494, Max: 22504) | Drift: 0.0%
+[Receiver] Progress: 362000 / 1600000 | Spread: 11 (Min: 22618, Max: 22629) | Drift: 0.0%
+[Receiver] Progress: 364000 / 1600000 | Spread: 11 (Min: 22743, Max: 22754) | Drift: 0.0%
+[Receiver] Progress: 366000 / 1600000 | Spread: 11 (Min: 22868, Max: 22879) | Drift: 0.0%
+[Receiver] Progress: 368000 / 1600000 | Spread: 10 (Min: 22993, Max: 23003) | Drift: 0.0%
+[Receiver] Progress: 370000 / 1600000 | Spread: 10 (Min: 23118, Max: 23128) | Drift: 0.0%
+[Receiver] Progress: 372000 / 1600000 | Spread: 10 (Min: 23243, Max: 23253) | Drift: 0.0%
+[Receiver] Progress: 374000 / 1600000 | Spread: 10 (Min: 23368, Max: 23378) | Drift: 0.0%
+[Receiver] Progress: 376000 / 1600000 | Spread: 10 (Min: 23493, Max: 23503) | Drift: 0.0%
+[Receiver] Progress: 378000 / 1600000 | Spread: 10 (Min: 23618, Max: 23628) | Drift: 0.0%
+[Receiver] Progress: 380000 / 1600000 | Spread: 9 (Min: 23744, Max: 23753) | Drift: 0.0%
+[Receiver] Progress: 382000 / 1600000 | Spread: 9 (Min: 23869, Max: 23878) | Drift: 0.0%
+[Receiver] Progress: 384000 / 1600000 | Spread: 9 (Min: 23994, Max: 24003) | Drift: 0.0%
+[Receiver] Progress: 386000 / 1600000 | Spread: 9 (Min: 24119, Max: 24128) | Drift: 0.0%
+[Receiver] Progress: 388000 / 1600000 | Spread: 9 (Min: 24244, Max: 24253) | Drift: 0.0%
+[Receiver] Progress: 390000 / 1600000 | Spread: 9 (Min: 24369, Max: 24378) | Drift: 0.0%
+[Receiver] Progress: 392000 / 1600000 | Spread: 9 (Min: 24494, Max: 24503) | Drift: 0.0%
+[Receiver] Progress: 394000 / 1600000 | Spread: 9 (Min: 24619, Max: 24628) | Drift: 0.0%
+[Receiver] Progress: 396000 / 1600000 | Spread: 9 (Min: 24744, Max: 24753) | Drift: 0.0%
+[Receiver] Progress: 398000 / 1600000 | Spread: 9 (Min: 24869, Max: 24878) | Drift: 0.0%
+[Receiver] Progress: 400000 / 1600000 | Spread: 9 (Min: 24994, Max: 25003) | Drift: 0.0%
+[Receiver] Progress: 402000 / 1600000 | Spread: 9 (Min: 25119, Max: 25128) | Drift: 0.0%
+[Receiver] Progress: 404000 / 1600000 | Spread: 10 (Min: 25244, Max: 25254) | Drift: 0.0%
+[Receiver] Progress: 406000 / 1600000 | Spread: 11 (Min: 25368, Max: 25379) | Drift: 0.0%
+[Receiver] Progress: 408000 / 1600000 | Spread: 11 (Min: 25493, Max: 25504) | Drift: 0.0%
+[Receiver] Progress: 410000 / 1600000 | Spread: 11 (Min: 25618, Max: 25629) | Drift: 0.0%
+[Receiver] Progress: 412000 / 1600000 | Spread: 11 (Min: 25743, Max: 25754) | Drift: 0.0%
+[Receiver] Progress: 414000 / 1600000 | Spread: 11 (Min: 25868, Max: 25879) | Drift: 0.0%
+[Receiver] Progress: 416000 / 1600000 | Spread: 11 (Min: 25993, Max: 26004) | Drift: 0.0%
+[Receiver] Progress: 418000 / 1600000 | Spread: 12 (Min: 26117, Max: 26129) | Drift: 0.0%
+[Receiver] Progress: 420000 / 1600000 | Spread: 12 (Min: 26242, Max: 26254) | Drift: 0.0%
+[Receiver] Progress: 422000 / 1600000 | Spread: 12 (Min: 26367, Max: 26379) | Drift: 0.0%
+[Receiver] Progress: 424000 / 1600000 | Spread: 12 (Min: 26492, Max: 26504) | Drift: 0.0%
+MainApp: 708/4096 bytes used (3388 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+[Receiver] Progress: 426000 / 1600000 | Spread: 12 (Min: 26617, Max: 26629) | Drift: 0.0%
+[Receiver] Progress: 428000 / 1600000 | Spread: 12 (Min: 26742, Max: 26754) | Drift: 0.0%
+[Receiver] Progress: 430000 / 1600000 | Spread: 12 (Min: 26867, Max: 26879) | Drift: 0.0%
+[Receiver] Progress: 432000 / 1600000 | Spread: 12 (Min: 26992, Max: 27004) | Drift: 0.0%
+[Receiver] Progress: 434000 / 1600000 | Spread: 12 (Min: 27117, Max: 27129) | Drift: 0.0%
+[Receiver] Progress: 436000 / 1600000 | Spread: 12 (Min: 27242, Max: 27254) | Drift: 0.0%
+[Receiver] Progress: 438000 / 1600000 | Spread: 12 (Min: 27367, Max: 27379) | Drift: 0.0%
+[Receiver] Progress: 440000 / 1600000 | Spread: 12 (Min: 27492, Max: 27504) | Drift: 0.0%
+[Receiver] Progress: 442000 / 1600000 | Spread: 12 (Min: 27617, Max: 27629) | Drift: 0.0%
+[Receiver] Progress: 444000 / 1600000 | Spread: 12 (Min: 27742, Max: 27754) | Drift: 0.0%
+[Receiver] Progress: 446000 / 1600000 | Spread: 11 (Min: 27868, Max: 27879) | Drift: 0.0%
+[Receiver] Progress: 448000 / 1600000 | Spread: 11 (Min: 27993, Max: 28004) | Drift: 0.0%
+[Receiver] Progress: 450000 / 1600000 | Spread: 11 (Min: 28118, Max: 28129) | Drift: 0.0%
+[Receiver] Progress: 452000 / 1600000 | Spread: 11 (Min: 28243, Max: 28254) | Drift: 0.0%
+[Receiver] Progress: 454000 / 1600000 | Spread: 11 (Min: 28368, Max: 28379) | Drift: 0.0%
+[Receiver] Progress: 456000 / 1600000 | Spread: 11 (Min: 28493, Max: 28504) | Drift: 0.0%
+[Receiver] Progress: 458000 / 1600000 | Spread: 11 (Min: 28618, Max: 28629) | Drift: 0.0%
+[Receiver] Progress: 460000 / 1600000 | Spread: 11 (Min: 28743, Max: 28754) | Drift: 0.0%
+[Receiver] Progress: 462000 / 1600000 | Spread: 11 (Min: 28868, Max: 28879) | Drift: 0.0%
+[Receiver] Progress: 464000 / 1600000 | Spread: 11 (Min: 28993, Max: 29004) | Drift: 0.0%
+[Receiver] Progress: 466000 / 1600000 | Spread: 11 (Min: 29118, Max: 29129) | Drift: 0.0%
+[Receiver] Progress: 468000 / 1600000 | Spread: 12 (Min: 29243, Max: 29255) | Drift: 0.0%
+[Receiver] Progress: 470000 / 1600000 | Spread: 12 (Min: 29368, Max: 29380) | Drift: 0.0%
+[Receiver] Progress: 472000 / 1600000 | Spread: 12 (Min: 29493, Max: 29505) | Drift: 0.0%
+[Receiver] Progress: 474000 / 1600000 | Spread: 12 (Min: 29618, Max: 29630) | Drift: 0.0%
+[Receiver] Progress: 476000 / 1600000 | Spread: 12 (Min: 29743, Max: 29755) | Drift: 0.0%
+[Receiver] Progress: 478000 / 1600000 | Spread: 12 (Min: 29868, Max: 29880) | Drift: 0.0%
+[Receiver] Progress: 480000 / 1600000 | Spread: 12 (Min: 29993, Max: 30005) | Drift: 0.0%
+[Receiver] Progress: 482000 / 1600000 | Spread: 12 (Min: 30118, Max: 30130) | Drift: 0.0%
+[Receiver] Progress: 484000 / 1600000 | Spread: 12 (Min: 30243, Max: 30255) | Drift: 0.0%
+[Receiver] Progress: 486000 / 1600000 | Spread: 12 (Min: 30368, Max: 30380) | Drift: 0.0%
+[Receiver] Progress: 488000 / 1600000 | Spread: 12 (Min: 30493, Max: 30505) | Drift: 0.0%
+[Receiver] Progress: 490000 / 1600000 | Spread: 12 (Min: 30618, Max: 30630) | Drift: 0.0%
+[Receiver] Progress: 492000 / 1600000 | Spread: 12 (Min: 30743, Max: 30755) | Drift: 0.0%
+[Receiver] Progress: 494000 / 1600000 | Spread: 12 (Min: 30868, Max: 30880) | Drift: 0.0%
+[Receiver] Progress: 496000 / 1600000 | Spread: 12 (Min: 30993, Max: 31005) | Drift: 0.0%
+[Receiver] Progress: 498000 / 1600000 | Spread: 12 (Min: 31118, Max: 31130) | Drift: 0.0%
+[Receiver] Progress: 500000 / 1600000 | Spread: 13 (Min: 31242, Max: 31255) | Drift: 0.0%
+[Receiver] Progress: 502000 / 1600000 | Spread: 13 (Min: 31367, Max: 31380) | Drift: 0.0%
+[Receiver] Progress: 504000 / 1600000 | Spread: 13 (Min: 31492, Max: 31505) | Drift: 0.0%
+[Receiver] Progress: 506000 / 1600000 | Spread: 13 (Min: 31617, Max: 31630) | Drift: 0.0%
+[Receiver] Progress: 508000 / 1600000 | Spread: 13 (Min: 31742, Max: 31755) | Drift: 0.0%
+[Receiver] Progress: 510000 / 1600000 | Spread: 14 (Min: 31866, Max: 31880) | Drift: 0.0%
+[Receiver] Progress: 512000 / 1600000 | Spread: 13 (Min: 31992, Max: 32005) | Drift: 0.0%
+[Receiver] Progress: 514000 / 1600000 | Spread: 13 (Min: 32117, Max: 32130) | Drift: 0.0%
+[Receiver] Progress: 516000 / 1600000 | Spread: 13 (Min: 32242, Max: 32255) | Drift: 0.0%
+[Receiver] Progress: 518000 / 1600000 | Spread: 13 (Min: 32367, Max: 32380) | Drift: 0.0%
+[Receiver] Progress: 520000 / 1600000 | Spread: 13 (Min: 32492, Max: 32505) | Drift: 0.0%
+[Receiver] Progress: 522000 / 1600000 | Spread: 13 (Min: 32617, Max: 32630) | Drift: 0.0%
+[Receiver] Progress: 524000 / 1600000 | Spread: 13 (Min: 32742, Max: 32755) | Drift: 0.0%
+[Receiver] Progress: 526000 / 1600000 | Spread: 13 (Min: 32867, Max: 32880) | Drift: 0.0%
+[Receiver] Progress: 528000 / 1600000 | Spread: 13 (Min: 32992, Max: 33005) | Drift: 0.0%
+[Receiver] Progress: 530000 / 1600000 | Spread: 13 (Min: 33117, Max: 33130) | Drift: 0.0%
+[Receiver] Progress: 532000 / 1600000 | Spread: 13 (Min: 33242, Max: 33255) | Drift: 0.0%
+[Receiver] Progress: 534000 / 1600000 | Spread: 13 (Min: 33367, Max: 33380) | Drift: 0.0%
+[Receiver] Progress: 536000 / 1600000 | Spread: 13 (Min: 33492, Max: 33505) | Drift: 0.0%
+[Receiver] Progress: 538000 / 1600000 | Spread: 13 (Min: 33617, Max: 33630) | Drift: 0.0%
+[Receiver] Progress: 540000 / 1600000 | Spread: 13 (Min: 33742, Max: 33755) | Drift: 0.0%
+[Receiver] Progress: 542000 / 1600000 | Spread: 13 (Min: 33867, Max: 33880) | Drift: 0.0%
+[Receiver] Progress: 544000 / 1600000 | Spread: 13 (Min: 33992, Max: 34005) | Drift: 0.0%
+[Receiver] Progress: 546000 / 1600000 | Spread: 13 (Min: 34117, Max: 34130) | Drift: 0.0%
+[Receiver] Progress: 548000 / 1600000 | Spread: 13 (Min: 34242, Max: 34255) | Drift: 0.0%
+[Receiver] Progress: 550000 / 1600000 | Spread: 13 (Min: 34367, Max: 34380) | Drift: 0.0%
+[Receiver] Progress: 552000 / 1600000 | Spread: 13 (Min: 34492, Max: 34505) | Drift: 0.0%
+[Receiver] Progress: 554000 / 1600000 | Spread: 13 (Min: 34617, Max: 34630) | Drift: 0.0%
+[Receiver] Progress: 556000 / 1600000 | Spread: 13 (Min: 34742, Max: 34755) | Drift: 0.0%
+[Receiver] Progress: 558000 / 1600000 | Spread: 13 (Min: 34867, Max: 34880) | Drift: 0.0%
+[Receiver] Progress: 560000 / 1600000 | Spread: 13 (Min: 34992, Max: 35005) | Drift: 0.0%
+[Receiver] Progress: 562000 / 1600000 | Spread: 13 (Min: 35117, Max: 35130) | Drift: 0.0%
+[Receiver] Progress: 564000 / 1600000 | Spread: 13 (Min: 35242, Max: 35255) | Drift: 0.0%
+[Receiver] Progress: 566000 / 1600000 | Spread: 13 (Min: 35367, Max: 35380) | Drift: 0.0%
+[Receiver] Progress: 568000 / 1600000 | Spread: 13 (Min: 35492, Max: 35505) | Drift: 0.0%
+[Receiver] Progress: 570000 / 1600000 | Spread: 12 (Min: 35618, Max: 35630) | Drift: 0.0%
+[Receiver] Progress: 572000 / 1600000 | Spread: 12 (Min: 35743, Max: 35755) | Drift: 0.0%
+[Receiver] Progress: 574000 / 1600000 | Spread: 12 (Min: 35868, Max: 35880) | Drift: 0.0%
+[Receiver] Progress: 576000 / 1600000 | Spread: 12 (Min: 35993, Max: 36005) | Drift: 0.0%
+[Receiver] Progress: 578000 / 1600000 | Spread: 12 (Min: 36118, Max: 36130) | Drift: 0.0%
+[Receiver] Progress: 580000 / 1600000 | Spread: 12 (Min: 36243, Max: 36255) | Drift: 0.0%
+[Receiver] Progress: 582000 / 1600000 | Spread: 12 (Min: 36368, Max: 36380) | Drift: 0.0%
+[Receiver] Progress: 584000 / 1600000 | Spread: 14 (Min: 36492, Max: 36506) | Drift: 0.0%
+[Receiver] Progress: 586000 / 1600000 | Spread: 14 (Min: 36617, Max: 36631) | Drift: 0.0%
+[Receiver] Progress: 588000 / 1600000 | Spread: 14 (Min: 36742, Max: 36756) | Drift: 0.0%
+[Receiver] Progress: 590000 / 1600000 | Spread: 14 (Min: 36867, Max: 36881) | Drift: 0.0%
+[Receiver] Progress: 592000 / 1600000 | Spread: 14 (Min: 36992, Max: 37006) | Drift: 0.0%
+[Receiver] Progress: 594000 / 1600000 | Spread: 14 (Min: 37117, Max: 37131) | Drift: 0.0%
+[Receiver] Progress: 596000 / 1600000 | Spread: 14 (Min: 37242, Max: 37256) | Drift: 0.0%
+[Receiver] Progress: 598000 / 1600000 | Spread: 14 (Min: 37367, Max: 37381) | Drift: 0.0%
+[Receiver] Progress: 600000 / 1600000 | Spread: 14 (Min: 37492, Max: 37506) | Drift: 0.0%
+[Receiver] Progress: 602000 / 1600000 | Spread: 14 (Min: 37617, Max: 37631) | Drift: 0.0%
+[Receiver] Progress: 604000 / 1600000 | Spread: 14 (Min: 37742, Max: 37756) | Drift: 0.0%
+[Receiver] Progress: 606000 / 1600000 | Spread: 14 (Min: 37867, Max: 37881) | Drift: 0.0%
+[Receiver] Progress: 608000 / 1600000 | Spread: 14 (Min: 37992, Max: 38006) | Drift: 0.0%
+[Receiver] Progress: 610000 / 1600000 | Spread: 14 (Min: 38117, Max: 38131) | Drift: 0.0%
+[Receiver] Progress: 612000 / 1600000 | Spread: 14 (Min: 38242, Max: 38256) | Drift: 0.0%
+[Receiver] Progress: 614000 / 1600000 | Spread: 14 (Min: 38367, Max: 38381) | Drift: 0.0%
+[Receiver] Progress: 616000 / 1600000 | Spread: 14 (Min: 38492, Max: 38506) | Drift: 0.0%
+[Receiver] Progress: 618000 / 1600000 | Spread: 14 (Min: 38617, Max: 38631) | Drift: 0.0%
+[Receiver] Progress: 620000 / 1600000 | Spread: 14 (Min: 38742, Max: 38756) | Drift: 0.0%
+[Receiver] Progress: 622000 / 1600000 | Spread: 14 (Min: 38867, Max: 38881) | Drift: 0.0%
+[Receiver] Progress: 624000 / 1600000 | Spread: 14 (Min: 38992, Max: 39006) | Drift: 0.0%
+[Receiver] Progress: 626000 / 1600000 | Spread: 14 (Min: 39117, Max: 39131) | Drift: 0.0%
+[Receiver] Progress: 628000 / 1600000 | Spread: 14 (Min: 39242, Max: 39256) | Drift: 0.0%
+[Receiver] Progress: 630000 / 1600000 | Spread: 14 (Min: 39367, Max: 39381) | Drift: 0.0%
+[Receiver] Progress: 632000 / 1600000 | Spread: 14 (Min: 39492, Max: 39506) | Drift: 0.0%
+[Receiver] Progress: 634000 / 1600000 | Spread: 14 (Min: 39617, Max: 39631) | Drift: 0.0%
+[Receiver] Progress: 636000 / 1600000 | Spread: 13 (Min: 39743, Max: 39756) | Drift: 0.0%
+[Receiver] Progress: 638000 / 1600000 | Spread: 13 (Min: 39868, Max: 39881) | Drift: 0.0%
+[Receiver] Progress: 640000 / 1600000 | Spread: 13 (Min: 39993, Max: 40006) | Drift: 0.0%
+[Receiver] Progress: 642000 / 1600000 | Spread: 13 (Min: 40118, Max: 40131) | Drift: 0.0%
+[Receiver] Progress: 644000 / 1600000 | Spread: 13 (Min: 40243, Max: 40256) | Drift: 0.0%
+[Receiver] Progress: 646000 / 1600000 | Spread: 13 (Min: 40368, Max: 40381) | Drift: 0.0%
+[Receiver] Progress: 648000 / 1600000 | Spread: 13 (Min: 40493, Max: 40506) | Drift: 0.0%
+[Receiver] Progress: 650000 / 1600000 | Spread: 14 (Min: 40618, Max: 40632) | Drift: 0.0%
+[Receiver] Progress: 652000 / 1600000 | Spread: 14 (Min: 40743, Max: 40757) | Drift: 0.0%
+[Receiver] Progress: 654000 / 1600000 | Spread: 14 (Min: 40868, Max: 40882) | Drift: 0.0%
+[Receiver] Progress: 656000 / 1600000 | Spread: 13 (Min: 40993, Max: 41006) | Drift: 0.0%
+[Receiver] Progress: 658000 / 1600000 | Spread: 13 (Min: 41118, Max: 41131) | Drift: 0.0%
+[Receiver] Progress: 660000 / 1600000 | Spread: 13 (Min: 41243, Max: 41256) | Drift: 0.0%
+[Receiver] Progress: 662000 / 1600000 | Spread: 14 (Min: 41367, Max: 41381) | Drift: 0.0%
+[Receiver] Progress: 664000 / 1600000 | Spread: 14 (Min: 41492, Max: 41506) | Drift: 0.0%
+[Receiver] Progress: 666000 / 1600000 | Spread: 14 (Min: 41617, Max: 41631) | Drift: 0.0%
+[Receiver] Progress: 668000 / 1600000 | Spread: 14 (Min: 41742, Max: 41756) | Drift: 0.0%
+[Receiver] Progress: 670000 / 1600000 | Spread: 14 (Min: 41867, Max: 41881) | Drift: 0.0%
+[Receiver] Progress: 672000 / 1600000 | Spread: 14 (Min: 41992, Max: 42006) | Drift: 0.0%
+[Receiver] Progress: 674000 / 1600000 | Spread: 14 (Min: 42117, Max: 42131) | Drift: 0.0%
+[Receiver] Progress: 676000 / 1600000 | Spread: 14 (Min: 42242, Max: 42256) | Drift: 0.0%
+[Receiver] Progress: 678000 / 1600000 | Spread: 14 (Min: 42367, Max: 42381) | Drift: 0.0%
+[Receiver] Progress: 680000 / 1600000 | Spread: 14 (Min: 42492, Max: 42506) | Drift: 0.0%
+[Receiver] Progress: 682000 / 1600000 | Spread: 14 (Min: 42617, Max: 42631) | Drift: 0.0%
+[Receiver] Progress: 684000 / 1600000 | Spread: 14 (Min: 42742, Max: 42756) | Drift: 0.0%
+[Receiver] Progress: 686000 / 1600000 | Spread: 14 (Min: 42867, Max: 42881) | Drift: 0.0%
+[Receiver] Progress: 688000 / 1600000 | Spread: 14 (Min: 42992, Max: 43006) | Drift: 0.0%
+[Receiver] Progress: 690000 / 1600000 | Spread: 14 (Min: 43117, Max: 43131) | Drift: 0.0%
+[Receiver] Progress: 692000 / 1600000 | Spread: 13 (Min: 43242, Max: 43255) | Drift: 0.0%
+[Receiver] Progress: 694000 / 1600000 | Spread: 13 (Min: 43367, Max: 43380) | Drift: 0.0%
+[Receiver] Progress: 696000 / 1600000 | Spread: 13 (Min: 43492, Max: 43505) | Drift: 0.0%
+[Receiver] Progress: 698000 / 1600000 | Spread: 13 (Min: 43617, Max: 43630) | Drift: 0.0%
+[Receiver] Progress: 700000 / 1600000 | Spread: 13 (Min: 43742, Max: 43755) | Drift: 0.0%
+[Receiver] Progress: 702000 / 1600000 | Spread: 13 (Min: 43867, Max: 43880) | Drift: 0.0%
+[Receiver] Progress: 704000 / 1600000 | Spread: 13 (Min: 43992, Max: 44005) | Drift: 0.0%
+[Receiver] Progress: 706000 / 1600000 | Spread: 13 (Min: 44117, Max: 44130) | Drift: 0.0%
+[Receiver] Progress: 708000 / 1600000 | Spread: 13 (Min: 44242, Max: 44255) | Drift: 0.0%
+[Receiver] Progress: 710000 / 1600000 | Spread: 13 (Min: 44367, Max: 44380) | Drift: 0.0%
+[Receiver] Progress: 712000 / 1600000 | Spread: 13 (Min: 44492, Max: 44505) | Drift: 0.0%
+[Receiver] Progress: 714000 / 1600000 | Spread: 13 (Min: 44617, Max: 44630) | Drift: 0.0%
+[Receiver] Progress: 716000 / 1600000 | Spread: 13 (Min: 44742, Max: 44755) | Drift: 0.0%
+[Receiver] Progress: 718000 / 1600000 | Spread: 13 (Min: 44867, Max: 44880) | Drift: 0.0%
+[Receiver] Progress: 720000 / 1600000 | Spread: 13 (Min: 44992, Max: 45005) | Drift: 0.0%
+[Receiver] Progress: 722000 / 1600000 | Spread: 14 (Min: 45116, Max: 45130) | Drift: 0.0%
+[Receiver] Progress: 724000 / 1600000 | Spread: 14 (Min: 45241, Max: 45255) | Drift: 0.0%
+[Receiver] Progress: 726000 / 1600000 | Spread: 14 (Min: 45366, Max: 45380) | Drift: 0.0%
+[Receiver] Progress: 728000 / 1600000 | Spread: 14 (Min: 45491, Max: 45505) | Drift: 0.0%
+[Receiver] Progress: 730000 / 1600000 | Spread: 14 (Min: 45616, Max: 45630) | Drift: 0.0%
+[Receiver] Progress: 732000 / 1600000 | Spread: 14 (Min: 45741, Max: 45755) | Drift: 0.0%
+[Receiver] Progress: 734000 / 1600000 | Spread: 14 (Min: 45866, Max: 45880) | Drift: 0.0%
+[Receiver] Progress: 736000 / 1600000 | Spread: 14 (Min: 45991, Max: 46005) | Drift: 0.0%
+[Receiver] Progress: 738000 / 1600000 | Spread: 14 (Min: 46116, Max: 46130) | Drift: 0.0%
+[Receiver] Progress: 740000 / 1600000 | Spread: 14 (Min: 46241, Max: 46255) | Drift: 0.0%
+[Receiver] Progress: 742000 / 1600000 | Spread: 14 (Min: 46366, Max: 46380) | Drift: 0.0%
+[Receiver] Progress: 744000 / 1600000 | Spread: 14 (Min: 46491, Max: 46505) | Drift: 0.0%
+[Receiver] Progress: 746000 / 1600000 | Spread: 14 (Min: 46616, Max: 46630) | Drift: 0.0%
+[Receiver] Progress: 748000 / 1600000 | Spread: 14 (Min: 46741, Max: 46755) | Drift: 0.0%
+[Receiver] Progress: 750000 / 1600000 | Spread: 14 (Min: 46866, Max: 46880) | Drift: 0.0%
+[Receiver] Progress: 752000 / 1600000 | Spread: 14 (Min: 46991, Max: 47005) | Drift: 0.0%
+[Receiver] Progress: 754000 / 1600000 | Spread: 13 (Min: 47117, Max: 47130) | Drift: 0.0%
+[Receiver] Progress: 756000 / 1600000 | Spread: 13 (Min: 47242, Max: 47255) | Drift: 0.0%
+[Receiver] Progress: 758000 / 1600000 | Spread: 13 (Min: 47367, Max: 47380) | Drift: 0.0%
+[Receiver] Progress: 760000 / 1600000 | Spread: 13 (Min: 47492, Max: 47505) | Drift: 0.0%
+[Receiver] Progress: 762000 / 1600000 | Spread: 13 (Min: 47617, Max: 47630) | Drift: 0.0%
+[Receiver] Progress: 764000 / 1600000 | Spread: 13 (Min: 47742, Max: 47755) | Drift: 0.0%
+[Receiver] Progress: 766000 / 1600000 | Spread: 13 (Min: 47867, Max: 47880) | Drift: 0.0%
+[Receiver] Progress: 768000 / 1600000 | Spread: 13 (Min: 47992, Max: 48005) | Drift: 0.0%
+[Receiver] Progress: 770000 / 1600000 | Spread: 14 (Min: 48117, Max: 48131) | Drift: 0.0%
+[Receiver] Progress: 772000 / 1600000 | Spread: 14 (Min: 48242, Max: 48256) | Drift: 0.0%
+[Receiver] Progress: 774000 / 1600000 | Spread: 14 (Min: 48367, Max: 48381) | Drift: 0.0%
+[Receiver] Progress: 776000 / 1600000 | Spread: 14 (Min: 48492, Max: 48506) | Drift: 0.0%
+[Receiver] Progress: 778000 / 1600000 | Spread: 14 (Min: 48617, Max: 48631) | Drift: 0.0%
+[Receiver] Progress: 780000 / 1600000 | Spread: 14 (Min: 48742, Max: 48756) | Drift: 0.0%
+[Receiver] Progress: 782000 / 1600000 | Spread: 14 (Min: 48867, Max: 48881) | Drift: 0.0%
+[Receiver] Progress: 784000 / 1600000 | Spread: 14 (Min: 48992, Max: 49006) | Drift: 0.0%
+[Receiver] Progress: 786000 / 1600000 | Spread: 14 (Min: 49117, Max: 49131) | Drift: 0.0%
+[Receiver] Progress: 788000 / 1600000 | Spread: 14 (Min: 49242, Max: 49256) | Drift: 0.0%
+[Receiver] Progress: 790000 / 1600000 | Spread: 14 (Min: 49367, Max: 49381) | Drift: 0.0%
+[Receiver] Progress: 792000 / 1600000 | Spread: 14 (Min: 49492, Max: 49506) | Drift: 0.0%
+[Receiver] Progress: 794000 / 1600000 | Spread: 15 (Min: 49616, Max: 49631) | Drift: 0.0%
+[Receiver] Progress: 796000 / 1600000 | Spread: 15 (Min: 49741, Max: 49756) | Drift: 0.0%
+[Receiver] Progress: 798000 / 1600000 | Spread: 15 (Min: 49866, Max: 49881) | Drift: 0.0%
+[Receiver] Progress: 800000 / 1600000 | Spread: 15 (Min: 49991, Max: 50006) | Drift: 0.0%
+[Receiver] Progress: 802000 / 1600000 | Spread: 15 (Min: 50116, Max: 50131) | Drift: 0.0%
+[Receiver] Progress: 804000 / 1600000 | Spread: 15 (Min: 50241, Max: 50256) | Drift: 0.0%
+[Receiver] Progress: 806000 / 1600000 | Spread: 15 (Min: 50366, Max: 50381) | Drift: 0.0%
+[Receiver] Progress: 808000 / 1600000 | Spread: 15 (Min: 50491, Max: 50506) | Drift: 0.0%
+[Receiver] Progress: 810000 / 1600000 | Spread: 15 (Min: 50616, Max: 50631) | Drift: 0.0%
+[Receiver] Progress: 812000 / 1600000 | Spread: 15 (Min: 50741, Max: 50756) | Drift: 0.0%
+[Receiver] Progress: 814000 / 1600000 | Spread: 15 (Min: 50866, Max: 50881) | Drift: 0.0%
+[Receiver] Progress: 816000 / 1600000 | Spread: 15 (Min: 50991, Max: 51006) | Drift: 0.0%
+[Receiver] Progress: 818000 / 1600000 | Spread: 15 (Min: 51116, Max: 51131) | Drift: 0.0%
+[Receiver] Progress: 820000 / 1600000 | Spread: 15 (Min: 51241, Max: 51256) | Drift: 0.0%
+[Receiver] Progress: 822000 / 1600000 | Spread: 15 (Min: 51366, Max: 51381) | Drift: 0.0%
+[Receiver] Progress: 824000 / 1600000 | Spread: 15 (Min: 51491, Max: 51506) | Drift: 0.0%
+[Receiver] Progress: 826000 / 1600000 | Spread: 15 (Min: 51616, Max: 51631) | Drift: 0.0%
+[Receiver] Progress: 828000 / 1600000 | Spread: 15 (Min: 51741, Max: 51756) | Drift: 0.0%
+[Receiver] Progress: 830000 / 1600000 | Spread: 15 (Min: 51866, Max: 51881) | Drift: 0.0%
+[Receiver] Progress: 832000 / 1600000 | Spread: 15 (Min: 51991, Max: 52006) | Drift: 0.0%
+[Receiver] Progress: 834000 / 1600000 | Spread: 15 (Min: 52116, Max: 52131) | Drift: 0.0%
+[Receiver] Progress: 836000 / 1600000 | Spread: 15 (Min: 52241, Max: 52256) | Drift: 0.0%
+[Receiver] Progress: 838000 / 1600000 | Spread: 15 (Min: 52366, Max: 52381) | Drift: 0.0%
+[Receiver] Progress: 840000 / 1600000 | Spread: 15 (Min: 52491, Max: 52506) | Drift: 0.0%
+[Receiver] Progress: 842000 / 1600000 | Spread: 15 (Min: 52616, Max: 52631) | Drift: 0.0%
+[Receiver] Progress: 844000 / 1600000 | Spread: 15 (Min: 52741, Max: 52756) | Drift: 0.0%
+[Receiver] Progress: 846000 / 1600000 | Spread: 15 (Min: 52866, Max: 52881) | Drift: 0.0%
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+[Receiver] Progress: 848000 / 1600000 | Spread: 15 (Min: 52991, Max: 53006) | Drift: 0.0%
+[Receiver] Progress: 850000 / 1600000 | Spread: 15 (Min: 53116, Max: 53131) | Drift: 0.0%
+[Receiver] Progress: 852000 / 1600000 | Spread: 15 (Min: 53241, Max: 53256) | Drift: 0.0%
+[Receiver] Progress: 854000 / 1600000 | Spread: 15 (Min: 53366, Max: 53381) | Drift: 0.0%
+[Receiver] Progress: 856000 / 1600000 | Spread: 15 (Min: 53491, Max: 53506) | Drift: 0.0%
+[Receiver] Progress: 858000 / 1600000 | Spread: 15 (Min: 53616, Max: 53631) | Drift: 0.0%
+[Receiver] Progress: 860000 / 1600000 | Spread: 15 (Min: 53741, Max: 53756) | Drift: 0.0%
+[Receiver] Progress: 862000 / 1600000 | Spread: 15 (Min: 53866, Max: 53881) | Drift: 0.0%
+[Receiver] Progress: 864000 / 1600000 | Spread: 15 (Min: 53991, Max: 54006) | Drift: 0.0%
+[Receiver] Progress: 866000 / 1600000 | Spread: 15 (Min: 54116, Max: 54131) | Drift: 0.0%
+[Receiver] Progress: 868000 / 1600000 | Spread: 15 (Min: 54241, Max: 54256) | Drift: 0.0%
+[Receiver] Progress: 870000 / 1600000 | Spread: 14 (Min: 54367, Max: 54381) | Drift: 0.0%
+[Receiver] Progress: 872000 / 1600000 | Spread: 14 (Min: 54492, Max: 54506) | Drift: 0.0%
+[Receiver] Progress: 874000 / 1600000 | Spread: 14 (Min: 54617, Max: 54631) | Drift: 0.0%
+[Receiver] Progress: 876000 / 1600000 | Spread: 14 (Min: 54742, Max: 54756) | Drift: 0.0%
+[Receiver] Progress: 878000 / 1600000 | Spread: 15 (Min: 54866, Max: 54881) | Drift: 0.0%
+[Receiver] Progress: 880000 / 1600000 | Spread: 15 (Min: 54991, Max: 55006) | Drift: 0.0%
+[Receiver] Progress: 882000 / 1600000 | Spread: 15 (Min: 55116, Max: 55131) | Drift: 0.0%
+[Receiver] Progress: 884000 / 1600000 | Spread: 15 (Min: 55241, Max: 55256) | Drift: 0.0%
+[Receiver] Progress: 886000 / 1600000 | Spread: 16 (Min: 55366, Max: 55382) | Drift: 0.0%
+[Receiver] Progress: 888000 / 1600000 | Spread: 16 (Min: 55491, Max: 55507) | Drift: 0.0%
+[Receiver] Progress: 890000 / 1600000 | Spread: 16 (Min: 55616, Max: 55632) | Drift: 0.0%
+[Receiver] Progress: 892000 / 1600000 | Spread: 16 (Min: 55741, Max: 55757) | Drift: 0.0%
+[Receiver] Progress: 894000 / 1600000 | Spread: 16 (Min: 55866, Max: 55882) | Drift: 0.0%
+[Receiver] Progress: 896000 / 1600000 | Spread: 16 (Min: 55991, Max: 56007) | Drift: 0.0%
+[Receiver] Progress: 898000 / 1600000 | Spread: 16 (Min: 56116, Max: 56132) | Drift: 0.0%
+[Receiver] Progress: 900000 / 1600000 | Spread: 16 (Min: 56241, Max: 56257) | Drift: 0.0%
+[Receiver] Progress: 902000 / 1600000 | Spread: 16 (Min: 56366, Max: 56382) | Drift: 0.0%
+[Receiver] Progress: 904000 / 1600000 | Spread: 15 (Min: 56491, Max: 56506) | Drift: 0.0%
+[Receiver] Progress: 906000 / 1600000 | Spread: 15 (Min: 56616, Max: 56631) | Drift: 0.0%
+[Receiver] Progress: 908000 / 1600000 | Spread: 15 (Min: 56741, Max: 56756) | Drift: 0.0%
+[Receiver] Progress: 910000 / 1600000 | Spread: 15 (Min: 56866, Max: 56881) | Drift: 0.0%
+[Receiver] Progress: 912000 / 1600000 | Spread: 14 (Min: 56991, Max: 57005) | Drift: 0.0%
+[Receiver] Progress: 914000 / 1600000 | Spread: 14 (Min: 57116, Max: 57130) | Drift: 0.0%
+[Receiver] Progress: 916000 / 1600000 | Spread: 14 (Min: 57241, Max: 57255) | Drift: 0.0%
+[Receiver] Progress: 918000 / 1600000 | Spread: 14 (Min: 57366, Max: 57380) | Drift: 0.0%
+[Receiver] Progress: 920000 / 1600000 | Spread: 14 (Min: 57491, Max: 57505) | Drift: 0.0%
+[Receiver] Progress: 922000 / 1600000 | Spread: 14 (Min: 57616, Max: 57630) | Drift: 0.0%
+[Receiver] Progress: 924000 / 1600000 | Spread: 14 (Min: 57741, Max: 57755) | Drift: 0.0%
+[Receiver] Progress: 926000 / 1600000 | Spread: 14 (Min: 57866, Max: 57880) | Drift: 0.0%
+[Receiver] Progress: 928000 / 1600000 | Spread: 14 (Min: 57991, Max: 58005) | Drift: 0.0%
+[Receiver] Progress: 930000 / 1600000 | Spread: 14 (Min: 58116, Max: 58130) | Drift: 0.0%
+[Receiver] Progress: 932000 / 1600000 | Spread: 14 (Min: 58241, Max: 58255) | Drift: 0.0%
+[Receiver] Progress: 934000 / 1600000 | Spread: 14 (Min: 58366, Max: 58380) | Drift: 0.0%
+[Receiver] Progress: 936000 / 1600000 | Spread: 14 (Min: 58491, Max: 58505) | Drift: 0.0%
+[Receiver] Progress: 938000 / 1600000 | Spread: 14 (Min: 58616, Max: 58630) | Drift: 0.0%
+[Receiver] Progress: 940000 / 1600000 | Spread: 14 (Min: 58741, Max: 58755) | Drift: 0.0%
+[Receiver] Progress: 942000 / 1600000 | Spread: 14 (Min: 58866, Max: 58880) | Drift: 0.0%
+[Receiver] Progress: 944000 / 1600000 | Spread: 14 (Min: 58991, Max: 59005) | Drift: 0.0%
+[Receiver] Progress: 946000 / 1600000 | Spread: 14 (Min: 59116, Max: 59130) | Drift: 0.0%
+[Receiver] Progress: 948000 / 1600000 | Spread: 14 (Min: 59241, Max: 59255) | Drift: 0.0%
+[Receiver] Progress: 950000 / 1600000 | Spread: 14 (Min: 59366, Max: 59380) | Drift: 0.0%
+[Receiver] Progress: 952000 / 1600000 | Spread: 15 (Min: 59491, Max: 59506) | Drift: 0.0%
+[Receiver] Progress: 954000 / 1600000 | Spread: 15 (Min: 59616, Max: 59631) | Drift: 0.0%
+[Receiver] Progress: 956000 / 1600000 | Spread: 15 (Min: 59741, Max: 59756) | Drift: 0.0%
+[Receiver] Progress: 958000 / 1600000 | Spread: 15 (Min: 59866, Max: 59881) | Drift: 0.0%
+[Receiver] Progress: 960000 / 1600000 | Spread: 15 (Min: 59991, Max: 60006) | Drift: 0.0%
+[Receiver] Progress: 962000 / 1600000 | Spread: 15 (Min: 60116, Max: 60131) | Drift: 0.0%
+[Receiver] Progress: 964000 / 1600000 | Spread: 15 (Min: 60241, Max: 60256) | Drift: 0.0%
+[Receiver] Progress: 966000 / 1600000 | Spread: 15 (Min: 60366, Max: 60381) | Drift: 0.0%
+[Receiver] Progress: 968000 / 1600000 | Spread: 15 (Min: 60491, Max: 60506) | Drift: 0.0%
+[Receiver] Progress: 970000 / 1600000 | Spread: 15 (Min: 60616, Max: 60631) | Drift: 0.0%
+[Receiver] Progress: 972000 / 1600000 | Spread: 15 (Min: 60741, Max: 60756) | Drift: 0.0%
+[Receiver] Progress: 974000 / 1600000 | Spread: 14 (Min: 60866, Max: 60880) | Drift: 0.0%
+[Receiver] Progress: 976000 / 1600000 | Spread: 14 (Min: 60991, Max: 61005) | Drift: 0.0%
+[Receiver] Progress: 978000 / 1600000 | Spread: 14 (Min: 61116, Max: 61130) | Drift: 0.0%
+[Receiver] Progress: 980000 / 1600000 | Spread: 14 (Min: 61241, Max: 61255) | Drift: 0.0%
+[Receiver] Progress: 982000 / 1600000 | Spread: 14 (Min: 61366, Max: 61380) | Drift: 0.0%
+[Receiver] Progress: 984000 / 1600000 | Spread: 14 (Min: 61491, Max: 61505) | Drift: 0.0%
+[Receiver] Progress: 986000 / 1600000 | Spread: 14 (Min: 61616, Max: 61630) | Drift: 0.0%
+[Receiver] Progress: 988000 / 1600000 | Spread: 13 (Min: 61742, Max: 61755) | Drift: 0.0%
+[Receiver] Progress: 990000 / 1600000 | Spread: 13 (Min: 61867, Max: 61880) | Drift: 0.0%
+[Receiver] Progress: 992000 / 1600000 | Spread: 13 (Min: 61992, Max: 62005) | Drift: 0.0%
+[Receiver] Progress: 994000 / 1600000 | Spread: 13 (Min: 62117, Max: 62130) | Drift: 0.0%
+[Receiver] Progress: 996000 / 1600000 | Spread: 13 (Min: 62242, Max: 62255) | Drift: 0.0%
+[Receiver] Progress: 998000 / 1600000 | Spread: 13 (Min: 62367, Max: 62380) | Drift: 0.0%
+[Receiver] Progress: 1000000 / 1600000 | Spread: 13 (Min: 62492, Max: 62505) | Drift: 0.0%
+[Receiver] Progress: 1002000 / 1600000 | Spread: 14 (Min: 62617, Max: 62631) | Drift: 0.0%
+[Receiver] Progress: 1004000 / 1600000 | Spread: 14 (Min: 62742, Max: 62756) | Drift: 0.0%
+[Receiver] Progress: 1006000 / 1600000 | Spread: 14 (Min: 62867, Max: 62881) | Drift: 0.0%
+[Receiver] Progress: 1008000 / 1600000 | Spread: 14 (Min: 62992, Max: 63006) | Drift: 0.0%
+[Receiver] Progress: 1010000 / 1600000 | Spread: 14 (Min: 63117, Max: 63131) | Drift: 0.0%
+[Receiver] Progress: 1012000 / 1600000 | Spread: 14 (Min: 63242, Max: 63256) | Drift: 0.0%
+[Receiver] Progress: 1014000 / 1600000 | Spread: 14 (Min: 63367, Max: 63381) | Drift: 0.0%
+[Receiver] Progress: 1016000 / 1600000 | Spread: 14 (Min: 63492, Max: 63506) | Drift: 0.0%
+[Receiver] Progress: 1018000 / 1600000 | Spread: 14 (Min: 63617, Max: 63631) | Drift: 0.0%
+[Receiver] Progress: 1020000 / 1600000 | Spread: 14 (Min: 63742, Max: 63756) | Drift: 0.0%
+[Receiver] Progress: 1022000 / 1600000 | Spread: 14 (Min: 63867, Max: 63881) | Drift: 0.0%
+[Receiver] Progress: 1024000 / 1600000 | Spread: 14 (Min: 63992, Max: 64006) | Drift: 0.0%
+[Receiver] Progress: 1026000 / 1600000 | Spread: 14 (Min: 64117, Max: 64131) | Drift: 0.0%
+[Receiver] Progress: 1028000 / 1600000 | Spread: 14 (Min: 64242, Max: 64256) | Drift: 0.0%
+[Receiver] Progress: 1030000 / 1600000 | Spread: 14 (Min: 64367, Max: 64381) | Drift: 0.0%
+[Receiver] Progress: 1032000 / 1600000 | Spread: 14 (Min: 64492, Max: 64506) | Drift: 0.0%
+[Receiver] Progress: 1034000 / 1600000 | Spread: 14 (Min: 64617, Max: 64631) | Drift: 0.0%
+[Receiver] Progress: 1036000 / 1600000 | Spread: 14 (Min: 64742, Max: 64756) | Drift: 0.0%
+[Receiver] Progress: 1038000 / 1600000 | Spread: 14 (Min: 64867, Max: 64881) | Drift: 0.0%
+[Receiver] Progress: 1040000 / 1600000 | Spread: 14 (Min: 64992, Max: 65006) | Drift: 0.0%
+[Receiver] Progress: 1042000 / 1600000 | Spread: 14 (Min: 65117, Max: 65131) | Drift: 0.0%
+[Receiver] Progress: 1044000 / 1600000 | Spread: 14 (Min: 65242, Max: 65256) | Drift: 0.0%
+[Receiver] Progress: 1046000 / 1600000 | Spread: 14 (Min: 65367, Max: 65381) | Drift: 0.0%
+[Receiver] Progress: 1048000 / 1600000 | Spread: 14 (Min: 65492, Max: 65506) | Drift: 0.0%
+[Receiver] Progress: 1050000 / 1600000 | Spread: 14 (Min: 65617, Max: 65631) | Drift: 0.0%
+[Receiver] Progress: 1052000 / 1600000 | Spread: 14 (Min: 65742, Max: 65756) | Drift: 0.0%
+[Receiver] Progress: 1054000 / 1600000 | Spread: 14 (Min: 65867, Max: 65881) | Drift: 0.0%
+[Receiver] Progress: 1056000 / 1600000 | Spread: 14 (Min: 65992, Max: 66006) | Drift: 0.0%
+[Receiver] Progress: 1058000 / 1600000 | Spread: 14 (Min: 66117, Max: 66131) | Drift: 0.0%
+[Receiver] Progress: 1060000 / 1600000 | Spread: 14 (Min: 66242, Max: 66256) | Drift: 0.0%
+[Receiver] Progress: 1062000 / 1600000 | Spread: 14 (Min: 66367, Max: 66381) | Drift: 0.0%
+[Receiver] Progress: 1064000 / 1600000 | Spread: 14 (Min: 66492, Max: 66506) | Drift: 0.0%
+[Receiver] Progress: 1066000 / 1600000 | Spread: 14 (Min: 66617, Max: 66631) | Drift: 0.0%
+[Receiver] Progress: 1068000 / 1600000 | Spread: 14 (Min: 66742, Max: 66756) | Drift: 0.0%
+[Receiver] Progress: 1070000 / 1600000 | Spread: 14 (Min: 66867, Max: 66881) | Drift: 0.0%
+[Receiver] Progress: 1072000 / 1600000 | Spread: 14 (Min: 66992, Max: 67006) | Drift: 0.0%
+[Receiver] Progress: 1074000 / 1600000 | Spread: 14 (Min: 67117, Max: 67131) | Drift: 0.0%
+[Receiver] Progress: 1076000 / 1600000 | Spread: 14 (Min: 67242, Max: 67256) | Drift: 0.0%
+[Receiver] Progress: 1078000 / 1600000 | Spread: 14 (Min: 67367, Max: 67381) | Drift: 0.0%
+[Receiver] Progress: 1080000 / 1600000 | Spread: 14 (Min: 67492, Max: 67506) | Drift: 0.0%
+[Receiver] Progress: 1082000 / 1600000 | Spread: 14 (Min: 67617, Max: 67631) | Drift: 0.0%
+[Receiver] Progress: 1084000 / 1600000 | Spread: 14 (Min: 67742, Max: 67756) | Drift: 0.0%
+[Receiver] Progress: 1086000 / 1600000 | Spread: 14 (Min: 67867, Max: 67881) | Drift: 0.0%
+[Receiver] Progress: 1088000 / 1600000 | Spread: 14 (Min: 67992, Max: 68006) | Drift: 0.0%
+[Receiver] Progress: 1090000 / 1600000 | Spread: 14 (Min: 68117, Max: 68131) | Drift: 0.0%
+[Receiver] Progress: 1092000 / 1600000 | Spread: 14 (Min: 68242, Max: 68256) | Drift: 0.0%
+[Receiver] Progress: 1094000 / 1600000 | Spread: 14 (Min: 68367, Max: 68381) | Drift: 0.0%
+[Receiver] Progress: 1096000 / 1600000 | Spread: 14 (Min: 68492, Max: 68506) | Drift: 0.0%
+[Receiver] Progress: 1098000 / 1600000 | Spread: 14 (Min: 68617, Max: 68631) | Drift: 0.0%
+[Receiver] Progress: 1100000 / 1600000 | Spread: 14 (Min: 68742, Max: 68756) | Drift: 0.0%
+[Receiver] Progress: 1102000 / 1600000 | Spread: 14 (Min: 68867, Max: 68881) | Drift: 0.0%
+[Receiver] Progress: 1104000 / 1600000 | Spread: 14 (Min: 68992, Max: 69006) | Drift: 0.0%
+[Receiver] Progress: 1106000 / 1600000 | Spread: 14 (Min: 69117, Max: 69131) | Drift: 0.0%
+[Receiver] Progress: 1108000 / 1600000 | Spread: 14 (Min: 69242, Max: 69256) | Drift: 0.0%
+[Receiver] Progress: 1110000 / 1600000 | Spread: 14 (Min: 69367, Max: 69381) | Drift: 0.0%
+[Receiver] Progress: 1112000 / 1600000 | Spread: 14 (Min: 69492, Max: 69506) | Drift: 0.0%
+[Receiver] Progress: 1114000 / 1600000 | Spread: 14 (Min: 69617, Max: 69631) | Drift: 0.0%
+[Receiver] Progress: 1116000 / 1600000 | Spread: 14 (Min: 69742, Max: 69756) | Drift: 0.0%
+[Receiver] Progress: 1118000 / 1600000 | Spread: 14 (Min: 69867, Max: 69881) | Drift: 0.0%
+[Receiver] Progress: 1120000 / 1600000 | Spread: 14 (Min: 69992, Max: 70006) | Drift: 0.0%
+[Receiver] Progress: 1122000 / 1600000 | Spread: 14 (Min: 70117, Max: 70131) | Drift: 0.0%
+[Receiver] Progress: 1124000 / 1600000 | Spread: 14 (Min: 70242, Max: 70256) | Drift: 0.0%
+[Receiver] Progress: 1126000 / 1600000 | Spread: 14 (Min: 70367, Max: 70381) | Drift: 0.0%
+[Receiver] Progress: 1128000 / 1600000 | Spread: 14 (Min: 70492, Max: 70506) | Drift: 0.0%
+[Receiver] Progress: 1130000 / 1600000 | Spread: 14 (Min: 70617, Max: 70631) | Drift: 0.0%
+[Receiver] Progress: 1132000 / 1600000 | Spread: 13 (Min: 70742, Max: 70755) | Drift: 0.0%
+[Receiver] Progress: 1134000 / 1600000 | Spread: 13 (Min: 70867, Max: 70880) | Drift: 0.0%
+[Receiver] Progress: 1136000 / 1600000 | Spread: 12 (Min: 70993, Max: 71005) | Drift: 0.0%
+[Receiver] Progress: 1138000 / 1600000 | Spread: 12 (Min: 71118, Max: 71130) | Drift: 0.0%
+[Receiver] Progress: 1140000 / 1600000 | Spread: 12 (Min: 71243, Max: 71255) | Drift: 0.0%
+[Receiver] Progress: 1142000 / 1600000 | Spread: 12 (Min: 71368, Max: 71380) | Drift: 0.0%
+[Receiver] Progress: 1144000 / 1600000 | Spread: 12 (Min: 71493, Max: 71505) | Drift: 0.0%
+[Receiver] Progress: 1146000 / 1600000 | Spread: 12 (Min: 71618, Max: 71630) | Drift: 0.0%
+[Receiver] Progress: 1148000 / 1600000 | Spread: 12 (Min: 71743, Max: 71755) | Drift: 0.0%
+[Receiver] Progress: 1150000 / 1600000 | Spread: 12 (Min: 71868, Max: 71880) | Drift: 0.0%
+[Receiver] Progress: 1152000 / 1600000 | Spread: 13 (Min: 71992, Max: 72005) | Drift: 0.0%
+[Receiver] Progress: 1154000 / 1600000 | Spread: 13 (Min: 72117, Max: 72130) | Drift: 0.0%
+[Receiver] Progress: 1156000 / 1600000 | Spread: 13 (Min: 72242, Max: 72255) | Drift: 0.0%
+[Receiver] Progress: 1158000 / 1600000 | Spread: 13 (Min: 72367, Max: 72380) | Drift: 0.0%
+[Receiver] Progress: 1160000 / 1600000 | Spread: 13 (Min: 72492, Max: 72505) | Drift: 0.0%
+[Receiver] Progress: 1162000 / 1600000 | Spread: 13 (Min: 72617, Max: 72630) | Drift: 0.0%
+[Receiver] Progress: 1164000 / 1600000 | Spread: 13 (Min: 72742, Max: 72755) | Drift: 0.0%
+[Receiver] Progress: 1166000 / 1600000 | Spread: 13 (Min: 72867, Max: 72880) | Drift: 0.0%
+[Receiver] Progress: 1168000 / 1600000 | Spread: 14 (Min: 72992, Max: 73006) | Drift: 0.0%
+[Receiver] Progress: 1170000 / 1600000 | Spread: 14 (Min: 73117, Max: 73131) | Drift: 0.0%
+[Receiver] Progress: 1172000 / 1600000 | Spread: 14 (Min: 73242, Max: 73256) | Drift: 0.0%
+[Receiver] Progress: 1174000 / 1600000 | Spread: 14 (Min: 73367, Max: 73381) | Drift: 0.0%
+[Receiver] Progress: 1176000 / 1600000 | Spread: 14 (Min: 73492, Max: 73506) | Drift: 0.0%
+[Receiver] Progress: 1178000 / 1600000 | Spread: 14 (Min: 73617, Max: 73631) | Drift: 0.0%
+[Receiver] Progress: 1180000 / 1600000 | Spread: 14 (Min: 73742, Max: 73756) | Drift: 0.0%
+[Receiver] Progress: 1182000 / 1600000 | Spread: 14 (Min: 73867, Max: 73881) | Drift: 0.0%
+[Receiver] Progress: 1184000 / 1600000 | Spread: 14 (Min: 73992, Max: 74006) | Drift: 0.0%
+[Receiver] Progress: 1186000 / 1600000 | Spread: 13 (Min: 74117, Max: 74130) | Drift: 0.0%
+[Receiver] Progress: 1188000 / 1600000 | Spread: 13 (Min: 74242, Max: 74255) | Drift: 0.0%
+[Receiver] Progress: 1190000 / 1600000 | Spread: 13 (Min: 74367, Max: 74380) | Drift: 0.0%
+[Receiver] Progress: 1192000 / 1600000 | Spread: 13 (Min: 74492, Max: 74505) | Drift: 0.0%
+[Receiver] Progress: 1194000 / 1600000 | Spread: 13 (Min: 74617, Max: 74630) | Drift: 0.0%
+[Receiver] Progress: 1196000 / 1600000 | Spread: 13 (Min: 74742, Max: 74755) | Drift: 0.0%
+[Receiver] Progress: 1198000 / 1600000 | Spread: 13 (Min: 74867, Max: 74880) | Drift: 0.0%
+[Receiver] Progress: 1200000 / 1600000 | Spread: 13 (Min: 74992, Max: 75005) | Drift: 0.0%
+[Receiver] Progress: 1202000 / 1600000 | Spread: 12 (Min: 75118, Max: 75130) | Drift: 0.0%
+[Receiver] Progress: 1204000 / 1600000 | Spread: 12 (Min: 75243, Max: 75255) | Drift: 0.0%
+[Receiver] Progress: 1206000 / 1600000 | Spread: 12 (Min: 75368, Max: 75380) | Drift: 0.0%
+[Receiver] Progress: 1208000 / 1600000 | Spread: 12 (Min: 75493, Max: 75505) | Drift: 0.0%
+[Receiver] Progress: 1210000 / 1600000 | Spread: 12 (Min: 75618, Max: 75630) | Drift: 0.0%
+[Receiver] Progress: 1212000 / 1600000 | Spread: 12 (Min: 75743, Max: 75755) | Drift: 0.0%
+[Receiver] Progress: 1214000 / 1600000 | Spread: 12 (Min: 75868, Max: 75880) | Drift: 0.0%
+[Receiver] Progress: 1216000 / 1600000 | Spread: 12 (Min: 75993, Max: 76005) | Drift: 0.0%
+[Receiver] Progress: 1218000 / 1600000 | Spread: 12 (Min: 76118, Max: 76130) | Drift: 0.0%
+[Receiver] Progress: 1220000 / 1600000 | Spread: 12 (Min: 76243, Max: 76255) | Drift: 0.0%
+[Receiver] Progress: 1222000 / 1600000 | Spread: 12 (Min: 76368, Max: 76380) | Drift: 0.0%
+[Receiver] Progress: 1224000 / 1600000 | Spread: 12 (Min: 76493, Max: 76505) | Drift: 0.0%
+[Receiver] Progress: 1226000 / 1600000 | Spread: 12 (Min: 76618, Max: 76630) | Drift: 0.0%
+[Receiver] Progress: 1228000 / 1600000 | Spread: 12 (Min: 76743, Max: 76755) | Drift: 0.0%
+[Receiver] Progress: 1230000 / 1600000 | Spread: 12 (Min: 76868, Max: 76880) | Drift: 0.0%
+[Receiver] Progress: 1232000 / 1600000 | Spread: 12 (Min: 76993, Max: 77005) | Drift: 0.0%
+[Receiver] Progress: 1234000 / 1600000 | Spread: 12 (Min: 77118, Max: 77130) | Drift: 0.0%
+[Receiver] Progress: 1236000 / 1600000 | Spread: 12 (Min: 77243, Max: 77255) | Drift: 0.0%
+[Receiver] Progress: 1238000 / 1600000 | Spread: 12 (Min: 77368, Max: 77380) | Drift: 0.0%
+[Receiver] Progress: 1240000 / 1600000 | Spread: 12 (Min: 77493, Max: 77505) | Drift: 0.0%
+[Receiver] Progress: 1242000 / 1600000 | Spread: 12 (Min: 77618, Max: 77630) | Drift: 0.0%
+[Receiver] Progress: 1244000 / 1600000 | Spread: 12 (Min: 77743, Max: 77755) | Drift: 0.0%
+[Receiver] Progress: 1246000 / 1600000 | Spread: 12 (Min: 77868, Max: 77880) | Drift: 0.0%
+[Receiver] Progress: 1248000 / 1600000 | Spread: 12 (Min: 77993, Max: 78005) | Drift: 0.0%
+[Receiver] Progress: 1250000 / 1600000 | Spread: 12 (Min: 78118, Max: 78130) | Drift: 0.0%
+[Receiver] Progress: 1252000 / 1600000 | Spread: 12 (Min: 78243, Max: 78255) | Drift: 0.0%
+[Receiver] Progress: 1254000 / 1600000 | Spread: 12 (Min: 78368, Max: 78380) | Drift: 0.0%
+[Receiver] Progress: 1256000 / 1600000 | Spread: 12 (Min: 78493, Max: 78505) | Drift: 0.0%
+[Receiver] Progress: 1258000 / 1600000 | Spread: 13 (Min: 78618, Max: 78631) | Drift: 0.0%
+[Receiver] Progress: 1260000 / 1600000 | Spread: 13 (Min: 78743, Max: 78756) | Drift: 0.0%
+[Receiver] Progress: 1262000 / 1600000 | Spread: 13 (Min: 78868, Max: 78881) | Drift: 0.0%
+[Receiver] Progress: 1264000 / 1600000 | Spread: 13 (Min: 78993, Max: 79006) | Drift: 0.0%
+[Receiver] Progress: 1266000 / 1600000 | Spread: 13 (Min: 79118, Max: 79131) | Drift: 0.0%
+[Receiver] Progress: 1268000 / 1600000 | Spread: 13 (Min: 79243, Max: 79256) | Drift: 0.0%
+[Receiver] Progress: 1270000 / 1600000 | Spread: 13 (Min: 79368, Max: 79381) | Drift: 0.0%
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+[Receiver] Progress: 1272000 / 1600000 | Spread: 13 (Min: 79493, Max: 79506) | Drift: 0.0%
+[Receiver] Progress: 1274000 / 1600000 | Spread: 13 (Min: 79618, Max: 79631) | Drift: 0.0%
+[Receiver] Progress: 1276000 / 1600000 | Spread: 13 (Min: 79743, Max: 79756) | Drift: 0.0%
+[Receiver] Progress: 1278000 / 1600000 | Spread: 13 (Min: 79868, Max: 79881) | Drift: 0.0%
+[Receiver] Progress: 1280000 / 1600000 | Spread: 13 (Min: 79993, Max: 80006) | Drift: 0.0%
+[Receiver] Progress: 1282000 / 1600000 | Spread: 13 (Min: 80118, Max: 80131) | Drift: 0.0%
+[Receiver] Progress: 1284000 / 1600000 | Spread: 13 (Min: 80243, Max: 80256) | Drift: 0.0%
+[Receiver] Progress: 1286000 / 1600000 | Spread: 13 (Min: 80368, Max: 80381) | Drift: 0.0%
+[Receiver] Progress: 1288000 / 1600000 | Spread: 13 (Min: 80493, Max: 80506) | Drift: 0.0%
+[Receiver] Progress: 1290000 / 1600000 | Spread: 13 (Min: 80618, Max: 80631) | Drift: 0.0%
+[Receiver] Progress: 1292000 / 1600000 | Spread: 13 (Min: 80743, Max: 80756) | Drift: 0.0%
+[Receiver] Progress: 1294000 / 1600000 | Spread: 13 (Min: 80868, Max: 80881) | Drift: 0.0%
+[Receiver] Progress: 1296000 / 1600000 | Spread: 13 (Min: 80993, Max: 81006) | Drift: 0.0%
+[Receiver] Progress: 1298000 / 1600000 | Spread: 12 (Min: 81119, Max: 81131) | Drift: 0.0%
+[Receiver] Progress: 1300000 / 1600000 | Spread: 12 (Min: 81244, Max: 81256) | Drift: 0.0%
+[Receiver] Progress: 1302000 / 1600000 | Spread: 12 (Min: 81369, Max: 81381) | Drift: 0.0%
+[Receiver] Progress: 1304000 / 1600000 | Spread: 12 (Min: 81494, Max: 81506) | Drift: 0.0%
+[Receiver] Progress: 1306000 / 1600000 | Spread: 12 (Min: 81619, Max: 81631) | Drift: 0.0%
+[Receiver] Progress: 1308000 / 1600000 | Spread: 12 (Min: 81744, Max: 81756) | Drift: 0.0%
+[Receiver] Progress: 1310000 / 1600000 | Spread: 12 (Min: 81869, Max: 81881) | Drift: 0.0%
+[Receiver] Progress: 1312000 / 1600000 | Spread: 12 (Min: 81994, Max: 82006) | Drift: 0.0%
+[Receiver] Progress: 1314000 / 1600000 | Spread: 12 (Min: 82119, Max: 82131) | Drift: 0.0%
+[Receiver] Progress: 1316000 / 1600000 | Spread: 12 (Min: 82244, Max: 82256) | Drift: 0.0%
+[Receiver] Progress: 1318000 / 1600000 | Spread: 12 (Min: 82369, Max: 82381) | Drift: 0.0%
+[Receiver] Progress: 1320000 / 1600000 | Spread: 12 (Min: 82494, Max: 82506) | Drift: 0.0%
+[Receiver] Progress: 1322000 / 1600000 | Spread: 12 (Min: 82619, Max: 82631) | Drift: 0.0%
+[Receiver] Progress: 1324000 / 1600000 | Spread: 12 (Min: 82744, Max: 82756) | Drift: 0.0%
+[Receiver] Progress: 1326000 / 1600000 | Spread: 12 (Min: 82869, Max: 82881) | Drift: 0.0%
+[Receiver] Progress: 1328000 / 1600000 | Spread: 12 (Min: 82994, Max: 83006) | Drift: 0.0%
+[Receiver] Progress: 1330000 / 1600000 | Spread: 12 (Min: 83119, Max: 83131) | Drift: 0.0%
+[Receiver] Progress: 1332000 / 1600000 | Spread: 12 (Min: 83244, Max: 83256) | Drift: 0.0%
+[Receiver] Progress: 1334000 / 1600000 | Spread: 12 (Min: 83369, Max: 83381) | Drift: 0.0%
+[Receiver] Progress: 1336000 / 1600000 | Spread: 12 (Min: 83494, Max: 83506) | Drift: 0.0%
+[Receiver] Progress: 1338000 / 1600000 | Spread: 12 (Min: 83619, Max: 83631) | Drift: 0.0%
+[Receiver] Progress: 1340000 / 1600000 | Spread: 12 (Min: 83744, Max: 83756) | Drift: 0.0%
+[Receiver] Progress: 1342000 / 1600000 | Spread: 12 (Min: 83869, Max: 83881) | Drift: 0.0%
+[Receiver] Progress: 1344000 / 1600000 | Spread: 12 (Min: 83994, Max: 84006) | Drift: 0.0%
+[Receiver] Progress: 1346000 / 1600000 | Spread: 12 (Min: 84119, Max: 84131) | Drift: 0.0%
+[Receiver] Progress: 1348000 / 1600000 | Spread: 12 (Min: 84244, Max: 84256) | Drift: 0.0%
+[Receiver] Progress: 1350000 / 1600000 | Spread: 12 (Min: 84369, Max: 84381) | Drift: 0.0%
+[Receiver] Progress: 1352000 / 1600000 | Spread: 12 (Min: 84494, Max: 84506) | Drift: 0.0%
+[Receiver] Progress: 1354000 / 1600000 | Spread: 12 (Min: 84619, Max: 84631) | Drift: 0.0%
+[Receiver] Progress: 1356000 / 1600000 | Spread: 12 (Min: 84744, Max: 84756) | Drift: 0.0%
+[Receiver] Progress: 1358000 / 1600000 | Spread: 13 (Min: 84869, Max: 84882) | Drift: 0.0%
+[Receiver] Progress: 1360000 / 1600000 | Spread: 13 (Min: 84994, Max: 85007) | Drift: 0.0%
+[Receiver] Progress: 1362000 / 1600000 | Spread: 13 (Min: 85119, Max: 85132) | Drift: 0.0%
+[Receiver] Progress: 1364000 / 1600000 | Spread: 13 (Min: 85244, Max: 85257) | Drift: 0.0%
+[Receiver] Progress: 1366000 / 1600000 | Spread: 13 (Min: 85369, Max: 85382) | Drift: 0.0%
+[Receiver] Progress: 1368000 / 1600000 | Spread: 13 (Min: 85494, Max: 85507) | Drift: 0.0%
+[Receiver] Progress: 1370000 / 1600000 | Spread: 13 (Min: 85619, Max: 85632) | Drift: 0.0%
+[Receiver] Progress: 1372000 / 1600000 | Spread: 13 (Min: 85744, Max: 85757) | Drift: 0.0%
+[Receiver] Progress: 1374000 / 1600000 | Spread: 13 (Min: 85869, Max: 85882) | Drift: 0.0%
+[Receiver] Progress: 1376000 / 1600000 | Spread: 12 (Min: 85994, Max: 86006) | Drift: 0.0%
+[Receiver] Progress: 1378000 / 1600000 | Spread: 12 (Min: 86119, Max: 86131) | Drift: 0.0%
+[Receiver] Progress: 1380000 / 1600000 | Spread: 12 (Min: 86244, Max: 86256) | Drift: 0.0%
+[Receiver] Progress: 1382000 / 1600000 | Spread: 12 (Min: 86369, Max: 86381) | Drift: 0.0%
+[Receiver] Progress: 1384000 / 1600000 | Spread: 12 (Min: 86494, Max: 86506) | Drift: 0.0%
+[Receiver] Progress: 1386000 / 1600000 | Spread: 12 (Min: 86619, Max: 86631) | Drift: 0.0%
+[Receiver] Progress: 1388000 / 1600000 | Spread: 12 (Min: 86744, Max: 86756) | Drift: 0.0%
+[Receiver] Progress: 1390000 / 1600000 | Spread: 12 (Min: 86869, Max: 86881) | Drift: 0.0%
+[Receiver] Progress: 1392000 / 1600000 | Spread: 12 (Min: 86994, Max: 87006) | Drift: 0.0%
+[Receiver] Progress: 1394000 / 1600000 | Spread: 12 (Min: 87119, Max: 87131) | Drift: 0.0%
+[Receiver] Progress: 1396000 / 1600000 | Spread: 12 (Min: 87244, Max: 87256) | Drift: 0.0%
+[Receiver] Progress: 1398000 / 1600000 | Spread: 12 (Min: 87369, Max: 87381) | Drift: 0.0%
+[Receiver] Progress: 1400000 / 1600000 | Spread: 12 (Min: 87494, Max: 87506) | Drift: 0.0%
+[Receiver] Progress: 1402000 / 1600000 | Spread: 12 (Min: 87619, Max: 87631) | Drift: 0.0%
+[Receiver] Progress: 1404000 / 1600000 | Spread: 12 (Min: 87744, Max: 87756) | Drift: 0.0%
+[Receiver] Progress: 1406000 / 1600000 | Spread: 12 (Min: 87869, Max: 87881) | Drift: 0.0%
+[Receiver] Progress: 1408000 / 1600000 | Spread: 12 (Min: 87994, Max: 88006) | Drift: 0.0%
+[Receiver] Progress: 1410000 / 1600000 | Spread: 12 (Min: 88119, Max: 88131) | Drift: 0.0%
+[Receiver] Progress: 1412000 / 1600000 | Spread: 12 (Min: 88244, Max: 88256) | Drift: 0.0%
+[Receiver] Progress: 1414000 / 1600000 | Spread: 12 (Min: 88369, Max: 88381) | Drift: 0.0%
+[Receiver] Progress: 1416000 / 1600000 | Spread: 12 (Min: 88494, Max: 88506) | Drift: 0.0%
+[Receiver] Progress: 1418000 / 1600000 | Spread: 12 (Min: 88619, Max: 88631) | Drift: 0.0%
+[Receiver] Progress: 1420000 / 1600000 | Spread: 12 (Min: 88744, Max: 88756) | Drift: 0.0%
+[Receiver] Progress: 1422000 / 1600000 | Spread: 12 (Min: 88869, Max: 88881) | Drift: 0.0%
+[Receiver] Progress: 1424000 / 1600000 | Spread: 12 (Min: 88994, Max: 89006) | Drift: 0.0%
+[Receiver] Progress: 1426000 / 1600000 | Spread: 12 (Min: 89119, Max: 89131) | Drift: 0.0%
+[Receiver] Progress: 1428000 / 1600000 | Spread: 12 (Min: 89244, Max: 89256) | Drift: 0.0%
+[Receiver] Progress: 1430000 / 1600000 | Spread: 12 (Min: 89369, Max: 89381) | Drift: 0.0%
+[Receiver] Progress: 1432000 / 1600000 | Spread: 12 (Min: 89494, Max: 89506) | Drift: 0.0%
+[Receiver] Progress: 1434000 / 1600000 | Spread: 12 (Min: 89619, Max: 89631) | Drift: 0.0%
+[Receiver] Progress: 1436000 / 1600000 | Spread: 12 (Min: 89744, Max: 89756) | Drift: 0.0%
+[Receiver] Progress: 1438000 / 1600000 | Spread: 12 (Min: 89869, Max: 89881) | Drift: 0.0%
+[Receiver] Progress: 1440000 / 1600000 | Spread: 12 (Min: 89994, Max: 90006) | Drift: 0.0%
+[Receiver] Progress: 1442000 / 1600000 | Spread: 12 (Min: 90119, Max: 90131) | Drift: 0.0%
+[Receiver] Progress: 1444000 / 1600000 | Spread: 12 (Min: 90244, Max: 90256) | Drift: 0.0%
+[Receiver] Progress: 1446000 / 1600000 | Spread: 11 (Min: 90370, Max: 90381) | Drift: 0.0%
+[Receiver] Progress: 1448000 / 1600000 | Spread: 11 (Min: 90495, Max: 90506) | Drift: 0.0%
+[Receiver] Progress: 1450000 / 1600000 | Spread: 11 (Min: 90620, Max: 90631) | Drift: 0.0%
+[Receiver] Progress: 1452000 / 1600000 | Spread: 11 (Min: 90745, Max: 90756) | Drift: 0.0%
+[Receiver] Progress: 1454000 / 1600000 | Spread: 11 (Min: 90870, Max: 90881) | Drift: 0.0%
+[Receiver] Progress: 1456000 / 1600000 | Spread: 11 (Min: 90995, Max: 91006) | Drift: 0.0%
+[Receiver] Progress: 1458000 / 1600000 | Spread: 11 (Min: 91120, Max: 91131) | Drift: 0.0%
+[Receiver] Progress: 1460000 / 1600000 | Spread: 12 (Min: 91244, Max: 91256) | Drift: 0.0%
+[Receiver] Progress: 1462000 / 1600000 | Spread: 12 (Min: 91369, Max: 91381) | Drift: 0.0%
+[Receiver] Progress: 1464000 / 1600000 | Spread: 11 (Min: 91494, Max: 91505) | Drift: 0.0%
+[Receiver] Progress: 1466000 / 1600000 | Spread: 11 (Min: 91619, Max: 91630) | Drift: 0.0%
+[Receiver] Progress: 1468000 / 1600000 | Spread: 11 (Min: 91744, Max: 91755) | Drift: 0.0%
+[Receiver] Progress: 1470000 / 1600000 | Spread: 11 (Min: 91869, Max: 91880) | Drift: 0.0%
+[Receiver] Progress: 1472000 / 1600000 | Spread: 11 (Min: 91994, Max: 92005) | Drift: 0.0%
+[Receiver] Progress: 1474000 / 1600000 | Spread: 11 (Min: 92119, Max: 92130) | Drift: 0.0%
+[Receiver] Progress: 1476000 / 1600000 | Spread: 11 (Min: 92244, Max: 92255) | Drift: 0.0%
+[Receiver] Progress: 1478000 / 1600000 | Spread: 11 (Min: 92369, Max: 92380) | Drift: 0.0%
+[Receiver] Progress: 1480000 / 1600000 | Spread: 11 (Min: 92494, Max: 92505) | Drift: 0.0%
+[Receiver] Progress: 1482000 / 1600000 | Spread: 11 (Min: 92619, Max: 92630) | Drift: 0.0%
+[Receiver] Progress: 1484000 / 1600000 | Spread: 11 (Min: 92744, Max: 92755) | Drift: 0.0%
+[Receiver] Progress: 1486000 / 1600000 | Spread: 11 (Min: 92869, Max: 92880) | Drift: 0.0%
+[Receiver] Progress: 1488000 / 1600000 | Spread: 12 (Min: 92994, Max: 93006) | Drift: 0.0%
+[Receiver] Progress: 1490000 / 1600000 | Spread: 12 (Min: 93119, Max: 93131) | Drift: 0.0%
+[Receiver] Progress: 1492000 / 1600000 | Spread: 12 (Min: 93244, Max: 93256) | Drift: 0.0%
+[Receiver] Progress: 1494000 / 1600000 | Spread: 12 (Min: 93369, Max: 93381) | Drift: 0.0%
+[Receiver] Progress: 1496000 / 1600000 | Spread: 12 (Min: 93494, Max: 93506) | Drift: 0.0%
+[Receiver] Progress: 1498000 / 1600000 | Spread: 12 (Min: 93619, Max: 93631) | Drift: 0.0%
+[Receiver] Progress: 1500000 / 1600000 | Spread: 12 (Min: 93744, Max: 93756) | Drift: 0.0%
+[Receiver] Progress: 1502000 / 1600000 | Spread: 12 (Min: 93869, Max: 93881) | Drift: 0.0%
+[Receiver] Progress: 1504000 / 1600000 | Spread: 12 (Min: 93994, Max: 94006) | Drift: 0.0%
+[Receiver] Progress: 1506000 / 1600000 | Spread: 12 (Min: 94119, Max: 94131) | Drift: 0.0%
+[Receiver] Progress: 1508000 / 1600000 | Spread: 12 (Min: 94244, Max: 94256) | Drift: 0.0%
+[Receiver] Progress: 1510000 / 1600000 | Spread: 12 (Min: 94369, Max: 94381) | Drift: 0.0%
+[Receiver] Progress: 1512000 / 1600000 | Spread: 12 (Min: 94494, Max: 94506) | Drift: 0.0%
+[Receiver] Progress: 1514000 / 1600000 | Spread: 12 (Min: 94619, Max: 94631) | Drift: 0.0%
+[Receiver] Progress: 1516000 / 1600000 | Spread: 12 (Min: 94744, Max: 94756) | Drift: 0.0%
+[Receiver] Progress: 1518000 / 1600000 | Spread: 12 (Min: 94869, Max: 94881) | Drift: 0.0%
+[Receiver] Progress: 1520000 / 1600000 | Spread: 12 (Min: 94994, Max: 95006) | Drift: 0.0%
+[Receiver] Progress: 1522000 / 1600000 | Spread: 12 (Min: 95119, Max: 95131) | Drift: 0.0%
+[Receiver] Progress: 1524000 / 1600000 | Spread: 12 (Min: 95244, Max: 95256) | Drift: 0.0%
+[Receiver] Progress: 1526000 / 1600000 | Spread: 12 (Min: 95369, Max: 95381) | Drift: 0.0%
+[Receiver] Progress: 1528000 / 1600000 | Spread: 12 (Min: 95494, Max: 95506) | Drift: 0.0%
+[Receiver] Progress: 1530000 / 1600000 | Spread: 12 (Min: 95619, Max: 95631) | Drift: 0.0%
+[Receiver] Progress: 1532000 / 1600000 | Spread: 12 (Min: 95744, Max: 95756) | Drift: 0.0%
+[Receiver] Progress: 1534000 / 1600000 | Spread: 12 (Min: 95869, Max: 95881) | Drift: 0.0%
+[Receiver] Progress: 1536000 / 1600000 | Spread: 12 (Min: 95994, Max: 96006) | Drift: 0.0%
+[Receiver] Progress: 1538000 / 1600000 | Spread: 12 (Min: 96119, Max: 96131) | Drift: 0.0%
+[Receiver] Progress: 1540000 / 1600000 | Spread: 12 (Min: 96244, Max: 96256) | Drift: 0.0%
+[Receiver] Progress: 1542000 / 1600000 | Spread: 12 (Min: 96369, Max: 96381) | Drift: 0.0%
+[Receiver] Progress: 1544000 / 1600000 | Spread: 12 (Min: 96494, Max: 96506) | Drift: 0.0%
+[Receiver] Progress: 1546000 / 1600000 | Spread: 12 (Min: 96619, Max: 96631) | Drift: 0.0%
+[Receiver] Progress: 1548000 / 1600000 | Spread: 13 (Min: 96743, Max: 96756) | Drift: 0.0%
+[Receiver] Progress: 1550000 / 1600000 | Spread: 13 (Min: 96868, Max: 96881) | Drift: 0.0%
+[Receiver] Progress: 1552000 / 1600000 | Spread: 13 (Min: 96993, Max: 97006) | Drift: 0.0%
+[Receiver] Progress: 1554000 / 1600000 | Spread: 13 (Min: 97118, Max: 97131) | Drift: 0.0%
+[Receiver] Progress: 1556000 / 1600000 | Spread: 13 (Min: 97243, Max: 97256) | Drift: 0.0%
+[Receiver] Progress: 1558000 / 1600000 | Spread: 13 (Min: 97368, Max: 97381) | Drift: 0.0%
+[Receiver] Progress: 1560000 / 1600000 | Spread: 13 (Min: 97493, Max: 97506) | Drift: 0.0%
+[Receiver] Progress: 1562000 / 1600000 | Spread: 13 (Min: 97618, Max: 97631) | Drift: 0.0%
+[Receiver] Progress: 1564000 / 1600000 | Spread: 13 (Min: 97743, Max: 97756) | Drift: 0.0%
+[Receiver] Progress: 1566000 / 1600000 | Spread: 13 (Min: 97868, Max: 97881) | Drift: 0.0%
+[Receiver] Progress: 1568000 / 1600000 | Spread: 13 (Min: 97993, Max: 98006) | Drift: 0.0%
+[Receiver] Progress: 1570000 / 1600000 | Spread: 13 (Min: 98118, Max: 98131) | Drift: 0.0%
+[Receiver] Progress: 1572000 / 1600000 | Spread: 13 (Min: 98243, Max: 98256) | Drift: 0.0%
+[Receiver] Progress: 1574000 / 1600000 | Spread: 13 (Min: 98368, Max: 98381) | Drift: 0.0%
+[Receiver] Progress: 1576000 / 1600000 | Spread: 13 (Min: 98493, Max: 98506) | Drift: 0.0%
+[Receiver] Progress: 1578000 / 1600000 | Spread: 13 (Min: 98618, Max: 98631) | Drift: 0.0%
+[Receiver] Progress: 1580000 / 1600000 | Spread: 13 (Min: 98743, Max: 98756) | Drift: 0.0%
+[Receiver] Progress: 1582000 / 1600000 | Spread: 13 (Min: 98868, Max: 98881) | Drift: 0.0%
+[Receiver] Progress: 1584000 / 1600000 | Spread: 13 (Min: 98993, Max: 99006) | Drift: 0.0%
+[Receiver] Progress: 1586000 / 1600000 | Spread: 13 (Min: 99118, Max: 99131) | Drift: 0.0%
+[Receiver] Progress: 1588000 / 1600000 | Spread: 13 (Min: 99243, Max: 99256) | Drift: 0.0%
+[Receiver] Progress: 1590000 / 1600000 | Spread: 13 (Min: 99368, Max: 99381) | Drift: 0.0%
+[Receiver] Progress: 1592000 / 1600000 | Spread: 13 (Min: 99493, Max: 99506) | Drift: 0.0%
+[Receiver] Progress: 1594000 / 1600000 | Spread: 13 (Min: 99618, Max: 99631) | Drift: 0.0%
+[Receiver] Progress: 1596000 / 1600000 | Spread: 13 (Min: 99743, Max: 99756) | Drift: 0.0%
+[Receiver] Progress: 1598000 / 1600000 | Spread: 13 (Min: 99868, Max: 99881) | Drift: 0.0%
+[Receiver] Progress: 1600000 / 1600000 | Spread: 0 (Min: 100000, Max: 100000) | Drift: 0.0%
+[Receiver] SUCCESS: All 1600000 messages verified with fair round-robin.
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+MainApp: 952/4096 bytes used (3144 bytes unused headroom)
+Receiver: 1168/8192 bytes used (7024 bytes unused headroom, 1756 words HWM)
+Snd1: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd2: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd3: 248/2048 bytes used (1800 bytes unused headroom, 450 words HWM)
+Snd4: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd5: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd6: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd7: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd8: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd9: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd10: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd11: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd12: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd13: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd14: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd15: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
+Snd16: 240/2048 bytes used (1808 bytes unused headroom, 452 words HWM)
