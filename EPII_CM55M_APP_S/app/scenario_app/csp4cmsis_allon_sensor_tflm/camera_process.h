@@ -10,12 +10,13 @@
 // when it had 1024 bytes and 280 left). 384 words = 1.5 KB leaves about 800.
 class Camera : public csp::CSProcessStatic<384> {
 public:
-    Camera(csp::Chanout<frame_t> out);
+    Camera(csp::Chanout<frame_t> out, csp::Chanout<report_t> report);
     void run() override;
     const char* name() const override { return "Camera"; }
 
 private:
     csp::Chanout<frame_t> m_frame_out;
+    csp::Chanout<report_t> m_report_out;
     uint32_t m_frame_counter;
 };
 
