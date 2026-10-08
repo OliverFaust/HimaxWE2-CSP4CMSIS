@@ -36,6 +36,9 @@ The console is a shared resource, and `xprintf()` has no locking, so two process
 * **Concurrency:** Each process runs in its own thread (`osPriorityLow2`), created by `Run(..., ExecutionMode::StaticNetwork)` from `MainApp_Task` (`osPriorityLow3`).
 * **Console output:** one line per frame, printed by the Reporter only (before, each result was printed twice, by Inference and by a Console process, and lines from different processes interleaved mid-string).
 
+### 6. Formal Model
+[`Formal model/`](Formal%20model/) holds a CSP-M model of this network (Camera → Inference → Reporter, one report channel with two writers), checked with ProB 1.16.1: deadlock and divergence freedom, and refinement against a specification of the console output (MainApp's line, the camera driver's log, the two `started` lines, then exactly one result line per frame, in frame order). Two positive controls -- a Reporter that reads two per-writer channels in a fixed order, and an Inference that also prints -- fail as they should (deadlock; specification violated).
+
 ---
 
 ## 🔧 Key Code Snippets
@@ -199,6 +202,7 @@ app/scenario_app/csp4cmsis_allon_sensor_tflm/
 ├── reporter_process.cpp    // Reporter: the only process that prints (reports, stack report)
 ├── common_types.h          // Shared structs (frame_t, report_t)
 ├── csp4cmsis_spn.cpp       // Network construction & Main task
+├── Formal model/           // CSP-M model of the network, positive controls, ProB results
 └── app.mk                  // Makefile source list
 ```
 

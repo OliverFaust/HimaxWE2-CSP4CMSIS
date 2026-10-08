@@ -1,0 +1,55 @@
+-- Positive controls for Neuropathway.csp: two plausible wrong designs. Each must FAIL its
+-- check, showing that the checks of the real model can detect these faults.
+
+MAX_INDEX = 3
+
+datatype prediction_t = person | no_person
+datatype source_t     = camera | inference
+datatype report_t     = started.source_t | result.{0..MAX_INDEX-1}.prediction_t
+
+channel g_trigger_chan
+channel frame_chan  : {0..MAX_INDEX-1}
+channel report_chan : report_t
+channel camera_report, inference_report : report_t
+channel main_print, camera_log, direct_print
+channel line        : report_t
+channel stack_report
+
+ENV = g_trigger_chan -> ENV
+
+-- Control 1 (must deadlock): one channel per writer, and a Reporter that reads them in a
+-- fixed order, Camera first, as if every round brought one report from each. Camera reports
+-- only once, so the Reporter waits for it for ever while Inference waits to report.
+Camera1 = camera_log -> camera_report!started.camera -> CameraLoop1(0)
+CameraLoop1(c) = g_trigger_chan -> frame_chan!c -> CameraLoop1((c + 1) % MAX_INDEX)
+Inference1 = frame_chan?f -> inference_report!started.inference -> Infer1(f)
+Infer1(f)  = (inference_report!result.f.person -> Next1) |~| (inference_report!result.f.no_person -> Next1)
+Next1      = frame_chan?f -> Infer1(f)
+Reporter1  = camera_report?r -> line!r -> inference_report?s -> line!s -> Reporter1
+SYSTEM1 = main_print ->
+    (ENV [| {| g_trigger_chan |} |]
+        ((Camera1 [| {| frame_chan |} |] Inference1)
+            [| {| camera_report, inference_report |} |] Reporter1))
+
+assert SYSTEM1 :[deadlock free [F]]          -- expected: false
+
+-- Control 2 (must violate the console specification): as the real network, but Inference
+-- also prints directly (a second printer), as the old dbg_printf did.
+Camera2 = camera_log -> report_chan!started.camera -> CameraLoop2(0)
+CameraLoop2(c) = g_trigger_chan -> frame_chan!c -> CameraLoop2((c + 1) % MAX_INDEX)
+Inference2 = frame_chan?f -> report_chan!started.inference -> Infer2(f)
+Infer2(f)  = (report_chan!result.f.person -> direct_print -> Next2)
+             |~| (report_chan!result.f.no_person -> direct_print -> Next2)
+Next2      = frame_chan?f -> Infer2(f)
+Reporter2  = report_chan?r -> line!r -> ((stack_report -> Reporter2) |~| Reporter2)
+SYSTEM2 = main_print ->
+    (ENV [| {| g_trigger_chan |} |]
+        ((Camera2 [| {| frame_chan |} |] Inference2) [| {| report_chan |} |] Reporter2))
+CONSOLE2 = SYSTEM2 \ {| g_trigger_chan, frame_chan, report_chan |}
+
+STK(P) = (stack_report -> P) |~| P
+SPEC = main_print -> camera_log -> line!started.camera ->
+       STK(line!started.inference -> STK(RESULTS(0)))
+RESULTS(f) = |~| p : prediction_t @ line!result.f.p -> STK(RESULTS((f + 1) % MAX_INDEX))
+
+assert SPEC [T= CONSOLE2                     -- expected: false

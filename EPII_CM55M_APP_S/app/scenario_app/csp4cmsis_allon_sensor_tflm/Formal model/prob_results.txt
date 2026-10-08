@@ -1,0 +1,25 @@
+# ProB VERSION 1.16.1-final (716929f528b333dd3901a0521fc0d3460a488af7), 2026-10-08
+
+## probcli Neuropathway.csp -assertions
+CHECKING CSP: SPEC [T= CSP: CONSOLE
+CSP: CONSOLE is a trace refinement of CSP: SPEC
+CHECKING CSP: SPEC [F= CSP: CONSOLE
+CSP: CONSOLE is a failures refinement of CSP: SPEC
+CHECKING CSP: SPEC [FD= CSP: CONSOLE
+CSP: CONSOLE is a failure_divergences refinement of CSP: SPEC
+CHECKING CSP: SYSTEM :[ livelock free ]
+CSP: SYSTEM is divergence free
+Result trace for assertModelCheck: no_counter_example
+CHECKING CSP: SYSTEM :[ deadlock free [F] ]
+CSP: SYSTEM is deadlock free
+Result trace for assertModelCheck: no_counter_example
+% CSP Assertion Checks Completed: [CSP: SPEC [T= CSP: CONSOLE=true,CSP: SPEC [F= CSP: CONSOLE=true,CSP: SPEC [FD= CSP: CONSOLE=true,CSP: SYSTEM :[ livelock free ]=true,CSP: SYSTEM :[ deadlock free [F] ]=true]
+[runtime/144,total/5,true/5,false/0,unknown/0]
+
+## probcli Neuropathway_controls.csp -assertions
+CHECKING CSP: SPEC [T= CSP: CONSOLE2
+CSP: CONSOLE2 is *not* a trace refinement of CSP: SPEC
+CHECKING CSP: SYSTEM1 :[ deadlock free [F] ]
+Result trace for assertModelCheck: [GO:,main_print,GO:,camera_log,GO:,camera_report.(started.camera),GO:,g_trigger_chan,GO:,frame_chan.0,GO:,g_trigger_chan,GO:,line.(started.camera),GO:,inference_report.(started.inference),GO:,tau,GO:,line.(started.inference),DEADLOCKS]
+% CSP Assertion Checks Completed: [CSP: SPEC [T= CSP: CONSOLE2=false,CSP: SYSTEM1 :[ deadlock free [F] ]=false]
+[runtime/108,total/2,true/0,false/2,unknown/0]
