@@ -76,3 +76,33 @@ Board (Grove Vision AI V2, IMX219, nobody in view; 3 runs of 40 s from boot, ide
 | Build warnings (app) | 25 | 23 (two unused variables in `cvapp.cpp` gone) |
 
 Logs: `results/board/reporter_allon_sensor_tflm_run{1,2,3}.txt`.
+
+## Neurochannel: stack report by MainApp (branch `mainapp-stack-monitor`, 2026-10-09)
+
+Review change: the Reporter's own stack report depended on report traffic (no reports, no stack report --
+exactly when a process stalls) and delayed the writers while it printed four lines. Now `MainApp_Task` keeps
+the network (`auto network = InParallel(...)`), runs it as a StaticNetwork and stays alive: every 3000 ms it
+sends one `ReportKind::Stack` report per process (`network.forEachProcess`) and one for itself
+(`osThreadGetStackSpace()`), over its own writer end of `report_chan` (now three writers). MainApp never
+prints; the "network started" line is dropped (as a report it could reach the Reporter while the camera
+driver is still printing its start-up log). The Reporter only receives and prints. A plain CMSIS-RTOS2
+thread may use a rendezvous in 3.0.0: it blocks on thread flag 0 of the calling thread (`osThreadGetId()`),
+and MainApp uses no thread flags otherwise. MainApp stays above the network (`osPriorityLow3`), so a busy
+network process does not hold the report up (time slicing is on, so the Reporter, at network priority, runs
+even next to a spinning process).
+
+Board (Grove Vision AI V2, IMX219; 40 s from boot):
+
+| | Reporter's stack report (before) | MainApp's stack report |
+|---|---|---|
+| Frames in 40 s | 764 | 764, 764, 764 |
+| Lines per frame / other lines after `Camera: started` | 1 / 0 | 1 / 0 |
+| Stack reports in 40 s | 12 | 13 (every 3 s from 3.5 s after start) |
+| Stacks Camera / Inference / Reporter / CSP_Main | 760 / 480 / 408 of 1024 / -- (MainApp ended) | 760 / 480 / 384–432 of 1024 / 464 of 1024 B (MainApp stack right-sized from 2048 to 1024 B) |
+| Stall test (scratch build: Inference stops after frame 100) | -- | frames 0..100, then the stack report continues every 3 s (12 more groups), nothing else |
+
+The first stack report came 56 frames (≈ 2.9 s) after `Camera: started`: that is the margin between the
+camera driver's start-up log (printed by the driver, outside the Reporter) and MainApp's first report.
+Formal model updated (MainApp as the third writer; stall case; the previous design as a positive control),
+ProB 1.16.1: 8 of 8 assertions hold, 3 of 3 controls fail as expected (`Formal model/`).
+Logs: `results/board/mainapp_stack_allon_sensor_tflm_run{1,2,3}.txt`, `..._stall.txt`.

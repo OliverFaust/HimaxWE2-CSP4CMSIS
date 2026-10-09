@@ -27,9 +27,9 @@ The inference process utilizes the `cvapp` module from the Himax SDK:
 * **Start-up order:** Inference initialises the model only when its first frame has arrived, i.e. after Camera has started.
 
 ### 4. Reporter: the console has one owner
-The console is a shared resource, and `xprintf()` has no locking, so two processes printing at the same time tear each other's lines. The **Reporter** is therefore the only process that prints while the network runs. Camera and Inference send it fixed-size `report_t` messages (`common_types.h`: kind, source, code, frame index, values) over **one rendezvous channel with two writers**; the Reporter owns every format string and prints exactly one line per frame, plus a stack report every 3 s.
+The console is a shared resource, and `xprintf()` has no locking, so two processes printing at the same time tear each other's lines. The **Reporter** is therefore the only process that prints while the network runs. Camera, Inference and `MainApp_Task` send it fixed-size `report_t` messages (`common_types.h`: kind, source, code, frame index, values) over **one rendezvous channel with three writers**; the Reporter owns every format string and prints exactly one line per report: one per frame, plus MainApp's stack report every 3 s. The Reporter has no state and no timer: it only receives and prints.
 * **Rendezvous, not buffered:** nothing is lost, and the cost is small: at 921 600 Bd a result line takes about 0.5 ms, against 51 ms per frame (19.6 frames/s, measured unchanged). Camera reports only at start-up, so its frame loop never waits for the console. A `KeepNewest` buffer would drop reports silently.
-* **Before the Reporter's first line**, only the camera driver prints (its start-up log, during `cisdp_sensor_init()`/`cisdp_dp_init()`): Inference is still waiting for the first frame, and MainApp has printed its line and ended before the network runs. The frame-ready ISR's `FATAL` message is the one exception: it halts the system.
+* **Before the Reporter's first line**, only the camera driver prints (its start-up log, during `cisdp_sensor_init()`/`cisdp_dp_init()`): Inference is still waiting for the first frame, and MainApp, which never prints, sends its first stack report only 3.5 s after start (on the board, Camera reported `started` about 2.9 s before it). The frame-ready ISR's `FATAL` message is the one exception: it halts the system.
 
 ### 5. Memory & Performance
 * **Zero Heap:** All CSP channels and processes, and every thread's stack, are statically allocated at compile time; the FreeRTOS heap is not used (`configTOTAL_HEAP_SIZE` 1 KB, 0 allocations measured).
@@ -37,7 +37,7 @@ The console is a shared resource, and `xprintf()` has no locking, so two process
 * **Console output:** one line per frame, printed by the Reporter only (before, each result was printed twice, by Inference and by a Console process, and lines from different processes interleaved mid-string).
 
 ### 6. Formal Model
-[`Formal model/`](Formal%20model/) holds a CSP-M model of this network (Camera → Inference → Reporter, one report channel with two writers), checked with ProB 1.16.1: deadlock and divergence freedom, and refinement against a specification of the console output (MainApp's line, the camera driver's log, the two `started` lines, then exactly one result line per frame, in frame order). Two positive controls -- a Reporter that reads two per-writer channels in a fixed order, and an Inference that also prints -- fail as they should (deadlock; specification violated).
+[`Formal model/`](Formal%20model/) holds a CSP-M model of this network (Camera → Inference → Reporter, one report channel with three writers: Camera, Inference and MainApp), checked with ProB 1.16.1: deadlock and divergence freedom; refinement against a specification of the console's pipeline lines (the camera driver's log, the two `started` lines, then exactly one result line per frame, in frame order) and of its stack lines (complete groups, for ever); and, with Inference stalled, no deadlock and an unchanged stack report. Three positive controls fail as they should: a Reporter that reads per-writer channels in a fixed order (deadlock), an Inference that also prints (specification violated), and the previous design with the stack report in the Reporter (the stack report stops when the pipeline stalls).
 
 ---
 
@@ -110,23 +110,27 @@ void Inference::run() {
 ```cpp
 void MainApp_Task(void* params) {
     static Channel<frame_t>  frame_chan;      // unbuffered
-    static Channel<report_t> report_chan;     // unbuffered; writers: Camera, Inference
+    static Channel<report_t> report_chan;     // unbuffered; writers: Camera, Inference, MainApp
 
     static Camera    camera(frame_chan.writer(), report_chan.writer());
     static Inference inference(frame_chan.reader(), report_chan.writer());
-    static CSProcess* const reported[] = { &camera, &inference };   // for the stack report
-    static Reporter  reporter(report_chan.reader(), reported, 2);
+    static Reporter  reporter(report_chan.reader());
 
-    Run(InParallel(camera, inference, reporter), ExecutionMode::StaticNetwork, NETWORK_PRIORITY);
+    auto network = InParallel(camera, inference, reporter);   // kept for forEachProcess()
+    Run(network, ExecutionMode::StaticNetwork, NETWORK_PRIORITY);
 
-    xprintf("*** MainApp_Task: network started. Terminating. ***\r\n");
-    osThreadExit();                                  // the processes run on their own
+    Chanout<report_t> report_out = report_chan.writer();      // MainApp's own writer end
+    while (true) {                                            // MainApp never prints
+        SleepFor(Milliseconds(CSP_STACK_REPORT_INTERVAL_MS));
+        // one Stack report per process (network.forEachProcess), then one for MainApp itself
+        // (osThreadGetStackSpace() of its own thread), each written with report_out << ...
+    }
 }
 ```
 
 ## 📊 Stack Occupancy Reporting
 
-The Reporter prints the stack report, since it owns the console: after a report, once every `CSP_STACK_REPORT_INTERVAL_MS` (default 3000 ms, overridable at compile time), it prints each process's allocated stack, used bytes, unused headroom and HWM in words (Camera, Inference, then itself). If a process doesn't expose a HWM, this is reported as unavailable rather than guessed at. `MainApp_Task` (static 2 KB stack, `CSP_Main`) ends after starting the network and is no longer reported.
+`MainApp_Task` sends the stack report: every `CSP_STACK_REPORT_INTERVAL_MS` (default 3000 ms, overridable at compile time) it sends one `ReportKind::Stack` report per process (`network.forEachProcess(...)`: Camera, Inference, Reporter) and one for itself (`osThreadGetStackSpace()` of its own thread, `CSP_Main`), each with used and allocated bytes and the HWM in words, over its own writer end of the report channel; the Reporter prints each as one line. The report runs on MainApp's own timer, so it continues when the pipeline stalls (tested on the board: with Inference stopped after frame 100, the report went on every 3 s). MainApp is an ordinary CMSIS-RTOS2 thread: a rendezvous may be used by any thread (it blocks on thread flag 0 of the calling thread, which MainApp uses for nothing else). It runs above the network (`osPriorityLow3`), so a busy network process does not hold the report up. If a process doesn't expose a HWM, this is reported as unavailable rather than guessed at.
 
 Because camera/inference/reporter all run forever, there's no natural "network finished" point to take a single reading at -- these are *live, worst-observed-so-far* readings, and are only trustworthy once each process's deepest call path has actually been exercised (e.g. after error/edge-case branches in inference or the reporter have run at least once).
 
@@ -136,7 +140,8 @@ Frame 113: prediction = -13
 Frame 114: prediction = -12
 Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
 Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
-Reporter: 408/1024 bytes used (616 bytes unused headroom, 154 words HWM)
+Reporter: 432/1024 bytes used (592 bytes unused headroom, 148 words HWM)
+CSP_Main: 464/1024 bytes used (560 bytes unused headroom, 140 words HWM)
 Frame 115: prediction = -12
 ```
 
@@ -144,7 +149,8 @@ Frame 115: prediction = -12
 |---|---|---|---|
 | Camera | 1536 bytes | 760 bytes | 776 bytes |
 | Inference | 1024 bytes | 480 bytes | 544 bytes |
-| Reporter | 1024 bytes | 408 bytes | 616 bytes |
+| Reporter | 1024 bytes | 432 bytes | 592 bytes |
+| CSP_Main (MainApp) | 1024 bytes | 464 bytes | 560 bytes |
 
 Camera uses 760 bytes (744 before it sent reports); before 2.0 it had only 1024 bytes (280 bytes of headroom), since CSP4CMSIS 2.0.1 it has 1536 bytes (384 words). Inference and the Reporter have comfortable margins, despite Inference being the process that drives the Ethos‑U55 NPU call.
 
@@ -174,7 +180,6 @@ make
 
 ### Expected UART Output
 ```text
-*** MainApp_Task: network started. Terminating. ***
 cis_IMX219_init
 ...                      (the camera driver's start-up log)
 IMX219 on by app done
@@ -186,7 +191,8 @@ Frame 1: prediction = -12
 ...
 Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
 Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
-Reporter: 408/1024 bytes used (616 bytes unused headroom, 154 words HWM)
+Reporter: 432/1024 bytes used (592 bytes unused headroom, 148 words HWM)
+CSP_Main: 464/1024 bytes used (560 bytes unused headroom, 140 words HWM)
 ...
 ```
 Stack occupancy lines like the block above are printed every `CSP_STACK_REPORT_INTERVAL_MS` (3 s by default) once the network is running -- see [Stack Occupancy Reporting](#-stack-occupancy-reporting) below.
@@ -199,7 +205,7 @@ app/scenario_app/csp4cmsis_allon_sensor_tflm/
 ├── inference_process.h     // Inference process declaration
 ├── inference_process.cpp   // Inference implementation (Ethos-U55)
 ├── reporter_process.h      // Reporter process declaration
-├── reporter_process.cpp    // Reporter: the only process that prints (reports, stack report)
+├── reporter_process.cpp    // Reporter: the only process that prints (one line per report)
 ├── common_types.h          // Shared structs (frame_t, report_t)
 ├── csp4cmsis_spn.cpp       // Network construction & Main task
 ├── Formal model/           // CSP-M model of the network, positive controls, ProB results

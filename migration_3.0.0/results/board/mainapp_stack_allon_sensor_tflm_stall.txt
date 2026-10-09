@@ -1,0 +1,183 @@
+1st BL Modem Build DATE=Nov 30 2023, 0x0002000b
+Please input any key to enter X-Modem mode in 100 ms 
+waiting input key...
+slot flash_offset 0x00000000
+New MemDesp himax_sec_SB_image_process PASS
+set_memory_s_ns
+bl_status = 0x800000, HX_DSP_FLAG 1
+bl_status = 0x800000
+jump_addr=0x10000000
+Compiler Version: ARM GNU, 13.2.1 20231009
+freertos rtos_app
+cis_IMX219_init 
+mclk DIV3, xshutdown_pin=82
+Set PA1(AON_GPIO1) to High
+hx_drv_cis_set_slaveID(0x10)
+IMX219 Init Stream by app 
+IMX219 Init by app (IMX219_binning_setting)
+IMX219 Init by app (IMX219_exposure_setting)
+IMX219 Init by app (IMX219_again_setting)
+IMX219 Init by app (IMX219_dgain_setting)
+IMX219 Init by app (IMX219_mirror_setting)
+WD1[340dfe80], WD2_J[340dfe80], WD3_RAW[3406f680], JPAuto[3406f600]
+MIPI CLK change to PLL freq:(400000000 / 2)
+MIPI TX CLK: 200M
+RESET MIPI CSI RX/TX
+sensor_type: 15
+IMX219 on by app done
+g_cursensorstream: 0
+Camera: started
+Inference: started
+Frame 0: prediction = -68
+Frame 1: prediction = -72
+Frame 2: prediction = -72
+Frame 3: prediction = -77
+Frame 4: prediction = -73
+Frame 5: prediction = -66
+Frame 6: prediction = -68
+Frame 7: prediction = -69
+Frame 8: prediction = -66
+Frame 9: prediction = -73
+Frame 10: prediction = -70
+Frame 11: prediction = -61
+Frame 12: prediction = -69
+Frame 13: prediction = -71
+Frame 14: prediction = -69
+Frame 15: prediction = -69
+Frame 16: prediction = -65
+Frame 17: prediction = -72
+Frame 18: prediction = -70
+Frame 19: prediction = -71
+Frame 20: prediction = -68
+Frame 21: prediction = -67
+Frame 22: prediction = -70
+Frame 23: prediction = -69
+Frame 24: prediction = -71
+Frame 25: prediction = -69
+Frame 26: prediction = -65
+Frame 27: prediction = -68
+Frame 28: prediction = -70
+Frame 29: prediction = -68
+Frame 30: prediction = -68
+Frame 31: prediction = -63
+Frame 32: prediction = -68
+Frame 33: prediction = -72
+Frame 34: prediction = -71
+Frame 35: prediction = -69
+Frame 36: prediction = -71
+Frame 37: prediction = -68
+Frame 38: prediction = -72
+Frame 39: prediction = -72
+Frame 40: prediction = -66
+Frame 41: prediction = -69
+Frame 42: prediction = -67
+Frame 43: prediction = -67
+Frame 44: prediction = -69
+Frame 45: prediction = -72
+Frame 46: prediction = -65
+Frame 47: prediction = -74
+Frame 48: prediction = -74
+Frame 49: prediction = -72
+Frame 50: prediction = -67
+Frame 51: prediction = -71
+Frame 52: prediction = -67
+Frame 53: prediction = -69
+Frame 54: prediction = -67
+Frame 55: prediction = -71
+Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
+Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
+Reporter: 384/1024 bytes used (640 bytes unused headroom, 160 words HWM)
+CSP_Main: 464/2048 bytes used (1584 bytes unused headroom, 396 words HWM)
+Frame 56: prediction = -63
+Frame 57: prediction = -75
+Frame 58: prediction = -69
+Frame 59: prediction = -72
+Frame 60: prediction = -63
+Frame 61: prediction = -74
+Frame 62: prediction = -72
+Frame 63: prediction = -68
+Frame 64: prediction = -68
+Frame 65: prediction = -73
+Frame 66: prediction = -71
+Frame 67: prediction = -71
+Frame 68: prediction = -67
+Frame 69: prediction = -68
+Frame 70: prediction = -71
+Frame 71: prediction = -71
+Frame 72: prediction = -75
+Frame 73: prediction = -76
+Frame 74: prediction = -74
+Frame 75: prediction = -69
+Frame 76: prediction = -77
+Frame 77: prediction = -78
+Frame 78: prediction = -74
+Frame 79: prediction = -62
+Frame 80: prediction = -69
+Frame 81: prediction = -74
+Frame 82: prediction = -74
+Frame 83: prediction = -72
+Frame 84: prediction = -67
+Frame 85: prediction = -74
+Frame 86: prediction = -73
+Frame 87: prediction = -74
+Frame 88: prediction = -74
+Frame 89: prediction = -71
+Frame 90: prediction = -67
+Frame 91: prediction = -68
+Frame 92: prediction = -71
+Frame 93: prediction = -69
+Frame 94: prediction = -69
+Frame 95: prediction = -65
+Frame 96: prediction = -72
+Frame 97: prediction = -69
+Frame 98: prediction = -73
+Frame 99: prediction = -68
+Frame 100: prediction = -66
+Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
+Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
+Reporter: 432/1024 bytes used (592 bytes unused headroom, 148 words HWM)
+CSP_Main: 464/2048 bytes used (1584 bytes unused headroom, 396 words HWM)
+Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
+Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
+Reporter: 432/1024 bytes used (592 bytes unused headroom, 148 words HWM)
+CSP_Main: 464/2048 bytes used (1584 bytes unused headroom, 396 words HWM)
+Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
+Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
+Reporter: 432/1024 bytes used (592 bytes unused headroom, 148 words HWM)
+CSP_Main: 464/2048 bytes used (1584 bytes unused headroom, 396 words HWM)
+Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
+Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
+Reporter: 432/1024 bytes used (592 bytes unused headroom, 148 words HWM)
+CSP_Main: 464/2048 bytes used (1584 bytes unused headroom, 396 words HWM)
+Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
+Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
+Reporter: 432/1024 bytes used (592 bytes unused headroom, 148 words HWM)
+CSP_Main: 464/2048 bytes used (1584 bytes unused headroom, 396 words HWM)
+Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
+Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
+Reporter: 432/1024 bytes used (592 bytes unused headroom, 148 words HWM)
+CSP_Main: 464/2048 bytes used (1584 bytes unused headroom, 396 words HWM)
+Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
+Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
+Reporter: 432/1024 bytes used (592 bytes unused headroom, 148 words HWM)
+CSP_Main: 464/2048 bytes used (1584 bytes unused headroom, 396 words HWM)
+Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
+Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
+Reporter: 432/1024 bytes used (592 bytes unused headroom, 148 words HWM)
+CSP_Main: 464/2048 bytes used (1584 bytes unused headroom, 396 words HWM)
+Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
+Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
+Reporter: 432/1024 bytes used (592 bytes unused headroom, 148 words HWM)
+CSP_Main: 464/2048 bytes used (1584 bytes unused headroom, 396 words HWM)
+Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
+Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
+Reporter: 432/1024 bytes used (592 bytes unused headroom, 148 words HWM)
+CSP_Main: 464/2048 bytes used (1584 bytes unused headroom, 396 words HWM)
+Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
+Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
+Reporter: 432/1024 bytes used (592 bytes unused headroom, 148 words HWM)
+CSP_Main: 464/2048 bytes used (1584 bytes unused headroom, 396 words HWM)
+Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
+Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
+Reporter: 432/1024 bytes used (592 bytes unused headroom, 148 words HWM)
+CSP_Main: 464/2048 bytes used (1584 bytes unused headroom, 396 words HWM)
