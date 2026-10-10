@@ -1,0 +1,66 @@
+-- Positive controls for Neuropathway.csp: plausible wrong designs. Each must FAIL its check,
+-- showing that the checks of the real model can detect these faults.
+
+MAX_INDEX = 3
+
+datatype prediction_t = person | no_person
+datatype source_t     = camera | inference
+datatype thread_t     = cam | inf | rep | main_app
+datatype report_t     = started.source_t | result.{0..MAX_INDEX-1}.prediction_t | stack.thread_t
+
+channel g_trigger_chan
+channel frame_chan  : {0..MAX_INDEX-1}
+channel report_chan : report_t
+channel camera_report, inference_report : report_t
+channel camera_log, direct_print, stack_tick
+channel line        : report_t
+
+ENV = g_trigger_chan -> ENV
+
+Camera = camera_log -> report_chan!started.camera -> CameraLoop(0)
+CameraLoop(c) = g_trigger_chan -> frame_chan!c -> CameraLoop((c + 1) % MAX_INDEX)
+
+SPEC_PIPE  = camera_log -> line!started.camera -> line!started.inference -> RESULTS(0)
+RESULTS(f) = |~| p : prediction_t @ line!result.f.p -> RESULTS((f + 1) % MAX_INDEX)
+SPEC_STACK = line!stack.cam -> line!stack.inf -> line!stack.rep -> line!stack.main_app -> SPEC_STACK
+
+-- Control 1 (must deadlock): one channel per writer, and a Reporter that reads them in a
+-- fixed order, Camera first, as if every round brought one report from each. Camera reports
+-- only once, so the Reporter waits for it for ever while Inference waits to report.
+Camera1 = camera_log -> camera_report!started.camera -> CameraLoop1(0)
+CameraLoop1(c) = g_trigger_chan -> frame_chan!c -> CameraLoop1((c + 1) % MAX_INDEX)
+Inference1 = frame_chan?f -> inference_report!started.inference -> Infer1(f)
+Infer1(f)  = (inference_report!result.f.person -> Next1) |~| (inference_report!result.f.no_person -> Next1)
+Next1      = frame_chan?f -> Infer1(f)
+Reporter1  = camera_report?r -> line!r -> inference_report?s -> line!s -> Reporter1
+SYSTEM1 = ENV [| {| g_trigger_chan |} |]
+    ((Camera1 [| {| frame_chan |} |] Inference1) [| {| camera_report, inference_report |} |] Reporter1)
+
+assert SYSTEM1 :[deadlock free [F]]          -- expected: false
+
+-- Control 2 (must violate the console specification): as the real pipeline, but Inference
+-- also prints directly (a second printer), as the old dbg_printf did.
+Inference2 = frame_chan?f -> report_chan!started.inference -> Infer2(f)
+Infer2(f)  = (report_chan!result.f.person -> direct_print -> Next2)
+             |~| (report_chan!result.f.no_person -> direct_print -> Next2)
+Next2      = frame_chan?f -> Infer2(f)
+Reporter2  = report_chan?r -> line!r -> Reporter2
+SYSTEM2 = ENV [| {| g_trigger_chan |} |]
+    ((Camera [| {| frame_chan |} |] Inference2) [| {| report_chan |} |] Reporter2)
+CONSOLE2 = SYSTEM2 \ {| g_trigger_chan, frame_chan, report_chan |}
+
+assert SPEC_PIPE [T= CONSOLE2                -- expected: false
+
+-- Control 3 (the previous design, must lose the stack report when the pipeline stalls): the
+-- Reporter prints the stack report itself, after a report, when its timer has expired (an
+-- internal choice), and MainApp sends nothing. Inference stops after its first result.
+InferenceStall = frame_chan?f -> report_chan!started.inference ->
+                 ((report_chan!result.f.person -> STOP) |~| (report_chan!result.f.no_person -> STOP))
+Reporter3 = report_chan?r -> line!r ->
+            ((line!stack.cam -> line!stack.inf -> line!stack.rep -> line!stack.main_app -> Reporter3)
+             |~| Reporter3)
+SYSTEM3 = ENV [| {| g_trigger_chan |} |]
+    ((Camera [| {| frame_chan |} |] InferenceStall) [| {| report_chan |} |] Reporter3)
+CONSOLE_STACK3 = SYSTEM3 \ diff(Events, {| line.stack |})
+
+assert SPEC_STACK [F= CONSOLE_STACK3         -- expected: false

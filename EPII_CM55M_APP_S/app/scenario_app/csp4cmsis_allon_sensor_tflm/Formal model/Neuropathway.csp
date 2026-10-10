@@ -1,37 +1,74 @@
--- Neuropathway
-MAX_INDEX = 2
+-- Neurochannel (csp4cmsis_allon_sensor_tflm): Camera -> Inference -> Reporter, plus MainApp.
+-- The Reporter is the only process that prints while the network runs. Camera, Inference and
+-- MainApp send it reports over one rendezvous channel with three writers; MainApp sends one
+-- stack report per thread on its own timer (every 3 s), whatever the pipeline does.
+
+MAX_INDEX = 3                                  -- frame indices 0..2 (wrapping), enough to check order
 
 datatype prediction_t = person | no_person
+datatype source_t     = camera | inference
+datatype thread_t     = cam | inf | rep | main_app       -- whose stack
+datatype report_t     = started.source_t | result.{0..MAX_INDEX-1}.prediction_t | stack.thread_t
 
-channel g_trigger_chan
-channel frame_chan : Int
-channel result_chan : Int.prediction_t
-channel print_
+channel g_trigger_chan                         -- frame-ready interrupt -> Camera
+channel frame_chan  : {0..MAX_INDEX-1}         -- Camera -> Inference (rendezvous)
+channel report_chan : report_t                 -- Camera, Inference, MainApp -> Reporter (rendezvous, three writers)
+channel camera_log                             -- the camera driver's start-up log
+channel stack_tick                             -- MainApp's timer (3 s)
+channel line        : report_t                 -- the Reporter's lines (print is a CSP-M keyword)
 
+-- The frame-ready interrupt. Camera re-arms the capture only after it has read a trigger,
+-- so at most one trigger is pending: the one-slot buffer behaves like a rendezvous here.
 ENV = g_trigger_chan -> ENV
 
-Camera(c) =
-    g_trigger_chan -> frame_chan!c -> Camera((c+1) % MAX_INDEX)
+-- Camera: the driver prints its start-up log, then Camera reports Started (and never again).
+Camera = camera_log -> report_chan!started.camera -> CameraLoop(0)
+CameraLoop(c) = g_trigger_chan -> frame_chan!c -> CameraLoop((c + 1) % MAX_INDEX)
 
-Inference =
-    frame_chan?f ->
-        (
-            (result_chan!f!person -> Inference)
-        |~|
-            (result_chan!f!no_person -> Inference)
-        )
+-- Inference: initialises the model only after the first frame (i.e. after Camera started),
+-- then reports one result per frame. The prediction depends on the image: internal choice.
+Inference = frame_chan?f -> report_chan!started.inference -> Infer(f)
+Infer(f)  = (report_chan!result.f.person -> Next) |~| (report_chan!result.f.no_person -> Next)
+Next      = frame_chan?f -> Infer(f)
 
-Console =
-    result_chan?f?p -> print_ -> Console
+-- MainApp: on every timer tick, one stack report per process (InParallel order) and one for
+-- itself, over its own writer end. It never prints.
+MainApp = stack_tick -> report_chan!stack.cam -> report_chan!stack.inf ->
+          report_chan!stack.rep -> report_chan!stack.main_app -> MainApp
 
-NEUROPATHWAY =
-    Camera(0)
-        [| {| frame_chan |} |]
-    (Inference [| {| result_chan |} |] Console)
+-- Reporter: receives any report and prints it as one line. No state, no timer.
+Reporter = report_chan?r -> line!r -> Reporter
 
-SYSTEM =
-    ENV [| {| g_trigger_chan |} |] NEUROPATHWAY
+WRITERS = (Camera [| {| frame_chan |} |] Inference) ||| MainApp
+NETWORK = WRITERS [| {| report_chan |} |] Reporter
+SYSTEM  = ENV [| {| g_trigger_chan |} |] NETWORK
 
--- Sanity checks:
-assert SYSTEM :[deadlock free[F]]
+INTERNAL = {| g_trigger_chan, frame_chan, report_chan, stack_tick |}
+
+-- Pipeline view of the console (stack lines hidden): the camera driver's log, Camera's and
+-- Inference's Started lines, then exactly one result line per frame, in frame order.
+CONSOLE_PIPE = SYSTEM \ union(INTERNAL, {| line.stack |})
+SPEC_PIPE  = camera_log -> line!started.camera -> line!started.inference -> RESULTS(0)
+RESULTS(f) = |~| p : prediction_t @ line!result.f.p -> RESULTS((f + 1) % MAX_INDEX)
+
+-- Stack view of the console (only stack lines visible): complete groups, in order, for ever.
+CONSOLE_STACK = SYSTEM \ diff(Events, {| line.stack |})
+SPEC_STACK = line!stack.cam -> line!stack.inf -> line!stack.rep -> line!stack.main_app -> SPEC_STACK
+
+assert SYSTEM :[deadlock free [F]]
 assert SYSTEM :[divergence free]
+assert SPEC_PIPE  [T= CONSOLE_PIPE
+assert SPEC_PIPE  [F= CONSOLE_PIPE
+assert SPEC_STACK [T= CONSOLE_STACK
+assert SPEC_STACK [F= CONSOLE_STACK
+
+-- Stall: Inference stops for ever after its first result (as in the board's stall test).
+-- The pipeline stops, the stack report goes on: no deadlock, stack view unchanged.
+InferenceStall  = frame_chan?f -> report_chan!started.inference ->
+                  ((report_chan!result.f.person -> STOP) |~| (report_chan!result.f.no_person -> STOP))
+SYSTEM_STALL = ENV [| {| g_trigger_chan |} |]
+    (((Camera [| {| frame_chan |} |] InferenceStall) ||| MainApp) [| {| report_chan |} |] Reporter)
+CONSOLE_STACK_STALL = SYSTEM_STALL \ diff(Events, {| line.stack |})
+
+assert SYSTEM_STALL :[deadlock free [F]]
+assert SPEC_STACK [F= CONSOLE_STACK_STALL
