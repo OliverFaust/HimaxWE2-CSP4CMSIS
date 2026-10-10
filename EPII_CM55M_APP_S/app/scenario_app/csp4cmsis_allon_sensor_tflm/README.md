@@ -167,21 +167,21 @@ Because camera/inference/reporter all run forever, there's no natural "network f
 ```text
 Frame 113: prediction = -13
 Frame 114: prediction = -12
-Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
-Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
-Reporter: 432/1024 bytes used (592 bytes unused headroom, 148 words HWM)
+Camera: 768/1536 bytes used (768 bytes unused headroom, 192 words HWM)
+Inference: 488/1024 bytes used (536 bytes unused headroom, 134 words HWM)
+Reporter: 448/1024 bytes used (576 bytes unused headroom, 144 words HWM)
 CSP_Main: 464/1024 bytes used (560 bytes unused headroom, 140 words HWM)
 Frame 115: prediction = -12
 ```
 
 | Task | Allocated | Used | Unused Headroom |
 |---|---|---|---|
-| Camera | 1536 bytes | 760 bytes | 776 bytes |
-| Inference | 1024 bytes | 480 bytes | 544 bytes |
-| Reporter | 1024 bytes | 432 bytes | 592 bytes |
+| Camera | 1536 bytes | 768 bytes | 768 bytes |
+| Inference | 1024 bytes | 488 bytes | 536 bytes |
+| Reporter | 1024 bytes | 448 bytes | 576 bytes |
 | CSP_Main (MainApp) | 1024 bytes | 464 bytes | 560 bytes |
 
-Camera uses 760 bytes (744 before it sent reports); before 2.0 it had only 1024 bytes (280 bytes of headroom), since CSP4CMSIS 2.0.1 it has 1536 bytes (384 words). Inference and the Reporter have comfortable margins, despite Inference being the process that drives the Ethos‑U55 NPU call.
+Camera uses 768 bytes (744 before it sent reports); before 2.0 it had only 1024 bytes (280 bytes of headroom), since CSP4CMSIS 2.0.1 it has 1536 bytes (384 words). Inference and the Reporter have comfortable margins, despite Inference being the process that drives the Ethos‑U55 NPU call.
 
 ## 🚀 How to Run
 ### Prerequisites
@@ -218,9 +218,9 @@ Inference: started
 Frame 0: prediction = -14
 Frame 1: prediction = -12
 ...
-Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
-Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
-Reporter: 432/1024 bytes used (592 bytes unused headroom, 148 words HWM)
+Camera: 768/1536 bytes used (768 bytes unused headroom, 192 words HWM)
+Inference: 488/1024 bytes used (536 bytes unused headroom, 134 words HWM)
+Reporter: 448/1024 bytes used (576 bytes unused headroom, 144 words HWM)
 CSP_Main: 464/1024 bytes used (560 bytes unused headroom, 140 words HWM)
 ...
 ```

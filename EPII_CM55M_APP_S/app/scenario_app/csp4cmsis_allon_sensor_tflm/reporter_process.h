@@ -4,7 +4,7 @@
 #include <csp/csp4cmsis.h>
 #include "common_types.h"    // for report_t
 
-// Prints each report as one line. 256 words = 1 KB; about 430 bytes used (measured).
+// Prints each report as one line. 256 words = 1 KB; about 450 bytes used (measured).
 class Reporter : public csp::CSProcessStatic<256> {
 public:
     explicit Reporter(csp::Chanin<report_t> in);
