@@ -5,9 +5,7 @@
 #include "common_types.h"
 #include "cisdp_sensor.h"
 
-// Stack depth in words, fixed at compile time via CSProcessStatic<N>.
-// Measured on the board with CSP4CMSIS 2.0.1: 744 bytes used (as before 2.0,
-// when it had 1024 bytes and 280 left). 384 words = 1.5 KB leaves about 800.
+// 384 words = 1.5 KB; 760 bytes used (measured).
 class Camera : public csp::CSProcessStatic<384> {
 public:
     Camera(csp::Chanout<frame_t> out, csp::Chanout<report_t> report);
