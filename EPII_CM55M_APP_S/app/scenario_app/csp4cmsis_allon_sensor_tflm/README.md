@@ -6,7 +6,18 @@ This project implements a robust, lossless image processing pipeline using **Com
 
 ## 🏗 Architecture Overview
 
-The system is designed as a **Static Network** of independent processes communicating via synchronous, zero-copy channels.
+The system is designed as a **Static Network** of independent processes communicating over synchronous channels. The frame data itself is never copied: it stays in the sensor's buffer, and the channels carry small descriptors -- `frame_t` (frame index, JPEG address and size) and `report_t` -- each copied once, from the writer to the reader.
+
+```mermaid
+flowchart LR
+    ISR["frame-ready ISR<br/>os_app_dplib_cb()"] -->|"g_trigger_chan<br/>buffered, 1 slot"| Camera
+    Camera -->|"frame_chan<br/>rendezvous, frame_t"| Inference
+    Camera --> report_chan
+    Inference --> report_chan
+    MainApp["MainApp_Task<br/>stack report every 3 s"] --> report_chan
+    report_chan(("report_chan<br/>one rendezvous channel<br/>report_t")) --> Reporter
+    Reporter --> Console[["console (UART)"]]
+```
 
 ### 1. Camera Handshake (ISR to Process)
 To ensure no frames are dropped or partially read, the system uses a private trigger channel:
@@ -27,7 +38,7 @@ The inference process utilizes the `cvapp` module from the Himax SDK:
 * **Start-up order:** Inference initialises the model only when its first frame has arrived, i.e. after Camera has started.
 
 ### 4. Reporter: the console has one owner
-The console is a shared resource, and `xprintf()` has no locking, so two processes printing at the same time tear each other's lines. The **Reporter** is therefore the only process that prints while the network runs. Camera, Inference and `MainApp_Task` send it fixed-size `report_t` messages (`common_types.h`: kind, source, code, frame index, values) over **one rendezvous channel with three writers**; the Reporter owns every format string and prints exactly one line per report: one per frame, plus MainApp's stack report every 3 s. The Reporter has no state and no timer: it only receives and prints.
+The console is a shared resource, and `xprintf()` has no locking, so two processes printing at the same time tear each other's lines. The **Reporter** is therefore the only process that prints while the network runs. Camera, Inference and `MainApp_Task` send it fixed-size `report_t` messages (`common_types.h`: kind, code, the reporting thread's name -- a string literal, so only the pointer is copied -- frame index, values) over **one rendezvous channel with three writers**; the Reporter owns every format string and prints exactly one line per report: one per frame, plus MainApp's stack report every 3 s. The Reporter has no state and no timer: it only receives and prints.
 * **Rendezvous, not buffered:** nothing is lost, and the cost is small: at 921 600 Bd a result line takes about 0.5 ms, against 51 ms per frame (19.6 frames/s, measured unchanged). Camera reports only at start-up, so its frame loop never waits for the console. A `KeepNewest` buffer would drop reports silently.
 * **Before the Reporter's first line**, only the camera driver prints (its start-up log, during `cisdp_sensor_init()`/`cisdp_dp_init()`): Inference is still waiting for the first frame, and MainApp, which never prints, sends its first stack report only 3.5 s after start (on the board, Camera reported `started` about 2.9 s before it). The frame-ready ISR's `FATAL` message is the one exception: it halts the system.
 
@@ -43,74 +54,88 @@ The console is a shared resource, and `xprintf()` has no locking, so two process
 
 ## 🔧 Key Code Snippets
 
+Excerpts; see the source files for the complete code.
+
 ### Camera Process (`camera_process.cpp`)
 ```cpp
 static BufferedChannel<trigger_t, 1> g_trigger_chan;
 
 extern "C" void os_app_dplib_cb(SENSORDPLIB_STATUS_E event) {
-    if (event == SENSORDPLIB_STATUS_XDMA_FRAME_READY) {
-        // Interrupt context: write through the ISR end of a buffered channel
-        if (!g_trigger_chan.isrWriter().putFromISR(trigger_t{})) {
-            __disable_irq();
-            xprintf("\r\nFATAL: camera frame-ready trigger lost ...\r\n");
-            for (;;) { }
-        }
+  if (event == SENSORDPLIB_STATUS_XDMA_FRAME_READY) {
+    if (!g_trigger_chan.isrWriter().putFromISR(trigger_t {})) {
+      __disable_irq();
+      xprintf("\r\nFATAL: camera frame-ready trigger lost (the previous one was not read yet)\r\n");
+      for (;;) { }
     }
+  }
 }
 
 void Camera::run() {
-    auto trigger_reader = g_trigger_chan.reader();
-    // ... sensor initialisation; on failure: report Failed and return ...
-    m_report_out.write(report_t{ReportKind::Started, ReportSource::Camera});
+  trigger_t t;
+  auto trigger_reader = g_trigger_chan.reader();
+  report_t r = {};
+  r.name = name();
+  // ... sensor and data-path initialisation; on failure: report Failed and return ...
+  cisdp_sensor_start();
+  r.kind = ReportKind::Started;
+  m_report_out.write(r);
 
-    while (true) {
-        trigger_t t;
-        trigger_reader.read(t);                      // Block until ISR fires
+  while (true) {
+    trigger_reader.read(t);
 
-        uint32_t jpeg_addr, jpeg_sz;
-        cisdp_get_jpginfo(&jpeg_sz, &jpeg_addr);
+    uint32_t jpeg_addr, jpeg_sz;
+    cisdp_get_jpginfo(&jpeg_sz, &jpeg_addr);
 
-        frame_t f = { m_frame_counter++, jpeg_addr, jpeg_sz };
-        m_frame_out.write(f);                        // Send to inference (blocks if busy)
+    frame_t f;
+    f.index = m_frame_counter++;
+    f.jpeg_addr = jpeg_addr;
+    f.jpeg_sz = jpeg_sz;
 
-        sensordplib_retrigger_capture();             // Acknowledge and allow next capture
-    }
+    m_frame_out.write(f);
+    sensordplib_retrigger_capture();  // only now can the next frame-ready come
+  }
 }
 ```
 
 ### Inference Process (`inference_process.cpp`)
 ```cpp
-void Inference::run() {
+void Inference::run()
+{
     frame_t f;
-    m_frame_in.read(f);                              // First frame: Camera has started
+    m_frame_in.read(f);
 
     report_t r = {};
-    r.source = ReportSource::Inference;
-    int err = cv_init(true, true);                   // Initialise NPU and model
+    r.name = name();
+    int err = cv_init(true, true);
     // ... on failure: report Failed (code = err) and return; otherwise report Started ...
 
     while (true) {
-        int8_t person_score, no_person_score;
-        int status = cv_run(&person_score, &no_person_score);   // Run NPU inference
+        int8_t person_score = 0, no_person_score = 0;
+        int status = cv_run(&person_score, &no_person_score);
 
         r = {};
-        r.kind = ReportKind::Result;                 // One report per frame to the Reporter
-        r.source = ReportSource::Inference;
-        r.code = status;
+        r.kind = ReportKind::Result;
+        r.name = name();
+        r.code = (int16_t)status;
         r.index = f.index;
         r.value[0] = person_score;
         r.value[1] = no_person_score;
         m_report_out.write(r);
 
-        m_frame_in.read(f);                          // Wait for the next frame
+        m_frame_in.read(f);
     }
 }
 ```
+
 ### Network Construction (`csp4cmsis_spn.cpp`)
 ```cpp
-void MainApp_Task(void* params) {
-    static Channel<frame_t>  frame_chan;      // unbuffered
-    static Channel<report_t> report_chan;     // unbuffered; writers: Camera, Inference, MainApp
+void MainApp_Task(void* params)
+{
+    (void)params;
+    SleepFor(Milliseconds(500));
+
+    static Channel<frame_t>  frame_chan;
+    static Channel<report_t> report_chan;     // writers: Camera, Inference, MainApp
 
     static Camera    camera(frame_chan.writer(), report_chan.writer());
     static Inference inference(frame_chan.reader(), report_chan.writer());
@@ -119,11 +144,15 @@ void MainApp_Task(void* params) {
     auto network = InParallel(camera, inference, reporter);   // kept for forEachProcess()
     Run(network, ExecutionMode::StaticNetwork, NETWORK_PRIORITY);
 
-    Chanout<report_t> report_out = report_chan.writer();      // MainApp's own writer end
-    while (true) {                                            // MainApp never prints
+    Chanout<report_t> report_out = report_chan.writer();
+    while (true) {
         SleepFor(Milliseconds(CSP_STACK_REPORT_INTERVAL_MS));
-        // one Stack report per process (network.forEachProcess), then one for MainApp itself
-        // (osThreadGetStackSpace() of its own thread), each written with report_out << ...
+        network.forEachProcess([&](CSProcess& p) {
+            report_out << stackReport(p.name(), p.stackWords() * sizeof(uint32_t),
+                                      p.stackHighWaterMarkWords());
+        });
+        report_out << stackReport("CSP_Main", sizeof(mainAppStack),
+                                  osThreadGetStackSpace(osThreadGetId()) / sizeof(uint32_t));
     }
 }
 ```
@@ -138,21 +167,21 @@ Because camera/inference/reporter all run forever, there's no natural "network f
 ```text
 Frame 113: prediction = -13
 Frame 114: prediction = -12
-Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
-Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
-Reporter: 432/1024 bytes used (592 bytes unused headroom, 148 words HWM)
+Camera: 768/1536 bytes used (768 bytes unused headroom, 192 words HWM)
+Inference: 488/1024 bytes used (536 bytes unused headroom, 134 words HWM)
+Reporter: 448/1024 bytes used (576 bytes unused headroom, 144 words HWM)
 CSP_Main: 464/1024 bytes used (560 bytes unused headroom, 140 words HWM)
 Frame 115: prediction = -12
 ```
 
 | Task | Allocated | Used | Unused Headroom |
 |---|---|---|---|
-| Camera | 1536 bytes | 760 bytes | 776 bytes |
-| Inference | 1024 bytes | 480 bytes | 544 bytes |
-| Reporter | 1024 bytes | 432 bytes | 592 bytes |
+| Camera | 1536 bytes | 768 bytes | 768 bytes |
+| Inference | 1024 bytes | 488 bytes | 536 bytes |
+| Reporter | 1024 bytes | 448 bytes | 576 bytes |
 | CSP_Main (MainApp) | 1024 bytes | 464 bytes | 560 bytes |
 
-Camera uses 760 bytes (744 before it sent reports); before 2.0 it had only 1024 bytes (280 bytes of headroom), since CSP4CMSIS 2.0.1 it has 1536 bytes (384 words). Inference and the Reporter have comfortable margins, despite Inference being the process that drives the Ethos‑U55 NPU call.
+Camera uses 768 bytes (744 before it sent reports); before 2.0 it had only 1024 bytes (280 bytes of headroom), since CSP4CMSIS 2.0.1 it has 1536 bytes (384 words). Inference and the Reporter have comfortable margins, despite Inference being the process that drives the Ethos‑U55 NPU call.
 
 ## 🚀 How to Run
 ### Prerequisites
@@ -189,9 +218,9 @@ Inference: started
 Frame 0: prediction = -14
 Frame 1: prediction = -12
 ...
-Camera: 760/1536 bytes used (776 bytes unused headroom, 194 words HWM)
-Inference: 480/1024 bytes used (544 bytes unused headroom, 136 words HWM)
-Reporter: 432/1024 bytes used (592 bytes unused headroom, 148 words HWM)
+Camera: 768/1536 bytes used (768 bytes unused headroom, 192 words HWM)
+Inference: 488/1024 bytes used (536 bytes unused headroom, 134 words HWM)
+Reporter: 448/1024 bytes used (576 bytes unused headroom, 144 words HWM)
 CSP_Main: 464/1024 bytes used (560 bytes unused headroom, 140 words HWM)
 ...
 ```
@@ -213,12 +242,12 @@ app/scenario_app/csp4cmsis_allon_sensor_tflm/
 ```
 
 ## 🐛 Troubleshooting
-* No "Frame ready IRQ"Hardware InitVerify cisdp_sensor_start() returns 0 and check sensor cables.
-* `FATAL: camera frame-ready trigger lost` — a second frame-ready arrived before Camera read the first, although Camera re-arms only after reading: check the data-path driver.
-* `IMX219 off by app fail` / `Camera: initialisation FAILED (step 1)` (I2C error -60 at start-up) — the camera module keeps its state across a WE2 reset; seen intermittently with both the pre-2.0 and the 2.0.1 build. Run the app again (or flash a non-camera app first).
-* Pipeline stallsMissing RetriggerEnsure sensordplib_retrigger_capture() is called at the end of the camera loop.
-* Memory OverrunBuffer sizeIf using BufferedChannel, ensure the size is sufficient for your FPS.
-* Stack overflow / corruptionTask stack too smallCheck the periodic stack report (see [Stack Occupancy Reporting](#-stack-occupancy-reporting)); if a process's unused headroom is trending toward 0, increase its `CSProcessStatic<N>` size.
+* **`Camera: started` but no `Frame` lines:** check that `cisdp_sensor_start()` succeeds and that the sensor cable is seated.
+* **`FATAL: camera frame-ready trigger lost`:** a second frame-ready arrived before Camera read the first, although Camera re-arms the capture only after reading. Check the data-path driver.
+* **`IMX219 off by app fail` / `Camera: initialisation FAILED (step 1)`** (I2C error -60 at start-up): the camera module keeps its state across a WE2 reset; seen intermittently with both the pre-2.0 and the 2.0.1 build. Run the app again, or flash a non-camera app first.
+* **The pipeline stops after the first frame:** Camera must call `sensordplib_retrigger_capture()` after passing each frame on (end of its loop); without it, no further frame-ready interrupt comes. The stack report still arrives every 3 s when the pipeline stops.
+* **Buffer sizes:** the only buffered channel is the one-slot trigger channel, and one slot is enough because Camera re-arms the capture only after reading the trigger. A buffered channel you add must be sized for the frame rate (about 19.6 frames/s).
+* **Stack overflow or corruption:** watch the stack report (see [Stack Occupancy Reporting](#-stack-occupancy-reporting)); if a process's unused headroom approaches 0, increase its `CSProcessStatic<N>` size.
 
 ## 📝 License
 This example is provided under the standard Himax SDK license terms. Refer to the top‑level license file in the SDK for details.

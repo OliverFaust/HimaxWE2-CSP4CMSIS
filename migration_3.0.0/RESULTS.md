@@ -106,3 +106,18 @@ camera driver's start-up log (printed by the driver, outside the Reporter) and M
 Formal model updated (MainApp as the third writer; stall case; the previous design as a positive control),
 ProB 1.16.1: 8 of 8 assertions hold, 3 of 3 controls fail as expected (`Formal model/`).
 Logs: `results/board/mainapp_stack_allon_sensor_tflm_run{1,2,3}.txt`, `..._stall.txt`.
+
+## Neurochannel for chapter 8 (branch `neurochannel-chapter8`, 2026-10-10)
+
+`report_t` carries the reporting thread's name (`const char*`, a string literal from `p.name()` or
+`"CSP_Main"`, so the message stays trivially copyable) instead of a source enum; MainApp's stack report
+uses `forEachProcess` and `p.name()` without a position table. Comments shortened; README with a
+process-network diagram, an accurate statement about copying (descriptors, not frame data), the current
+code snippets and clean troubleshooting entries. The formal model abstracts the reporters by its own
+constructors, not by the C struct: unchanged, and ProB 1.16.1 still gives 8 of 8.
+
+Board (Grove Vision AI V2, IMX219; 3 runs of 40 s from boot, identical): 764 frames (fps unchanged), one line
+per frame, nothing but Reporter lines after `Camera: started`, 13 stack reports (every 3 s) named Camera,
+Inference, Reporter, CSP_Main. Stacks Camera / Inference / Reporter / CSP_Main: 768 / 488 / 384–448 / 464 B
+(before: 760 / 480 / 384–432 / 464 B). Build: app warnings unchanged (23). Log:
+`results/board/chapter8_allon_sensor_tflm_run1.txt`.

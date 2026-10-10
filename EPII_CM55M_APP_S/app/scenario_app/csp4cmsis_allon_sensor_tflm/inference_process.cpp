@@ -8,14 +8,13 @@ Inference::Inference(Chanin<frame_t> in, Chanout<report_t> report)
 
 void Inference::run()
 {
-    // Inference does not print: it reports to the Reporter. It initialises the model only
-    // when the first frame has arrived, i.e. after Camera has started: the camera driver
-    // prints its own start-up log, and this keeps that log from overlapping with anything.
+    // The model is initialised only after the first frame, i.e. after Camera has started, so
+    // that nothing is reported while the camera driver prints its start-up log.
     frame_t f;
     m_frame_in.read(f);
 
     report_t r = {};
-    r.source = ReportSource::Inference;
+    r.name = name();
 
     int err = cv_init(true, true);
     if (err < 0) {
@@ -28,15 +27,13 @@ void Inference::run()
     m_report_out.write(r);
 
     while (true) {
-        // cv_run() reads directly from the raw sensor buffer, not the
-        // JPEG buffer -- a model expecting JPEG input would need a
-        // decode step here first.
+        // cv_run() reads the raw sensor buffer, not the JPEG.
         int8_t person_score = 0, no_person_score = 0;
         int status = cv_run(&person_score, &no_person_score);
 
         r = {};
         r.kind = ReportKind::Result;
-        r.source = ReportSource::Inference;
+        r.name = name();
         r.code = (int16_t)status;
         r.index = f.index;
         r.value[0] = person_score;
