@@ -1,4 +1,3 @@
-// reporter_process.cpp
 #include "reporter_process.h"
 #include "xprintf.h"
 
@@ -8,7 +7,6 @@ Reporter::Reporter(Chanin<report_t> in) : m_in(in)
 {
 }
 
-// The only process that prints while the network runs: xprintf() has no locking.
 void Reporter::run()
 {
     while (true) {

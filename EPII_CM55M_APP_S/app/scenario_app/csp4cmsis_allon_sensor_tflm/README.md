@@ -2,6 +2,8 @@
 
 This project implements a robust, lossless image processing pipeline using **Communicating Sequential Processes (CSP)** patterns on the Himax WE2 (Grove Vision AI V2) hardware. It uses CSP4CMSIS 3.0.0 on FreeRTOS 10.5.1, through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`; the kernel is started with `osKernelInitialize()`/`osKernelStart()`), and the Ethos-U55 NPU to perform real-time person detection.
 
+The explanations for this code are in the book; the source files deliberately contain no comments.
+
 
 
 ## 🏗 Architecture Overview
@@ -92,7 +94,7 @@ void Camera::run() {
     f.jpeg_sz = jpeg_sz;
 
     m_frame_out.write(f);
-    sensordplib_retrigger_capture();  // only now can the next frame-ready come
+    sensordplib_retrigger_capture();
   }
 }
 ```
@@ -135,13 +137,13 @@ void MainApp_Task(void* params)
     SleepFor(Milliseconds(500));
 
     static Channel<frame_t>  frame_chan;
-    static Channel<report_t> report_chan;     // writers: Camera, Inference, MainApp
+    static Channel<report_t> report_chan;
 
     static Camera    camera(frame_chan.writer(), report_chan.writer());
     static Inference inference(frame_chan.reader(), report_chan.writer());
     static Reporter  reporter(report_chan.reader());
 
-    auto network = InParallel(camera, inference, reporter);   // kept for forEachProcess()
+    auto network = InParallel(camera, inference, reporter);
     Run(network, ExecutionMode::StaticNetwork, NETWORK_PRIORITY);
 
     Chanout<report_t> report_out = report_chan.writer();

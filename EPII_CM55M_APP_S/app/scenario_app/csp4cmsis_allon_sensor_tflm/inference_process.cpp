@@ -1,5 +1,5 @@
 #include "inference_process.h"
-#include "cvapp.h"          // for cv_init, cv_run
+#include "cvapp.h"
 
 using namespace csp;
 
@@ -8,8 +8,6 @@ Inference::Inference(Chanin<frame_t> in, Chanout<report_t> report)
 
 void Inference::run()
 {
-    // The model is initialised only after the first frame, i.e. after Camera has started, so
-    // that nothing is reported while the camera driver prints its start-up log.
     frame_t f;
     m_frame_in.read(f);
 
@@ -27,7 +25,6 @@ void Inference::run()
     m_report_out.write(r);
 
     while (true) {
-        // cv_run() reads the raw sensor buffer, not the JPEG.
         int8_t person_score = 0, no_person_score = 0;
         int status = cv_run(&person_score, &no_person_score);
 

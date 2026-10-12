@@ -5,7 +5,6 @@
 #include "common_types.h"
 #include "cisdp_sensor.h"
 
-// 384 words = 1.5 KB; 768 bytes used (measured).
 class Camera : public csp::CSProcessStatic<384> {
 public:
     Camera(csp::Chanout<frame_t> out, csp::Chanout<report_t> report);
