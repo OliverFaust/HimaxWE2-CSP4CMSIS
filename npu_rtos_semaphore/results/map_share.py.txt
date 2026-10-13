@@ -1,0 +1,112 @@
+#!/usr/bin/env python3
+"""mapshare.py <map> <elf>: CSP4CMSIS's share of the image, from the GNU ld map.
+
+Counted: every input section KEPT in the link (the "Linker script and memory map" part of the map;
+discarded sections are listed elsewhere), with its output section, size and owning object.
+ - library: objects from libcsp4cmsis.a;
+ - templates: input sections from the app's own objects whose symbol (one function or object per
+   section: -ffunction-sections -fdata-sections) demangles into namespace csp:: (functions, vtables,
+   typeinfo, guard variables). Code inlined into app functions cannot be attributed and is not
+   counted; nor are the app's own static objects of csp:: types (channels, processes, stacks), whose
+   section names carry the variable's name, not its type.
+Category by output section: code = .text/.table/.ARM.exidx (ITCM) and .text_2 (SRAM), rodata = .rodata (DTCM),
+data = .data (DTCM, initialised from the image), bss = .bss/.noinit/.heap/.stack (RAM only).
+"""
+import re, subprocess, sys
+from collections import defaultdict
+
+mp, elf = sys.argv[1], sys.argv[2]
+text = open(mp, encoding='latin-1').read()
+body = text[text.index('Linker script and memory map'):]
+CAT = {'.text': 'code', '.text_2': 'code', '.table': 'code', '.ARM.exidx': 'code', '.copy.table': 'code', '.zero.table': 'code',
+       '.rodata': 'rodata', '.data': 'data', '.bss': 'bss', '.noinit': 'bss', '.model': 'rodata'}
+out = None
+pending = None
+recs = []   # (outsec, insec, size, obj)
+for line in body.split('\n'):
+    m = re.match(r'^(\.[\w.]+)\s+0x[0-9a-f]+\s+0x[0-9a-f]+', line)
+    if m:
+        out = m.group(1); pending = None; continue
+    if re.match(r'^\.\S+$', line):
+        out = line.strip(); pending = None; continue
+    m = re.match(r'^ (\.\S+|COMMON)\s+0x([0-9a-f]+)\s+0x([0-9a-f]+)\s+(\S.*)$', line)
+    if m:
+        recs.append((out, m.group(1), int(m.group(3), 16), m.group(4), int(m.group(2), 16))); pending = None; continue
+    m = re.match(r'^ (\.\S+|COMMON)$', line)
+    if m:
+        pending = m.group(1); continue
+    m = re.match(r'^\s+0x([0-9a-f]+)\s+0x([0-9a-f]+)\s+(\S.*)$', line)
+    if m and pending:
+        recs.append((out, pending, int(m.group(2), 16), m.group(3), int(m.group(1), 16))); pending = None; continue
+recs = [r for r in recs if r[0] in CAT and r[2] > 0]
+
+def sym(insec):
+    parts = insec.split('.', 2)
+    return parts[2] if len(parts) == 3 and parts[1] in ('text', 'rodata', 'data', 'bss', 'noinit') else ''
+mangled = sorted({sym(r[1]).split('.str')[0] for r in recs if sym(r[1]).startswith('_Z')})
+dem = dict(zip(mangled, subprocess.run(['c++filt'], input='\n'.join(mangled), capture_output=True, text=True).stdout.split('\n')))
+
+def ns_csp(insec):
+    d = dem.get(sym(insec).split('.str')[0], '')
+    return re.sub(r'^(vtable for |typeinfo for |typeinfo name for |guard variable for |non-virtual thunk to )', '', d).startswith('csp::')
+
+lib = defaultdict(int); libobj = defaultdict(lambda: defaultdict(int)); tpl = defaultdict(int); tpllist = []
+for out, insec, size, obj, addr in recs:
+    c = CAT[out]
+    if 'libcsp4cmsis.a(' in obj:
+        lib[c] += size; libobj[obj.split('(')[1].rstrip(')')][c] += size
+    elif '/app/scenario_app/' in obj:
+        s = sym(insec).split('.str')[0]; d = dem.get(s, '')
+        ns = re.sub(r'^(vtable for |typeinfo for |typeinfo name for |guard variable for |non-virtual thunk to )', '', d)
+        if ns.startswith('csp::'):
+            tpl[c] += size; tpllist.append((size, c, d, obj.rsplit('/', 1)[-1]))
+
+def row(name, d):
+    t = sum(d[k] for k in ('code', 'rodata', 'data'))
+    return '%-34s code %6d  rodata %5d  data %4d  bss %5d | image (code+rodata+data) %6d  RAM %6d' % (
+        name, d['code'], d['rodata'], d['data'], d['bss'], t, t + d['bss'])
+print('library objects (libcsp4cmsis.a):')
+for o in sorted(libobj): print('  ' + row(o, libobj[o]))
+print('  ' + row('TOTAL library', lib))
+print('templates instantiated in app objects (namespace csp::):')
+print('  ' + row('TOTAL templates', tpl))
+for s, c, d, o in sorted(tpllist, reverse=True)[:12]: print('    %5d %-6s %s  [%s]' % (s, c, d[:110], o))
+print('    ... %d sections in all' % len(tpllist))
+# totals from the ELF
+sz = subprocess.run(['arm-none-eabi-size', '-A', elf], capture_output=True, text=True).stdout
+tot = defaultdict(int)
+for l in sz.split('\n'):
+    p = l.split()
+    if len(p) == 3 and p[0] in CAT: tot[CAT[p[0]]] += int(p[1])
+    if len(p) == 3 and p[0] in ('.heap', '.stack'): tot['heap+stack'] += int(p[1])
+print(row('IMAGE TOTAL (ELF, all sections)', tot) + '  (+ heap 16 KB and main stack %d B reserved: %d)' % (tot['heap+stack'] - 0x4004, tot['heap+stack']))
+img = sum(tot[k] for k in ('code', 'rodata', 'data'))
+li = sum(lib[k] for k in ('code', 'rodata', 'data')); ti = sum(tpl[k] for k in ('code', 'rodata', 'data'))
+print('share of image (code+rodata+data, incl. model %d B): library %.2f %%, templates %.2f %%' % (
+    sum(r[2] for r in recs if r[0] == '.model'), 100 * li / img, 100 * ti / img))
+codeonly = tot['code']
+print('share of code (.text etc.): library %.2f %%, templates %.2f %%' % (100 * lib['code'] / codeonly, 100 * tpl['code'] / codeonly))
+
+# Merged string sections (.str1.N): the map lists their sizes BEFORE the linker merges equal
+# strings, at one shared address. Recount them as the distinct strings they contain (len + 1 each).
+import os, tempfile
+objdir = os.path.dirname(os.path.abspath(elf)) if len(sys.argv) < 4 else sys.argv[3]
+def strings_of(obj, sec):
+    tmp = tempfile.mkdtemp()
+    if '(' in obj:
+        ar, member = obj.split('(')[0], obj.split('(')[1].rstrip(')')
+        subprocess.run(['arm-none-eabi-ar', 'x', os.path.join(objdir, ar), member], cwd=tmp, check=True)
+        path = os.path.join(tmp, member)
+    else:
+        path = os.path.join(objdir, obj)
+    out = os.path.join(tmp, 'sec.bin')
+    subprocess.run(['arm-none-eabi-objcopy', '-O', 'binary', '--only-section=' + sec, path, out], check=True)
+    return [s for s in open(out, 'rb').read().split(b'\0') if s]
+for label, pred in (('library', lambda o, s: 'libcsp4cmsis.a(' in o),
+                    ('templates', lambda o, s: '/app/scenario_app/' in o and ns_csp(s))):
+    listed, uniq = 0, set()
+    for out, insec, size, obj, addr in recs:
+        if out == '.rodata' and '.str' in insec and pred(obj, insec):
+            listed += size
+            uniq.update(strings_of(obj, insec))
+    print('%s: merged-string rodata listed %d B, distinct strings %d, %d B' % (label, listed, len(uniq), sum(len(s) + 1 for s in uniq)))

@@ -1,0 +1,25 @@
+library objects (libcsp4cmsis.a):
+  alt_channel_sync.o                 code   1504  rodata   346  data    0  bss     0 | image (code+rodata+data)   1850  RAM   1850
+  csp_wrapper.o                      code     24  rodata     0  data    0  bss     0 | image (code+rodata+data)     24  RAM     24
+  glue.o                             code     12  rodata     0  data    0  bss     4 | image (code+rodata+data)     12  RAM     16
+  TOTAL library                      code   1540  rodata   346  data    0  bss     4 | image (code+rodata+data)   1886  RAM   1890
+templates instantiated in app objects (namespace csp::):
+  TOTAL templates                    code   1832  rodata   471  data    0  bss     0 | image (code+rodata+data)   2303  RAM   2303
+      192 code   csp::internal::BufferedChannel<trigger_t, 1u, (csp::BufferPolicy)0>::putFromISR(trigger_t const&)  [camera_process.o]
+      124 code   csp::internal::BufferedChannel<trigger_t, 1u, (csp::BufferPolicy)0>::beginExtInput(trigger_t*)  [camera_process.o]
+      108 code   csp::internal::BufferedChannel<trigger_t, 1u, (csp::BufferPolicy)0>::output(trigger_t const*)  [camera_process.o]
+      108 code   csp::internal::BufferedChannel<trigger_t, 1u, (csp::BufferPolicy)0>::input(trigger_t*)  [camera_process.o]
+      100 code   csp::internal::BufferedOutputGuard<trigger_t, 1u, (csp::BufferPolicy)0>::activate()  [camera_process.o]
+      100 code   csp::internal::BufferedInputGuard<trigger_t, 1u, (csp::BufferPolicy)0>::activate()  [camera_process.o]
+       75 rodata csp::internal::BufferedOutputGuard<trigger_t, 1u, (csp::BufferPolicy)0>::enable(csp::internal::AltScheduler*,   [camera_process.o]
+       75 rodata csp::internal::BufferedInputGuard<trigger_t, 1u, (csp::BufferPolicy)0>::enable(csp::internal::AltScheduler*, u  [camera_process.o]
+       72 code   csp::internal::BufferedOutputGuard<trigger_t, 1u, (csp::BufferPolicy)0>::enable(csp::internal::AltScheduler*,   [camera_process.o]
+       72 code   csp::internal::BufferedInputGuard<trigger_t, 1u, (csp::BufferPolicy)0>::enable(csp::internal::AltScheduler*, u  [camera_process.o]
+       64 rodata vtable for csp::internal::BufferedChannel<trigger_t, 1u, (csp::BufferPolicy)0>  [camera_process.o]
+       56 code   csp::internal::BufferedOutputGuard<trigger_t, 1u, (csp::BufferPolicy)0>::disable()  [camera_process.o]
+    ... 71 sections in all
+IMAGE TOTAL (ELF, all sections)    code 167044  rodata 265152  data 2964  bss 660844 | image (code+rodata+data) 435160  RAM 1096004  (+ heap 16 KB and main stack 36864 B reserved: 53252)
+share of image (code+rodata+data, incl. model 251568 B): library 0.43 %, templates 0.53 %
+share of code (.text etc.): library 0.92 %, templates 1.10 %
+library: merged-string rodata listed 346 B, distinct strings 8, 345 B
+templates: merged-string rodata listed 199 B, distinct strings 3, 199 B

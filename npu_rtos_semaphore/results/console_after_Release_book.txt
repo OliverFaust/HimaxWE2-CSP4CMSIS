@@ -1,0 +1,90 @@
+1st BL Modem Build DATE=Nov 30 2023, 0x0002000b
+Please input any key to enter X-Modem mode in 100 ms 
+waiting input key...
+slot flash_offset 0x00000000
+New MemDesp himax_sec_SB_image_process PASS
+set_memory_s_ns
+bl_status = 0x800000, HX_DSP_FLAG 1
+bl_status = 0x800000
+jump_addr=0x10000000
+Compiler Version: ARM GNU, 13.2.1 20231009
+freertos rtos_app
+cis_IMX219_init 
+mclk DIV3, xshutdown_pin=82
+Set PA1(AON_GPIO1) to High
+hx_drv_cis_set_slaveID(0x10)
+IMX219 Init Stream by app 
+IMX219 Init by app (IMX219_binning_setting)
+IMX219 Init by app (IMX219_exposure_setting)
+IMX219 Init by app (IMX219_again_setting)
+IMX219 Init by app (IMX219_dgain_setting)
+IMX219 Init by app (IMX219_mirror_setting)
+WD1[340dfe80], WD2_J[340dfe80], WD3_RAW[3406f680], JPAuto[3406f600]
+MIPI CLK change to PLL freq:(400000000 / 2)
+MIPI TX CLK: 200M
+RESET MIPI CSI RX/TX
+sensor_type: 15
+IMX219 on by app done
+g_cursensorstream: 0
+Camera: started
+Inference: started
+Frame 0: prediction = -30
+Frame 1: prediction = -28
+Frame 2: prediction = -28
+Frame 3: prediction = -27
+Frame 4: prediction = -28
+Frame 5: prediction = -28
+Frame 6: prediction = -28
+Frame 7: prediction = -28
+Frame 8: prediction = -32
+Frame 9: prediction = -30
+Frame 10: prediction = -30
+Frame 11: prediction = -27
+Frame 12: prediction = -29
+Frame 13: prediction = -30
+Frame 14: prediction = -26
+Frame 15: prediction = -28
+Frame 16: prediction = -30
+Frame 17: prediction = -28
+Frame 18: prediction = -30
+Frame 19: prediction = -28
+Frame 20: prediction = -30
+Frame 21: prediction = -27
+Frame 22: prediction = -30
+Frame 23: prediction = -30
+Frame 24: prediction = -28
+Frame 25: prediction = -28
+Frame 26: prediction = -30
+Frame 27: prediction = -27
+Frame 28: prediction = -31
+Frame 29: prediction = -30
+Frame 30: prediction = -30
+Frame 31: prediction = -30
+Frame 32: prediction = -28
+Frame 33: prediction = -28
+Frame 34: prediction = -25
+Frame 35: prediction = -30
+Frame 36: prediction = -30
+Frame 37: prediction = -30
+Frame 38: prediction = -28
+Frame 39: prediction = -30
+Frame 40: prediction = -32
+Frame 41: prediction = -28
+Frame 42: prediction = -29
+Frame 43: prediction = -29
+Frame 44: prediction = -28
+Frame 45: prediction = -30
+Frame 46: prediction = -28
+Frame 47: prediction = -28
+Frame 48: prediction = -30
+Frame 49: prediction = -29
+Frame 50: prediction = -30
+Frame 51: prediction = -30
+Frame 52: prediction = -30
+Frame 53: prediction = -29
+Frame 54: prediction = -28
+Frame 55: prediction = -28
+Camera: 768/1536 bytes used (768 bytes unused headroom, 192 words HWM)
+Inference: 560/1024 bytes used (464 bytes unused headroom, 116 words HWM)
+Reporter: 384/1024 bytes used (640 bytes unused headroom, 160 words HWM)
+CSP_Main: 464/1024 bytes used (560 bytes unused headroom, 140 words HWM)

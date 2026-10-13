@@ -1,0 +1,16 @@
+  csp4cmsis_allon_sensor_tflm rc=0 elf=yes errors=0 warnings=39 csp-warnings=0 clz-in-select=0
+  csp4cmsis_alt_test rc=0 elf=yes errors=0 warnings=8 csp-warnings=0 clz-in-select=1
+  csp4cmsis_alt_test_max rc=0 elf=yes errors=0 warnings=8 csp-warnings=0 clz-in-select=1
+  csp4cmsis_asymmetric_philosophers rc=0 elf=yes errors=0 warnings=8 csp-warnings=0 clz-in-select=0
+  csp4cmsis_chain_test rc=0 elf=yes errors=0 warnings=8 csp-warnings=0 clz-in-select=0
+  csp4cmsis_comstime rc=0 elf=yes errors=0 warnings=8 csp-warnings=0 clz-in-select=1
+  csp4cmsis_dining_philosophers rc=0 elf=yes errors=0 warnings=8 csp-warnings=0 clz-in-select=0
+  csp4cmsis_irq rc=0 elf=yes errors=0 warnings=8 csp-warnings=0 clz-in-select=0
+  csp4cmsis_kws_iic rc=0 elf=yes errors=0 warnings=79 csp-warnings=0 clz-in-select=0
+  csp4cmsis_kws_PCA9685 rc=0 elf=yes errors=0 warnings=79 csp-warnings=0 clz-in-select=0
+  csp4cmsis_kws_PCA9685_alt rc=0 elf=yes errors=0 warnings=79 csp-warnings=0 clz-in-select=1
+  csp4cmsis_kws_pdm_record rc=0 elf=yes errors=0 warnings=75 csp-warnings=0 clz-in-select=0
+  csp4cmsis_lossy_policy_test rc=0 elf=yes errors=0 warnings=8 csp-warnings=0 clz-in-select=0
+  csp4cmsis_matrix_multiplication rc=0 elf=yes errors=0 warnings=8 csp-warnings=0 clz-in-select=0
+  csp4cmsis_shake_detection rc=0 elf=yes errors=0 warnings=7 csp-warnings=0 clz-in-select=0
+  csp4cmsis_sieve rc=0 elf=yes errors=0 warnings=8 csp-warnings=0 clz-in-select=0

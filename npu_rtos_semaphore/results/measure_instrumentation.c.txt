@@ -1,0 +1,193 @@
+// SCRATCH MEASUREMENT BUILD ONLY -- never committed.
+// Same file in the "before" and "after" builds. Measures:
+//  - idle share: time in the FreeRTOS idle task (traceTASK_SWITCHED_IN/OUT,
+//    DWT->CYCCNT), against wall time (tick count) and total CYCCNT;
+//  - Invoke(): DWT->CYCCNT around int_ptr->Invoke() in cvapp.cpp;
+//  - C library heap: every allocation (caller, size), the _sbrk extent;
+//  - FreeRTOS heap: xPortGetHeapStats();
+//  - Ethos-U semaphore take/give counts (after build only; filled by the
+//    instrumented ethosu_rtos_semaphore.c).
+// One summary block at T_END_MS after boot, printed with the scheduler
+// suspended.
+#include <stdint.h>
+#include <stddef.h>
+#include <string.h>
+#include <reent.h>
+#include <malloc.h>
+#include "WE2_device.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "cmsis_os2.h"
+#include "xprintf.h"
+
+#define T_START_MS 10000u
+#define T_END_MS   70000u
+
+// ---------------- idle share ----------------
+static volatile uint64_t idle_cyc;
+static volatile uint32_t idle_in_at;
+static volatile int in_idle;
+void meas_switched_in(int is_idle) {
+    if (is_idle) { idle_in_at = DWT->CYCCNT; in_idle = 1; }
+}
+void meas_switched_out(int is_idle) {
+    if (is_idle && in_idle) { idle_cyc += (uint32_t)(DWT->CYCCNT - idle_in_at); in_idle = 0; }
+}
+
+// ---------------- Invoke() ----------------
+static volatile uint32_t inv_n, inv_first, inv_min = 0xFFFFFFFFu, inv_max;
+static volatile uint64_t inv_sum;
+static volatile uint32_t inv_n_win; static volatile uint64_t inv_sum_win;
+static volatile uint32_t inv_min_win = 0xFFFFFFFFu, inv_max_win;
+static volatile int window_open;
+void meas_invoke(uint32_t cyc) {
+    if (inv_n++ == 0) { inv_first = cyc; return; }
+    inv_sum += cyc;
+    if (cyc < inv_min) inv_min = cyc;
+    if (cyc > inv_max) inv_max = cyc;
+    if (window_open) {
+        inv_n_win++; inv_sum_win += cyc;
+        if (cyc < inv_min_win) inv_min_win = cyc;
+        if (cyc > inv_max_win) inv_max_win = cyc;
+    }
+}
+
+// ---------------- Ethos-U semaphore counters (after build) ----------------
+volatile uint32_t meas_sem_take[4], meas_sem_give[4], meas_sem_give_full[4];
+volatile void *meas_sem_id[4];
+volatile uint32_t meas_sem_n;
+
+// ---------------- C library heap ----------------
+typedef struct { void *caller; void *ptr; uint32_t size; uint32_t tick; char kind; } rec_t;
+#define NREC 64
+static rec_t recs[NREC];
+static volatile uint32_t nrec, n_alloc, n_free, n_sbrk;
+static void *outer_caller;
+extern char __HeapBase[], __HeapLimit[];
+static char *brk_peak;
+
+static uint32_t now_tick(void) {
+    return (xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED) ? 0u : (uint32_t)xTaskGetTickCount();
+}
+static void record(char kind, void *caller, void *ptr, uint32_t size) {
+    if (nrec < NREC) { recs[nrec].kind = kind; recs[nrec].caller = caller; recs[nrec].ptr = ptr;
+                       recs[nrec].size = size; recs[nrec].tick = now_tick(); }
+    nrec++;
+}
+
+void *__real__malloc_r(struct _reent *, size_t);
+void *__real__calloc_r(struct _reent *, size_t, size_t);
+void *__real__realloc_r(struct _reent *, void *, size_t);
+void  __real__free_r(struct _reent *, void *);
+void *__real_malloc(size_t);
+void *__real_calloc(size_t, size_t);
+void *__real_realloc(void *, size_t);
+void  __real_free(void *);
+void *__real__Znwj(size_t);
+void *__real__Znaj(size_t);
+void *__real__sbrk(ptrdiff_t);
+
+#define CALLER (outer_caller ? outer_caller : __builtin_return_address(0))
+void *__wrap__malloc_r(struct _reent *r, size_t n) {
+    void *c = CALLER; void *p = __real__malloc_r(r, n); n_alloc++; record('m', c, p, n); return p;
+}
+void *__wrap__calloc_r(struct _reent *r, size_t a, size_t b) {
+    void *c = CALLER; void *p = __real__calloc_r(r, a, b); n_alloc++; record('c', c, p, a * b); return p;
+}
+void *__wrap__realloc_r(struct _reent *r, void *q, size_t n) {
+    void *c = CALLER; void *p = __real__realloc_r(r, q, n); n_alloc++; record('r', c, p, n); return p;
+}
+void __wrap__free_r(struct _reent *r, void *q) {
+    void *c = CALLER; __real__free_r(r, q); if (q) { n_free++; record('f', c, q, 0); }
+}
+#define OUTER(call) do { void *s = outer_caller; if (!s) outer_caller = __builtin_return_address(0); call; outer_caller = s; } while (0)
+void *__wrap_malloc(size_t n) { void *p; OUTER(p = __real_malloc(n)); return p; }
+void *__wrap_calloc(size_t a, size_t b) { void *p; OUTER(p = __real_calloc(a, b)); return p; }
+void *__wrap_realloc(void *q, size_t n) { void *p; OUTER(p = __real_realloc(q, n)); return p; }
+void __wrap_free(void *q) { OUTER(__real_free(q)); }
+void *__wrap__Znwj(size_t n) { void *p; OUTER(p = __real__Znwj(n)); return p; }
+void *__wrap__Znaj(size_t n) { void *p; OUTER(p = __real__Znaj(n)); return p; }
+void *__wrap__sbrk(ptrdiff_t incr) {
+    char *p = (char *)__real__sbrk(incr);
+    n_sbrk++;
+    record('s', __builtin_return_address(0), p, (uint32_t)incr);
+    if (p != (char *)-1 && p + incr > brk_peak) brk_peak = p + incr;
+    return p;
+}
+
+// ---------------- measurement thread ----------------
+static uint64_t cyc_total;
+static uint32_t cyc_last;
+static void sample(void) {
+    uint32_t c = DWT->CYCCNT; cyc_total += (uint32_t)(c - cyc_last); cyc_last = c;
+}
+static uint32_t k(uint64_t cyc) { return (uint32_t)(cyc / 1000u); }   // kilocycles
+
+static StaticTask_t meas_tcb;
+static uint64_t meas_stack[256];
+static void meas_thread(void *arg) {
+    (void)arg;
+    uint64_t idle0 = 0, cyc0 = 0; uint32_t tick0 = 0, inv0 = 0;
+    uint32_t take0[4] = {0}, give0[4] = {0};
+    while (now_tick() < T_START_MS) { sample(); osDelay(100); }
+    sample();
+    taskENTER_CRITICAL();
+    idle0 = idle_cyc + (in_idle ? (uint32_t)(DWT->CYCCNT - idle_in_at) : 0u);
+    taskEXIT_CRITICAL();
+    cyc0 = cyc_total; tick0 = now_tick(); inv0 = inv_n;
+    for (int i = 0; i < 4; i++) { take0[i] = meas_sem_take[i]; give0[i] = meas_sem_give[i]; }
+    window_open = 1;
+    while (now_tick() < T_END_MS) { sample(); osDelay(100); }
+    sample();
+    window_open = 0;
+    taskENTER_CRITICAL();
+    uint64_t idle1 = idle_cyc + (in_idle ? (uint32_t)(DWT->CYCCNT - idle_in_at) : 0u);
+    taskEXIT_CRITICAL();
+    uint64_t cyc1 = cyc_total; uint32_t tick1 = now_tick(); uint32_t inv1 = inv_n;
+
+    HeapStats_t hs; memset(&hs, 0, sizeof hs); vPortGetHeapStats(&hs);
+
+    struct mallinfo mi = mallinfo();
+    vTaskSuspendAll();
+    uint32_t f = SystemCoreClock;
+    uint32_t wall_ms = tick1 - tick0;
+    uint64_t wall_cyc = (uint64_t)wall_ms * (f / 1000u);
+    uint64_t didle = idle1 - idle0, dcyc = cyc1 - cyc0;
+    xprintf("\r\n@@MEAS begin\r\n");
+    xprintf("@@MEAS clock SystemCoreClock=%u Hz\r\n", (unsigned)f);
+    xprintf("@@MEAS window ticks=%u ms (from %u to %u) wall_kcyc=%u cyccnt_kcyc=%u\r\n",
+            (unsigned)wall_ms, (unsigned)tick0, (unsigned)tick1, (unsigned)k(wall_cyc), (unsigned)k(dcyc));
+    xprintf("@@MEAS idle_kcyc=%u idle_permille_of_wall=%u idle_permille_of_cyccnt=%u\r\n",
+            (unsigned)k(didle), (unsigned)(didle * 1000u / wall_cyc), (unsigned)(didle * 1000u / (dcyc ? dcyc : 1)));
+    xprintf("@@MEAS invokes total=%u in_window=%u first_cyc=%u\r\n", (unsigned)inv1, (unsigned)(inv1 - inv0), (unsigned)inv_first);
+    xprintf("@@MEAS invoke_all(excl first) n=%u min=%u mean=%u max=%u cyc\r\n", (unsigned)(inv_n - 1),
+            (unsigned)inv_min, (unsigned)(inv_n > 1 ? inv_sum / (inv_n - 1) : 0), (unsigned)inv_max);
+    xprintf("@@MEAS invoke_window n=%u min=%u mean=%u max=%u cyc\r\n", (unsigned)inv_n_win,
+            (unsigned)inv_min_win, (unsigned)(inv_n_win ? inv_sum_win / inv_n_win : 0), (unsigned)inv_max_win);
+    for (uint32_t i = 0; i < meas_sem_n && i < 4; i++)
+        xprintf("@@MEAS ethosu_sem[%u] id=%x take=%u give=%u give_when_full=%u in_window: take=%u give=%u\r\n",
+                (unsigned)i, (unsigned)(uintptr_t)meas_sem_id[i], (unsigned)meas_sem_take[i], (unsigned)meas_sem_give[i],
+                (unsigned)meas_sem_give_full[i], (unsigned)(meas_sem_take[i] - take0[i]), (unsigned)(meas_sem_give[i] - give0[i]));
+    xprintf("@@MEAS freertos_heap total=%u allocs=%u frees=%u free_now=%u min_ever_free=%u\r\n",
+            (unsigned)configTOTAL_HEAP_SIZE, (unsigned)hs.xNumberOfSuccessfulAllocations, (unsigned)hs.xNumberOfSuccessfulFrees,
+            (unsigned)hs.xAvailableHeapSpaceInBytes, (unsigned)hs.xMinimumEverFreeBytesRemaining);
+    xprintf("@@MEAS clib_heap base=%x limit=%x size=%u sbrk_calls=%u peak_extent=%u allocs=%u frees=%u\r\n",
+            (unsigned)(uintptr_t)__HeapBase, (unsigned)(uintptr_t)__HeapLimit, (unsigned)(__HeapLimit - __HeapBase),
+            (unsigned)n_sbrk, (unsigned)(brk_peak ? brk_peak - __HeapBase : 0), (unsigned)n_alloc, (unsigned)n_free);
+    xprintf("@@MEAS clib_mallinfo arena=%u in_use=%u free=%u\r\n", (unsigned)mi.arena, (unsigned)mi.uordblks, (unsigned)mi.fordblks);
+    for (uint32_t i = 0; i < nrec && i < NREC; i++)
+        xprintf("@@MEAS clib %c caller=%x ptr=%x size=%u tick=%u\r\n", recs[i].kind, (unsigned)(uintptr_t)recs[i].caller,
+                (unsigned)(uintptr_t)recs[i].ptr, (unsigned)recs[i].size, (unsigned)recs[i].tick);
+    xprintf("@@MEAS end\r\n");
+    xTaskResumeAll();
+    for (;;) osDelay(1000);
+}
+
+void meas_start(void) {
+    DCB->DEMCR |= DCB_DEMCR_TRCENA_Msk;
+    DWT->CYCCNT = 0;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+    cyc_last = DWT->CYCCNT;
+    xTaskCreateStatic(meas_thread, "meas", (sizeof meas_stack) / (sizeof(StackType_t)), NULL,
+                      configMAX_PRIORITIES - 2, (StackType_t *)meas_stack, &meas_tcb);
+}

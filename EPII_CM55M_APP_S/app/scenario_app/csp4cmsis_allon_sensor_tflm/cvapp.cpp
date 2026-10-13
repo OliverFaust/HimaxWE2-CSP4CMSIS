@@ -128,6 +128,11 @@ static void _arm_npu_irq_init(void)
     EPII_NVIC_SetVector(ethosu_irqnum, (uint32_t)_arm_npu_irq_handler);
 
     /* Enable the IRQ */
+    // The handler gives the CMSIS-RTOS2 semaphore of the Ethos-U override
+    // (ethosu_rtos_semaphore.c), so it must run at priority 5..7: at or below
+    // CSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY (5; 3 priority bits). The SDK
+    // leaves it at 0 (the highest). Set it before enabling.
+    NVIC_SetPriority(ethosu_irqnum, CSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY);
     NVIC_EnableIRQ(ethosu_irqnum);
 
 }
