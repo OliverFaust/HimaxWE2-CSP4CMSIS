@@ -1,6 +1,6 @@
 # CSP-based Person Detection on Himax WE2
 
-This project implements a robust, lossless image processing pipeline using **Communicating Sequential Processes (CSP)** patterns on the Himax WE2 (Grove Vision AI V2) hardware. It uses CSP4CMSIS 3.0.0 on FreeRTOS 10.5.1, through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`; the kernel is started with `osKernelInitialize()`/`osKernelStart()`), and the Ethos-U55 NPU to perform real-time person detection.
+This project implements a robust, lossless image processing pipeline using **Communicating Sequential Processes (CSP)** patterns on the Himax WE2 (Grove Vision AI V2) hardware. It uses CSP4CMSIS 3.0.1 on FreeRTOS 10.5.1, through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`; the kernel is started with `osKernelInitialize()`/`osKernelStart()`), and the Ethos-U55 NPU to perform real-time person detection.
 
 The explanations for this code are in the book; the source files deliberately contain no comments.
 
@@ -26,7 +26,7 @@ To ensure no frames are dropped or partially read, the system uses a private tri
 * **The ISR:** the sensor data path calls `os_app_dplib_cb` from its frame-end interrupt (`SC_sen_nframe_end_IRQn`, measured on the board). On `SENSORDPLIB_STATUS_XDMA_FRAME_READY` it writes a trigger to a one-slot `BufferedChannel<trigger_t, 1>` through `isrWriter().putFromISR()`.
 * **Why not a rendezvous channel:** a rendezvous completes only when writer and reader meet, so the writer must be able to wait for its partner. An interrupt cannot wait, so CSP4CMSIS gives rendezvous channels no ISR writer at all. Before 2.0 the ISR used `putFromISR()` on a rendezvous anyway; when the Camera process was not already waiting, the trigger was simply dropped -- and since Camera re-arms the capture only after a trigger, the camera then stopped for good. The one-slot buffer keeps the trigger until Camera reads it.
 * **One slot is enough:** Camera re-arms the capture only after it has read the trigger, so at most one frame-ready can be pending. If a write ever fails, a second frame-ready arrived before the first was read (a driver bug): the callback prints `FATAL: camera frame-ready trigger lost ...` and halts instead of losing the frame silently.
-* **Interrupt priority:** an interrupt whose handler calls CSP4CMSIS or FreeRTOS must run at priority 5..7 (`CSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY` = 5, 3 priority bits); the SDK leaves every interrupt at 0. `Camera::run()` sets `SC_sen_nframe_end_IRQn` to 5 before the data path starts. The data path's other interrupts (84, 143, 154-157) and the NPU's make no RTOS or CSP4CMSIS calls and stay as they are.
+* **Interrupt priority:** an interrupt whose handler calls CSP4CMSIS or FreeRTOS must run at priority 5..7 (`CSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY` = 5, 3 priority bits); the SDK leaves every interrupt at 0. `Camera::run()` sets `SC_sen_nframe_end_IRQn` to 5 before the data path starts. The NPU interrupt (`U55_IRQn`) gives an RTOS semaphore (point 3), so `cvapp.cpp` sets it to 5 too, before enabling it. The data path's other interrupts (84, 143, 154-157) make no RTOS or CSP4CMSIS calls and stay as they are.
 * **The Process:** the Camera process blocks on this trigger, ensuring a lossless, synchronized handshake between hardware and software.
 
 ### 2. Frame Re-triggering
@@ -35,17 +35,18 @@ To prevent buffer overruns and keep the pipeline in lockstep, the Camera process
 ### 3. Model Inference
 The inference process utilizes the `cvapp` module from the Himax SDK:
 * **NPU:** Initialises the Ethos‑U55.
+* **Inference blocks during `Invoke()`:** the Ethos-U driver waits for the NPU with a semaphore. Its own bare-metal version spins in `__WFE()` (and `malloc()`s each semaphore); `ethosu_rtos_semaphore.c` replaces it with CMSIS-RTOS2 semaphores whose control blocks are static. While the NPU runs, Inference is blocked and the CPU is free; the NPU's end-of-job interrupt, at priority 5 like the frame-ready interrupt, releases the semaphore and Inference continues. Measured over 60 s (1164 frames): one take per frame; `Invoke()` takes 1.61 ms (642 k cycles at 400 MHz), of which about 1.1 ms was spent spinning before; the CPU's idle share rose from 95.3 % to 97.4 %. The frame rate is unchanged: the camera sets it, not the NPU.
 * **Model:** Loads a specialized person‑detection TFLM model.
 * **Data Path:** Runs inference on raw YUV frames (accessed via `app_get_raw_addr()`).
 * **Start-up order:** Inference initialises the model only when its first frame has arrived, i.e. after Camera has started.
 
 ### 4. Reporter: the console has one owner
 The console is a shared resource, and `xprintf()` has no locking, so two processes printing at the same time tear each other's lines. The **Reporter** is therefore the only process that prints while the network runs. Camera, Inference and `MainApp_Task` send it fixed-size `report_t` messages (`common_types.h`: kind, code, the reporting thread's name -- a string literal, so only the pointer is copied -- frame index, values) over **one rendezvous channel with three writers**; the Reporter owns every format string and prints exactly one line per report: one per frame, plus MainApp's stack report every 3 s. The Reporter has no state and no timer: it only receives and prints.
-* **Rendezvous, not buffered:** nothing is lost, and the cost is small: at 921 600 Bd a result line takes about 0.5 ms, against 51 ms per frame (19.6 frames/s, measured unchanged). Camera reports only at start-up, so its frame loop never waits for the console. A `KeepNewest` buffer would drop reports silently.
+* **Rendezvous, not buffered:** nothing is lost, and the cost is small: at 921 600 Bd a result line takes about 0.5 ms, against 51.6 ms per frame (19.4 frames/s, measured over 60 s). Camera reports only at start-up, so its frame loop never waits for the console. A `KeepNewest` buffer would drop reports silently.
 * **Before the Reporter's first line**, only the camera driver prints (its start-up log, during `cisdp_sensor_init()`/`cisdp_dp_init()`): Inference is still waiting for the first frame, and MainApp, which never prints, sends its first stack report only 3.5 s after start (on the board, Camera reported `started` about 2.9 s before it). The frame-ready ISR's `FATAL` message is the one exception: it halts the system.
 
 ### 5. Memory & Performance
-* **Zero Heap:** All CSP channels and processes, and every thread's stack, are statically allocated at compile time; the FreeRTOS heap is not used (`configTOTAL_HEAP_SIZE` 1 KB, 0 allocations measured).
+* **Zero Heap:** All CSP channels and processes, every thread's stack, and the Ethos-U driver's semaphores are statically allocated at compile time; the FreeRTOS heap is not used (`configTOTAL_HEAP_SIZE` 1 KB, 0 allocations measured). The C library heap (16 KB, `__HEAP_SIZE` in the linker script) sees two allocations, both at start-up and never freed: 1088 bytes for the C++ runtime's emergency exception buffer (libstdc++, before `main()`) and 12 bytes for the Ethos-U driver's device structure (`ethosu_dev_init()`, when Inference initialises the model); 1112 bytes in use including `malloc()`'s bookkeeping (`mallinfo()`), and no allocation while frames run.
 * **Concurrency:** Each process runs in its own thread (`osPriorityLow2`), created by `Run(..., ExecutionMode::StaticNetwork)` from `MainApp_Task` (`osPriorityLow3`).
 * **Console output:** one line per frame, printed by the Reporter only (before, each result was printed twice, by Inference and by a Console process, and lines from different processes interleaved mid-string).
 
@@ -170,8 +171,8 @@ Because camera/inference/reporter all run forever, there's no natural "network f
 Frame 113: prediction = -13
 Frame 114: prediction = -12
 Camera: 768/1536 bytes used (768 bytes unused headroom, 192 words HWM)
-Inference: 488/1024 bytes used (536 bytes unused headroom, 134 words HWM)
-Reporter: 448/1024 bytes used (576 bytes unused headroom, 144 words HWM)
+Inference: 560/1024 bytes used (464 bytes unused headroom, 116 words HWM)
+Reporter: 472/1024 bytes used (552 bytes unused headroom, 138 words HWM)
 CSP_Main: 464/1024 bytes used (560 bytes unused headroom, 140 words HWM)
 Frame 115: prediction = -12
 ```
@@ -179,11 +180,11 @@ Frame 115: prediction = -12
 | Task | Allocated | Used | Unused Headroom |
 |---|---|---|---|
 | Camera | 1536 bytes | 768 bytes | 768 bytes |
-| Inference | 1024 bytes | 488 bytes | 536 bytes |
-| Reporter | 1024 bytes | 448 bytes | 576 bytes |
+| Inference | 1024 bytes | 560 bytes | 464 bytes |
+| Reporter | 1024 bytes | 472 bytes | 552 bytes |
 | CSP_Main (MainApp) | 1024 bytes | 464 bytes | 560 bytes |
 
-Camera uses 768 bytes (744 before it sent reports); before 2.0 it had only 1024 bytes (280 bytes of headroom), since CSP4CMSIS 2.0.1 it has 1536 bytes (384 words). Inference and the Reporter have comfortable margins, despite Inference being the process that drives the Ethos‑U55 NPU call.
+Camera uses 768 bytes (744 before it sent reports); before 2.0 it had only 1024 bytes (280 bytes of headroom), since CSP4CMSIS 2.0.1 it has 1536 bytes (384 words). Inference and the Reporter have comfortable margins. Inference uses 560 bytes since it blocks in the semaphore wait during `Invoke()` (488 bytes when it spun); the Reporter's figure grows during the first seconds and reached 448 or 472 bytes, depending on the run.
 
 ## 🚀 How to Run
 ### Prerequisites
@@ -221,8 +222,8 @@ Frame 0: prediction = -14
 Frame 1: prediction = -12
 ...
 Camera: 768/1536 bytes used (768 bytes unused headroom, 192 words HWM)
-Inference: 488/1024 bytes used (536 bytes unused headroom, 134 words HWM)
-Reporter: 448/1024 bytes used (576 bytes unused headroom, 144 words HWM)
+Inference: 560/1024 bytes used (464 bytes unused headroom, 116 words HWM)
+Reporter: 472/1024 bytes used (552 bytes unused headroom, 138 words HWM)
 CSP_Main: 464/1024 bytes used (560 bytes unused headroom, 140 words HWM)
 ...
 ```
@@ -235,6 +236,8 @@ app/scenario_app/csp4cmsis_allon_sensor_tflm/
 ├── camera_process.cpp      // Camera implementation + ISR handling
 ├── inference_process.h     // Inference process declaration
 ├── inference_process.cpp   // Inference implementation (Ethos-U55)
+├── cvapp.cpp               // Model, NPU initialisation (NPU interrupt at priority 5), cv_run()
+├── ethosu_rtos_semaphore.c // Ethos-U driver semaphores: Inference blocks during Invoke()
 ├── reporter_process.h      // Reporter process declaration
 ├── reporter_process.cpp    // Reporter: the only process that prints (one line per report)
 ├── common_types.h          // Shared structs (frame_t, report_t)
@@ -248,7 +251,7 @@ app/scenario_app/csp4cmsis_allon_sensor_tflm/
 * **`FATAL: camera frame-ready trigger lost`:** a second frame-ready arrived before Camera read the first, although Camera re-arms the capture only after reading. Check the data-path driver.
 * **`IMX219 off by app fail` / `Camera: initialisation FAILED (step 1)`** (I2C error -60 at start-up): the camera module keeps its state across a WE2 reset; seen intermittently with both the pre-2.0 and the 2.0.1 build. Run the app again, or flash a non-camera app first.
 * **The pipeline stops after the first frame:** Camera must call `sensordplib_retrigger_capture()` after passing each frame on (end of its loop); without it, no further frame-ready interrupt comes. The stack report still arrives every 3 s when the pipeline stops.
-* **Buffer sizes:** the only buffered channel is the one-slot trigger channel, and one slot is enough because Camera re-arms the capture only after reading the trigger. A buffered channel you add must be sized for the frame rate (about 19.6 frames/s).
+* **Buffer sizes:** the only buffered channel is the one-slot trigger channel, and one slot is enough because Camera re-arms the capture only after reading the trigger. A buffered channel you add must be sized for the frame rate (about 19.4 frames/s).
 * **Stack overflow or corruption:** watch the stack report (see [Stack Occupancy Reporting](#-stack-occupancy-reporting)); if a process's unused headroom approaches 0, increase its `CSProcessStatic<N>` size.
 
 ## 📝 License

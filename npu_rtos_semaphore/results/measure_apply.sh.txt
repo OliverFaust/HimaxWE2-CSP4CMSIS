@@ -1,0 +1,77 @@
+#!/bin/bash
+# apply_meas.sh <tree>: add the scratch measurement instrumentation to an exported tree (never to the repo)
+set -e
+A=$1/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_allon_sensor_tflm
+M=$(dirname "$0")
+cp $M/meas.c $A/meas.c
+# idle share: trace hooks
+python3 - "$A/FreeRTOSConfig.h" <<'EOF'
+import sys
+p = sys.argv[1]; t = open(p).read()
+hook = '''
+/* SCRATCH MEASUREMENT BUILD */
+#ifndef __ASSEMBLER__
+#ifdef __cplusplus
+extern "C" {
+#endif
+void meas_switched_in(int is_idle);
+void meas_switched_out(int is_idle);
+#ifdef __cplusplus
+}
+#endif
+#endif
+#define traceTASK_SWITCHED_IN()  meas_switched_in(pxCurrentTCB == xIdleTaskHandle)
+#define traceTASK_SWITCHED_OUT() meas_switched_out(pxCurrentTCB == xIdleTaskHandle)
+'''
+i = t.rindex('#endif /* FREERTOS_CONFIG_H */')
+open(p, 'w').write(t[:i] + hook + '\n' + t[i:])
+EOF
+# Invoke() timing
+python3 - "$A/cvapp.cpp" <<'EOF'
+import sys
+p = sys.argv[1]; t = open(p).read()
+old = '\tTfLiteStatus invoke_status = int_ptr->Invoke();\n'
+assert t.count(old) == 1
+new = ('\tuint32_t meas_t0 = DWT->CYCCNT;\n' + old +
+       '\tmeas_invoke(DWT->CYCCNT - meas_t0);\n')
+t = t.replace(old, new)
+t = t.replace('using namespace std;', 'extern "C" void meas_invoke(uint32_t cyc);\nusing namespace std;', 1)
+open(p, 'w').write(t)
+EOF
+# start: DWT on, measurement thread
+python3 - "$A/csp4cmsis_allon_sensor_tflm.c" <<'EOF'
+import sys
+p = sys.argv[1]; t = open(p).read()
+old = '\tosKernelInitialize();\n'
+assert t.count(old) == 1
+t = t.replace(old, old + '\t{ extern void meas_start(void); meas_start(); }\n')
+open(p, 'w').write(t)
+EOF
+# malloc/_sbrk wrappers
+cat >> $A/csp4cmsis_allon_sensor_tflm.mk <<'EOF'
+
+# SCRATCH MEASUREMENT BUILD
+LINK_OPT += -Wl,--wrap=_malloc_r,--wrap=_calloc_r,--wrap=_realloc_r,--wrap=_free_r,--wrap=malloc,--wrap=calloc,--wrap=realloc,--wrap=free,--wrap=_Znwj,--wrap=_Znaj,--wrap=_sbrk
+EOF
+# Ethos-U semaphore counters (only if the override exists)
+S=$A/ethosu_rtos_semaphore.c
+if [ -f $S ]; then
+python3 - "$S" <<'EOF'
+import sys
+p = sys.argv[1]; t = open(p).read()
+t = t.replace('static osSemaphoreId_t   sem_id[ETHOSU_SEMAPHORES];',
+ 'static osSemaphoreId_t   sem_id[ETHOSU_SEMAPHORES];\n'
+ 'extern volatile uint32_t meas_sem_take[4], meas_sem_give[4], meas_sem_give_full[4], meas_sem_n;\n'
+ 'extern volatile void *meas_sem_id[4];\n'
+ 'static int meas_slot(void *s) { for (int i = 0; i < ETHOSU_SEMAPHORES; i++) if (sem_id[i] == s) return i; return 3; }\n', 1)
+t = t.replace('            return sem_id[i];', '            meas_sem_id[i] = sem_id[i]; if (meas_sem_n < i + 1) meas_sem_n = i + 1;\n            return sem_id[i];', 1)
+old_take = '    return (osSemaphoreAcquire('
+assert t.count(old_take) == 1
+t = t.replace(old_take, '    meas_sem_take[meas_slot(sem)]++;\n' + old_take)
+old_give = '    return (status == osOK || status == osErrorResource) ? 0 : -1;'
+assert t.count(old_give) == 1
+t = t.replace(old_give, '    meas_sem_give[meas_slot(sem)]++; if (status == osErrorResource) meas_sem_give_full[meas_slot(sem)]++;\n' + old_give)
+open(p, 'w').write(t)
+EOF
+fi
+echo "instrumented $A"
