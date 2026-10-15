@@ -26,21 +26,21 @@ Finally, teach you how to restore to the original factory settings and run [Sens
 
 | scenario_app  | project name |
 | ----- | -------- |
-| CSP: Library | [csp4cmsis](https://github.com/OliverFaust/CSP4CMSIS/tree/main/EPII_CM55M_APP_S/library/csp4cmsis) | 
-| CSP: Keyword detection with servo actuation |[csp4cmsis_kws_PCA9685](https://github.com/OliverFaust/CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_kws_PCA9685) |
-| CSP: Keyword detection with actuation |[csp4cmsis_kws_iic](https://github.com/OliverFaust/CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_kws_iic) |
-| CSP: Keyword detection |[csp4cmsis_kws_pdm_record](https://github.com/OliverFaust/CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_kws_pdm_record) |
-| CSP: Person Detection | [csp4cmsis_allon_sensor_tflm](https://github.com/OliverFaust/CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_allon_sensor_tflm) |
-| CSP: Interrupt to Channel | [csp4cmsis_irq](https://github.com/OliverFaust/CSP4CMSIS/blob/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_irq) | 
-| CSP: Comstime Benchmark | [csp4cmsis_comstime](https://github.com/OliverFaust/CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_comstime) | 
-| CSP: Resident-Guard ALT Test | [csp4cmsis_alt_test](https://github.com/OliverFaust/CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_alt_test) | 
-| CSP: 16-Sender ALT Stress Test | [csp4cmsis_alt_test_max](https://github.com/OliverFaust/CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_alt_test_max) | 
-| CSP: Relay Chain (SPN) | [csp4cmsis_chain_test](https://github.com/OliverFaust/CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_chain_test) | 
-| CSP: Systolic Array Matrix Mult | [csp4cmsis_matrix_multiplication](https://github.com/OliverFaust/CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_matrix_multiplication) | 
-| CSP: Sieve of Eratosthenes | [csp4cmsis_sieve](https://github.com/OliverFaust/CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_sieve) | 
-| CSP: Dining Philosophers (Deadlock) | [csp4cmsis_dining_philosophers](https://github.com/OliverFaust/CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_dining_philosophers) | 
-| CSP: Asymmetric Philosophers (Liveness) | [csp4cmsis_asymmetric_philosophers](https://github.com/OliverFaust/CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_asymmetric_philosophers) | 
-| CSP: Lossy Policy Validation (Newest vs. Oldest) | [csp4cmsis_lossy_policy_test](https://github.com/OliverFaust/CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_lossy_policy_test) | 
+| CSP: Library | [csp4cmsis](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/library/csp4cmsis) | 
+| CSP: Keyword detection with servo actuation |[csp4cmsis_kws_PCA9685](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_kws_PCA9685) |
+| CSP: Keyword detection with actuation |[csp4cmsis_kws_iic](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_kws_iic) |
+| CSP: Keyword detection |[csp4cmsis_kws_pdm_record](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_kws_pdm_record) |
+| CSP: Person Detection | [csp4cmsis_allon_sensor_tflm](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_allon_sensor_tflm) |
+| CSP: Interrupt to Channel | [csp4cmsis_irq](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/blob/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_irq) | 
+| CSP: Comstime Benchmark | [csp4cmsis_comstime](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_comstime) | 
+| CSP: Resident-Guard ALT Test | [csp4cmsis_alt_test](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_alt_test) | 
+| CSP: 16-Sender ALT Stress Test | [csp4cmsis_alt_test_max](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_alt_test_max) | 
+| CSP: Relay Chain (SPN) | [csp4cmsis_chain_test](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_chain_test) | 
+| CSP: Systolic Array Matrix Mult | [csp4cmsis_matrix_multiplication](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_matrix_multiplication) | 
+| CSP: Sieve of Eratosthenes | [csp4cmsis_sieve](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_sieve) | 
+| CSP: Dining Philosophers (Deadlock) | [csp4cmsis_dining_philosophers](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_dining_philosophers) | 
+| CSP: Asymmetric Philosophers (Liveness) | [csp4cmsis_asymmetric_philosophers](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_asymmetric_philosophers) | 
+| CSP: Lossy Policy Validation (Newest vs. Oldest) | [csp4cmsis_lossy_policy_test](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_lossy_policy_test) | 
 | Himax examples for Seeed Grove Vision AI Module V2 |  |
 | face mesh | [tflm_fd_fm](https://github.com/HimaxWiseEyePlus/Seeed_Grove_Vision_AI_Module_V2/blob/main/EPII_CM55M_APP_S/app/scenario_app/tflm_fd_fm/README.md) |
 | yolov8n object detection | [tflm_yolov8_od](https://github.com/HimaxWiseEyePlus/Seeed_Grove_Vision_AI_Module_V2/blob/main/EPII_CM55M_APP_S/app/scenario_app/tflm_yolov8_od/README.md) |
