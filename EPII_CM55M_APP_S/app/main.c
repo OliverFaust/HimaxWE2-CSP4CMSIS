@@ -127,6 +127,18 @@ int main(void)
 }
 #endif
 
+#ifdef CSP4CMSIS_NEUROPATHWAY_IMAGE_UPLINK
+#include "csp4cmsis_neuropathway_image_uplink.h"
+
+/** main entry */
+int main(void)
+{
+	board_init();
+	app_main();
+	return 0;
+}
+#endif
+
 #ifdef CSP4CMSIS_LOSSY_POLICY_TEST
 #include "csp4cmsis_lossy_policy_test.h"
 

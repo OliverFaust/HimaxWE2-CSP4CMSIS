@@ -168,7 +168,8 @@ CUSTOMER ?= seeed
 # APP_TYPE = csp4cmsis_shake_detection
 # APP_TYPE = csp4cmsis_kws_iic
 # APP_TYPE = csp4cmsis_kws_PCA9685
-APP_TYPE = csp4cmsis_kws_PCA9685_alt
+# APP_TYPE = csp4cmsis_kws_PCA9685_alt
+APP_TYPE = csp4cmsis_neuropathway_image_uplink
 
 ### Options above must be added before include options.mk ###
 override EPII_ROOT := $(strip $(subst \,/,$(EPII_ROOT)))
