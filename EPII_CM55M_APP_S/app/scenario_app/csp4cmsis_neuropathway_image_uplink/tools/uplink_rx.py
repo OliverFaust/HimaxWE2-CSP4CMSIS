@@ -6,6 +6,12 @@ The console carries plain text lines and binary frames:
     body (length bytes) | CRC32 of body (u32), all little-endian.
 Type 1 (image): body = frame index u32, score i8, window id u32, JPEG.
 
+Inference sends one text line per window,
+    Window W: frames A-B best F score S merged M
+and the frame rate is taken from these lines (frames B per second). A window
+must start one frame after the previous one ended; a gap fails the run, and so
+does an "inference failed" line.
+
 The board's USB bridge (WCH CH343, cdc_acm) resets the WE2 on a rising edge of
 RTS, and Linux raises DTR and RTS in open() unless the port's stored baud rate
 is B0; deasserting them after open() is too late. The receiver therefore
@@ -34,7 +40,9 @@ MAGIC = b"\xa5\x5aIM"
 HEADER = struct.Struct("<4sBBHI")
 IMAGE_META = struct.Struct("<IbI")
 MAX_BODY = 1 << 20
-FRAME_LINE = re.compile(rb"^Frame (\d+): ")
+WINDOW_LINE = re.compile(rb"^Window (\d+): frames (\d+)-(\d+) best (\d+) score (-?\d+) merged (\d+)")
+INFERENCE_FAILED = re.compile(rb"^Frame \d+: inference failed")
+UPLINK_WINDOW = 20
 BOOT_BANNER = b"1st BL Modem"
 EOI_ERROR = b"Uplink: frame"
 
@@ -85,6 +93,20 @@ class Stats:
         self.first_frame = None
         self.last_frame = None
         self.text_lines = 0
+        self.windows = 0
+        self.window_gaps = 0
+        self.windows_merged = 0
+        self.inference_failures = 0
+        self.last_window_end = None
+
+    def window_line(self, first, last, merged, now):
+        self.windows += 1
+        self.windows_merged += merged
+        if self.last_window_end is not None and first != self.last_window_end + 1:
+            self.window_gaps += 1
+            print(f"!! window gap: previous window ended at frame {self.last_window_end}, next starts at {first}")
+        self.last_window_end = last
+        self.frame_line(last, now)
 
     def frame_line(self, index, now):
         if self.first_frame is None:
@@ -104,6 +126,8 @@ class Stats:
             f"images {self.images} ({self.images / elapsed:.2f}/s), CRC errors {self.crc_errors}, "
             f"bad frames {self.bad_frames}, seq gaps {self.seq_gaps}, decode failures {self.decode_failures}, "
             f"EOI errors reported by the board {self.eoi_errors}",
+            f"windows {self.windows}, window gaps {self.window_gaps}, windows merged {self.windows_merged}, "
+            f"inference failures {self.inference_failures}",
             f"board resets seen {self.resets}",
         ]
         if fps is not None:
@@ -206,9 +230,11 @@ def main():
                 st.resets += 1
             if line.startswith(EOI_ERROR):
                 st.eoi_errors += 1
-            m = FRAME_LINE.match(line)
+            m = WINDOW_LINE.match(line)
             if m:
-                st.frame_line(int(m.group(1)), now)
+                st.window_line(int(m.group(2)), int(m.group(3)), int(m.group(6)), now)
+            if INFERENCE_FAILED.match(line):
+                st.inference_failures += 1
             if not args.quiet or BOOT_BANNER in line or line.startswith(EOI_ERROR):
                 print(line.decode("ascii", "replace"))
 
@@ -223,10 +249,11 @@ def main():
     print(st.summary())
     ok = (st.images > 0 and st.crc_errors == 0 and st.bad_frames == 0 and st.seq_gaps == 0
           and st.decode_failures == 0 and st.eoi_errors == 0 and st.resets == 0
-          and st.first_frame is not None and st.first_frame[0] > 0)
-    if st.first_frame is not None and st.first_frame[0] == 0:
-        print("!! the first frame seen was frame 0: the board started (or restarted) while the receiver was open")
-    print("STAGE 1:", "PASS" if ok else "FAIL")
+          and st.window_gaps == 0 and st.inference_failures == 0
+          and st.first_frame is not None and st.first_frame[0] >= UPLINK_WINDOW)
+    if st.first_frame is not None and st.first_frame[0] < UPLINK_WINDOW:
+        print("!! the first window seen was window 0: the board started (or restarted) while the receiver was open")
+    print("UPLINK:", "PASS" if ok else "FAIL")
     return 0 if ok else 1
 
 

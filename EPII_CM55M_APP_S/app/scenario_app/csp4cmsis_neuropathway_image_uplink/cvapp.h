@@ -19,8 +19,9 @@ extern "C" {
  * allocation. Does not print (the Reporter prints the result). */
 int cv_init(bool security_enable, bool privilege_enable);
 
-/* Classifies the current raw frame. Returns 0, or -1 if Invoke() failed. Does not print. */
-int cv_run(int8_t* person_score, int8_t* no_person_score);
+void cv_prepare(void);
+
+int cv_invoke(int8_t* person_score, int8_t* no_person_score);
 
 int cv_deinit();
 #ifdef __cplusplus

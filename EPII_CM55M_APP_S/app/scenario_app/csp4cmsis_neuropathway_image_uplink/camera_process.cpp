@@ -82,11 +82,12 @@ void os_app_dplib_cb(SENSORDPLIB_STATUS_E event) {
   }
 }
 
-Camera::Camera(Chanout<frame_t> out, Chanout<report_t> report)
-    : m_frame_out(out), m_report_out(report), m_frame_counter(0) {}
+Camera::Camera(Chanout<frame_t> out, Chanin<release_t> release, Chanout<report_t> report)
+    : m_frame_out(out), m_release_in(release), m_report_out(report), m_frame_counter(0) {}
 
 void Camera::run() {
   trigger_t t;
+  release_t token;
   auto trigger_reader = g_trigger_chan.reader();
   report_t r = {};
   r.name = name();
@@ -162,6 +163,7 @@ void Camera::run() {
 #endif
 
     m_frame_out.write(f);
+    m_release_in.read(token);
 
 #ifdef UPLINK_STAGE0
     if (m_frame_counter == STAGE0_FRAMES) {
@@ -189,15 +191,6 @@ void Camera::run() {
     other_crc = crc32_buf(cur ^ 1);
 #else
     if (f.index % UPLINK_WINDOW == UPLINK_WINDOW - 1) {
-      r = {};
-      r.kind = ReportKind::Image;
-      r.name = name();
-      r.code = cur;
-      r.index = f.index;
-      r.value[0] = (int32_t)jpeg_addr;
-      r.value[1] = (int32_t)jpeg_sz;
-      r.value[2] = (int32_t)(f.index / UPLINK_WINDOW);
-      m_report_out.write(r);
       cur ^= 1;
       cisdp_set_jpeg_buf(cur);
     }

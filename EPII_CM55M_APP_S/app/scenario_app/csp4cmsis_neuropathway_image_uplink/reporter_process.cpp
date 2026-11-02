@@ -87,7 +87,7 @@ void Reporter::send_image(const report_t& r)
     put_le(&header[8], IMAGE_META_SIZE + len, 4);
     uint8_t meta[IMAGE_META_SIZE];
     put_le(&meta[0], r.index, 4);
-    meta[4] = 0;
+    meta[4] = (uint8_t)(int8_t)r.value[3];
     put_le(&meta[5], (uint32_t)r.value[2], 4);
     uint32_t crc = crc32_update(0, meta, IMAGE_META_SIZE);
     crc = crc32_update(crc, p, len);
@@ -113,11 +113,12 @@ void Reporter::run()
             xprintf("%s: initialisation FAILED (step %d)\r\n", r.name, (int)r.code);
             break;
         case ReportKind::Result:
-            if (r.code == 0) {
-                xprintf("Frame %lu: prediction = %d\n", (unsigned long)r.index, (int)r.value[0]);
-            } else {
-                xprintf("Frame %lu: inference failed\n", (unsigned long)r.index);
-            }
+            xprintf("Frame %lu: inference failed (%d)\r\n", (unsigned long)r.index, (int)r.code);
+            break;
+        case ReportKind::Window:
+            xprintf("Window %lu: frames %lu-%lu best %lu score %d merged %d\r\n",
+                    (unsigned long)r.index, (unsigned long)(uint32_t)r.value[0], (unsigned long)(uint32_t)r.value[1],
+                    (unsigned long)(uint32_t)r.value[2], (int)r.value[3], (int)r.code);
             break;
         case ReportKind::Stack:
             if (r.value[2] < 0) {
