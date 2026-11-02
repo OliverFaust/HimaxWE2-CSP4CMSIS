@@ -65,7 +65,8 @@ static void print_tail(const report_t& r)
 }
 #endif
 
-Reporter::Reporter(Chanin<report_t> in) : m_in(in), m_seq(0), m_eoi_errors(0)
+Reporter::Reporter(Chanin<report_t> in, Chanout<uint8_t> free_out)
+    : m_in(in), m_free_out(free_out), m_seq(0), m_eoi_errors(0)
 {
 }
 
@@ -112,13 +113,15 @@ void Reporter::run()
         case ReportKind::Failed:
             xprintf("%s: initialisation FAILED (step %d)\r\n", r.name, (int)r.code);
             break;
-        case ReportKind::Result:
-            xprintf("Frame %lu: inference failed (%d)\r\n", (unsigned long)r.index, (int)r.code);
-            break;
         case ReportKind::Window:
-            xprintf("Window %lu: frames %lu-%lu best %lu score %d merged %d\r\n",
-                    (unsigned long)r.index, (unsigned long)(uint32_t)r.value[0], (unsigned long)(uint32_t)r.value[1],
-                    (unsigned long)(uint32_t)r.value[2], (int)r.value[3], (int)r.code);
+            xprintf("Window %lu: frames %lu-%lu", (unsigned long)r.index,
+                    (unsigned long)(uint32_t)r.value[0], (unsigned long)(uint32_t)r.value[1]);
+            if (r.value[2] < 0) {
+                xprintf(" best - score -");
+            } else {
+                xprintf(" best %lu score %d", (unsigned long)(uint32_t)r.value[2], (int)r.value[3]);
+            }
+            xprintf(" merged %d failed %ld\r\n", (int)r.code, (long)r.value[4]);
             break;
         case ReportKind::Stack:
             if (r.value[2] < 0) {
@@ -131,6 +134,10 @@ void Reporter::run()
             break;
         case ReportKind::Image:
             send_image(r);
+#ifdef UPLINK_STALL_MS
+            SleepFor(Milliseconds(UPLINK_STALL_MS));
+#endif
+            m_free_out.write((uint8_t)r.code);
             break;
 #ifdef UPLINK_STAGE0
         case ReportKind::BufferCheck:

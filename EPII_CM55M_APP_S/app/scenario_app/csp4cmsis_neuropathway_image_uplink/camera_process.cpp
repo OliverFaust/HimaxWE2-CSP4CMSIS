@@ -137,6 +137,7 @@ void Camera::run() {
     f.index = m_frame_counter++;
     f.jpeg_addr = jpeg_addr;
     f.jpeg_sz = jpeg_sz;
+    f.buf = cur;
 
 #ifdef UPLINK_STAGE0
     uint32_t hw_addr = cisdp_get_wdma2_hw_addr();
@@ -190,10 +191,8 @@ void Camera::run() {
     arm_jpeg_buf(cur);
     other_crc = crc32_buf(cur ^ 1);
 #else
-    if (f.index % UPLINK_WINDOW == UPLINK_WINDOW - 1) {
-      cur ^= 1;
-      cisdp_set_jpeg_buf(cur);
-    }
+    cur = token.buf;
+    cisdp_set_jpeg_buf(cur);
 #endif
     sensordplib_retrigger_capture();
   }

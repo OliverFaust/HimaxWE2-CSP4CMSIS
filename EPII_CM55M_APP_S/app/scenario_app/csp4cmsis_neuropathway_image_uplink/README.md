@@ -6,10 +6,10 @@ The work follows a staged plan; each stage must pass on the board before the nex
 * **Stage 0, retargeting test (gate):** point the JPEG DMA (WDMA2) at a different buffer before each capture and check that the hardware follows (section 7).
 * **Stage 1, link:** binary frames from the Reporter, and a PC receiver that saves the JPEGs and prints the text lines.
 * **Stage 2, ownership token:** Inference hands the raw frame buffer back to Camera (`release_chan`) once it has rescaled it, so the camera re-arms while `Invoke()` runs. In the uplink build Inference also stops sending a result line per frame and sends one `Window` summary per window (window id, frame range, best frame index and score, windows merged), followed by the window's `Image` report; Camera no longer reports while frames run. Measured against two baselines: 18.47 frames/s (Stage 1) and 19.4 frames/s (the parent app); the target is about 19.4 while images are being sent.
-* **Stage 3, best-of-20:** four JPEG buffers in fixed roles (DMA target, being scored, best of the window, being sent); the uplink returns its buffer when the send is done, and a window whose best cannot be sent yet is merged into the next.
+* **Stage 3, best-of-20:** four JPEG buffers in fixed roles (DMA target, being scored, best of the window, being sent); the uplink returns its buffer when the send is done, and a window whose best cannot be sent yet is merged into the next. Inference writes to `report_chan` only while it holds the free token, i.e. knows that the Reporter has finished sending; the `Window` line and the `Image` go together, and a failed inference is counted in the next `Window` line instead of getting a line of its own. Only the start-up lines and MainApp's stack report can still block on the Reporter. A board-side stall (`-DUPLINK_STALL_MS`) makes merging happen; stopping reads on the PC does not slow the board (there is no flow control) and is a separate check that the board carries on. Until Stage 3 nothing can merge, so every `Window` line says `merged 0`; the check with the uplink stalled is where the count must start to rise. Stack high-water marks are taken at the end of the 10-minute run, not shortly after flashing: the selection logic and the non-blocking poll on `free_chan` run in Inference (592/1024 bytes in Stage 2).
 * **Stage 4, formal model:** the CSP-M model extended with buffer ids as data. The check that Camera and Inference keep cycling while the uplink is stalled must include `report_chan`, not only the buffer tokens: a stalled Reporter blocks every writer of `report_chan`.
 
-**Status (2026-11-02):** Stages 0, 1 and 2 pass on the board (sections 7, 8 and 9). The default build is the Stage 2 build; `-DUPLINK_STAGE0` builds the Stage 0 test instead. Sections 1-6 describe the network and note what the uplink changes.
+**Status (2026-11-02):** Stages 0, 1 and 2 pass on the board (sections 7, 8 and 9); Stage 3 passes on the board (section 10). The default build is the Stage 3 build; `-DUPLINK_STAGE0` builds the Stage 0 test instead. Sections 1-6 describe the network and note what the uplink changes.
 
 The explanations for this code are in the book; the source files deliberately contain no comments.
 
@@ -23,7 +23,8 @@ The system is designed as a **Static Network** of independent processes communic
 flowchart LR
     ISR["frame-ready ISR<br/>os_app_dplib_cb()"] -->|"g_trigger_chan<br/>buffered, 1 slot"| Camera
     Camera -->|"frame_chan<br/>rendezvous, frame_t"| Inference
-    Inference -->|"release_chan<br/>rendezvous, release_t"| Camera
+    Inference -->|"release_chan<br/>rendezvous, next JPEG buffer"| Camera
+    Reporter -->|"free_chan<br/>buffered, 1 slot, sent JPEG buffer"| Inference
     Camera -->|"start-up only"| report_chan
     Inference --> report_chan
     MainApp["MainApp_Task<br/>stack report every 3 s"] --> report_chan
@@ -39,13 +40,15 @@ To ensure no frames are dropped or partially read, the system uses a private tri
 * **One slot is enough:** Camera re-arms the capture only after it has read the trigger, so at most one frame-ready can be pending. If a write ever fails, a second frame-ready arrived before the first was read (a driver bug): the callback prints `FATAL: camera frame-ready trigger lost ...` and halts instead of losing the frame silently.
 * **Interrupt priority:** an interrupt whose handler calls CSP4CMSIS or FreeRTOS must run at priority 5..7 (`CSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY` = 5, 3 priority bits); the SDK leaves every interrupt at 0. `Camera::run()` sets `SC_sen_nframe_end_IRQn` to 5 before the data path starts. The NPU interrupt (`U55_IRQn`) gives an RTOS semaphore (point 3), so `cvapp.cpp` sets it to 5 too, before enabling it. The data path's other interrupts (84, 143, 154-157) make no RTOS or CSP4CMSIS calls and stay as they are.
 * **The Process:** the Camera process blocks on this trigger, ensuring a lossless, synchronized handshake between hardware and software.
-* **Stage 2 (default build):** the handshake is unchanged. Between passing a frame on and re-arming, Camera now waits for Inference to release the raw buffer (section 2). On the last frame of each window of 20 (frame index 19, 39, ...) it also points WDMA2 at the other JPEG buffer before re-arming (section 8).
+* **Stage 3 (default build):** the handshake is unchanged. Between passing a frame on and re-arming, Camera waits for Inference to release the raw buffer and to name the JPEG buffer for the next capture, and points WDMA2 at it (section 2).
 * **Under `-DUPLINK_STAGE0`:** the handshake is the same, but it ends by design after 100 frames. Camera no longer re-arms the capture, so no further frame-ready interrupt comes and Camera blocks on the trigger channel for good (section 2).
 
 ### 2. Frame Re-triggering
 To prevent buffer overruns and keep the pipeline in lockstep, the Camera process explicitly calls `sensordplib_retrigger_capture()` only **after** the current frame has been successfully passed to the inference stage. This creates natural back-pressure.
 
-**Stage 2 (default build): the raw buffer is a token.** There is one raw frame buffer (`demosbuf`), and re-arming the capture hands it back to the DMA. Before Stage 2, Camera re-armed as soon as Inference had taken the frame descriptor, while Inference was still rescaling the raw buffer: the next capture could overwrite it during the rescale, and only the sensor's timing kept that from happening. Now `cv_run()` is split into `cv_prepare()` (rescale the raw frame into the model's input tensor) and `cv_invoke()` (run the model, read the scores). Inference writes a `release_t` on `release_chan` (a rendezvous) between the two, and Camera reads it after `m_frame_out.write(f)` and before `sensordplib_retrigger_capture()`. The raw buffer is therefore written by the DMA or read by Inference, never both, by the order of channel events alone, and the capture still overlaps `Invoke()`. On the last frame of each window, Camera then calls `cisdp_set_jpeg_buf()` for the other JPEG buffer before re-arming (section 8). Whether re-arming after the rescale, instead of at once, still catches the next sensor frame is measured by the frame rate (section 9).
+**Stage 2: the raw buffer is a token.** There is one raw frame buffer (`demosbuf`), and re-arming the capture hands it back to the DMA. Before Stage 2, Camera re-armed as soon as Inference had taken the frame descriptor, while Inference was still rescaling the raw buffer: the next capture could overwrite it during the rescale, and only the sensor's timing kept that from happening. Now `cv_run()` is split into `cv_prepare()` (rescale the raw frame into the model's input tensor) and `cv_invoke()` (run the model, read the scores). Inference writes a `release_t` on `release_chan` (a rendezvous) between the two, and Camera reads it after `m_frame_out.write(f)` and before `sensordplib_retrigger_capture()`. The raw buffer is therefore written by the DMA or read by Inference, never both, by the order of channel events alone, and the capture still overlaps `Invoke()`. In Stage 2, on the last frame of each window, Camera then called `cisdp_set_jpeg_buf()` for the other JPEG buffer before re-arming (section 8). Whether re-arming after the rescale, instead of at once, still catches the next sensor frame is measured by the frame rate (section 9).
+
+**Stage 3 (default build): the JPEG buffers are tokens too.** There are four JPEG buffers (`CISDP_JPEG_BUF_CNT=4`, set in the `.mk`), each in one role at a time: the DMA target (Camera), being scored (Inference, from `frame_chan` until its score is known), the best of the window so far (Inference), and being sent (the Reporter). `frame_t` carries the buffer id, and `release_t` now carries the id of the buffer for the next capture. Inference keeps the buffers that are in no role in a small array (`spare`) and releases one of them after the rescale, as in Stage 2. One is always there: at that moment Camera holds no buffer (its last target is the frame being scored), and the other three roles take at most three, so with four buffers at least one is spare, whether or not the window has a best and the Reporter is sending. Once the frame is scored, either the old best or the new frame's own buffer joins the spares. Releasing only after `cv_invoke()`, which an earlier version did, made Camera re-arm about 1.6 ms later and cost 1.5 % of the frame rate (19.11 and 19.13 frames/s in two 10-minute runs, section 10).
 
 **Under `-DUPLINK_STAGE0`**, Camera does two more things between passing the frame on and re-arming: it zeroes the other JPEG buffer, takes a CRC32 of the buffer it has just checked, and points WDMA2 at the other buffer (`cisdp_set_jpeg_buf()`), so the buffers alternate from frame to frame. After frame 99 it does not re-arm at all: it reports the verdict, has both buffers dumped and waits for ever, and Inference waits for a frame that never comes (section 7).
 
@@ -55,18 +58,19 @@ The inference process utilizes the `cvapp` module from the Himax SDK:
 * **Inference blocks during `Invoke()`:** the Ethos-U driver waits for the NPU with a semaphore. Its own bare-metal version spins in `__WFE()` (and `malloc()`s each semaphore); `ethosu_rtos_semaphore.c` replaces it with CMSIS-RTOS2 semaphores whose control blocks are static. While the NPU runs, Inference is blocked and the CPU is free; the NPU's end-of-job interrupt, at priority 5 like the frame-ready interrupt, releases the semaphore and Inference continues. Measured over 60 s (1164 frames): one take per frame; `Invoke()` takes 1.61 ms (642 k cycles at 400 MHz), of which about 1.1 ms was spent spinning before; the CPU's idle share rose from 95.3 % to 97.4 %. The frame rate is unchanged: the camera sets it, not the NPU.
 * **Model:** Loads a specialized person‑detection TFLM model.
 * **Data Path:** Runs inference on raw YUV frames (accessed via `app_get_raw_addr()`). `cv_prepare()` rescales the frame to 96x96 and `cv_invoke()` runs the model; Inference releases the raw buffer between the two (section 2).
-* **Windows (Stage 2):** Inference keeps the window's best person score and its frame index. On the window's last frame it sends a `Window` report (window id, first and last frame, best frame index and score, windows merged; always 0 until Stage 3) and then the `Image` report for that frame's JPEG buffer (frame index, JPEG address and size, window id, the frame's score). A failed `Invoke()` is reported at once (`Frame <n>: inference failed (<code>)`) and does not count for the best score. Under `-DUPLINK_STAGE0` Inference sends the `Window` report but no `Image`.
+* **Windows (Stage 2):** Inference keeps the window's best person score and its frame index. On the window's last frame it sends a `Window` report (window id, first and last frame, best frame index and score, windows merged; always 0 in Stage 2) and then the `Image` report for the window's last frame (frame index, JPEG address and size, window id, the frame's score). A failed `Invoke()` is reported at once (`Frame <n>: inference failed (<code>)`) and does not count for the best score. Under `-DUPLINK_STAGE0` Inference sends the `Window` report but no `Image`.
+* **Best-of-20 (Stage 3):** Inference keeps the best frame's descriptor (`frame_t`, with its buffer). Before every frame it polls `free_chan` without blocking: a PRI ALT over the channel and a zero timeout (`Alternative(m_free_in | returned, skip)` with `RelTimeoutGuard skip(Milliseconds(0))`, CSP's SKIP; CSP4CMSIS 3.0.1 has no `tryRead`). A buffer that comes back joins the spares, and Inference holds the free token again. On a window's last frame, if it holds the token, it sends the `Window` line (window id, the first and last frame of the merged range, best frame and score or `-` if every frame failed, windows merged, failed inferences) and then the `Image` report of the best frame, with its buffer id; it then no longer holds the token. If it does not hold the token, it sends nothing: the window is merged, the best and the counts carry over, and the next line it sends covers both windows. A failed `Invoke()` is counted (`failed <k>`); its buffer is free at once. Under `-DUPLINK_STAGE0` the best buffer is put back with the spares instead of being sent.
 * **Start-up order:** Inference initialises the model only when its first frame has arrived, i.e. after Camera has started.
 
 ### 4. Reporter: the console has one owner
 The console is a shared resource, and `xprintf()` has no locking, so two processes printing at the same time tear each other's lines. The **Reporter** is therefore the only process that prints while the network runs. Camera, Inference and `MainApp_Task` send it fixed-size `report_t` messages (`common_types.h`: kind, code, the reporting thread's name -- a string literal, so only the pointer is copied -- frame index, values) over **one rendezvous channel with three writers**; the Reporter owns every format string and prints exactly one line per report: one per window (Stage 2; one per frame before), plus MainApp's stack report every 3 s. For an `Image` report it writes one binary frame instead (section 8). The Reporter has no timer; its only state is the binary frames' sequence number and a count of JPEGs it refused to send.
-* **Rendezvous, not buffered:** nothing is lost, and the cost is small: at 921 600 Bd a result line takes about 0.5 ms, against 51.6 ms per frame (19.4 frames/s, measured over 60 s). Before the uplink, Camera reported only at start-up, so its frame loop never waited for the console. A `KeepNewest` buffer would drop reports silently. In Stage 1 the console was a bottleneck once per window: an image takes about 62 ms at 921 600 Bd, Inference waited that long to hand over its next result line, and Camera waited for Inference (section 8). In Stage 2 Inference writes to `report_chan` only twice per window, the `Window` line (about 0.6 ms) and then the `Image` report, which the Reporter takes at once and then sends for 62 ms while nobody but MainApp writes; Camera writes only at start-up. A stalled Reporter would still block Inference at the end of the next window, and Camera behind it; Stage 3 removes that. Under `-DUPLINK_STAGE0` Camera also sends two reports per frame (the check and the JPEG tail), before it passes the frame on, so the Stage 0 build does wait for the console. `report_t` then also carries 16 bytes for the tail (44 bytes instead of 28; 28 since Stage 2 added a fourth value for the `Window` report).
+* **Rendezvous, not buffered:** nothing is lost, and the cost is small: at 921 600 Bd a result line takes about 0.5 ms, against 51.6 ms per frame (19.4 frames/s, measured over 60 s). Before the uplink, Camera reported only at start-up, so its frame loop never waited for the console. A `KeepNewest` buffer would drop reports silently. In Stage 1 the console was a bottleneck once per window: an image takes about 62 ms at 921 600 Bd, Inference waited that long to hand over its next result line, and Camera waited for Inference (section 8). In Stage 2 Inference writes to `report_chan` only twice per window, the `Window` line (about 0.6 ms) and then the `Image` report, which the Reporter takes at once and then sends for 62 ms while nobody but MainApp writes; Camera writes only at start-up. A stalled Reporter would still block Inference at the end of the next window, and Camera behind it. In Stage 3 Inference writes only while it holds the free token, so the Reporter is idle and takes the line at once (or after at most one stack line from MainApp); with the uplink busy, Inference merges instead of waiting. After an `Image` the Reporter returns the buffer on `free_chan`, a one-slot buffered channel, so it never waits for Inference either: only one image is ever out, so the slot is always empty when it writes. Under `-DUPLINK_STAGE0` Camera also sends two reports per frame (the check and the JPEG tail), before it passes the frame on, so the Stage 0 build does wait for the console. `report_t` then also carries 16 bytes for the tail (48 bytes instead of 32; 32 since Stages 2 and 3 added two values for the `Window` report).
 * **Before the Reporter's first line**, only MainApp (`CSP_Main: started`, before it builds the network) and the camera driver print (its start-up log, during `cisdp_sensor_init()`/`cisdp_dp_init()`): Inference is still waiting for the first frame, and MainApp sends its first stack report only 3.5 s after start (on the board, Camera reported `started` about 2.9 s before it). The `FATAL` messages are the exception: the frame-ready ISR's, the stack-overflow hook's and the malloc-failed hook's (section 5); each halts the system.
 
 ### 5. Memory & Performance
 * **Zero Heap:** All CSP channels and processes, every thread's stack, and the Ethos-U driver's semaphores are statically allocated at compile time; the FreeRTOS heap is not used (`configTOTAL_HEAP_SIZE` 1 KB, 0 allocations measured). The C library heap (16 KB, `__HEAP_SIZE` in the linker script) sees two allocations, both at start-up and never freed: 1088 bytes for the C++ runtime's emergency exception buffer (libstdc++, before `main()`) and 12 bytes for the Ethos-U driver's device structure (`ethosu_dev_init()`, when Inference initialises the model); 1112 bytes in use including `malloc()`'s bookkeeping (`mallinfo()`), and no allocation while frames run.
-* **Frame buffers:** all in `.bss.NoInit`, set up in `cis_sensor/cis_imx219/cisdp_sensor.c`: `demosbuf` (raw YUV420 at 640x480, 460 800 bytes, read by Inference), `jpegfilesizebuf` (100 bytes; the encoder writes the JPEG size here) and the `jpegbuf` array of `CISDP_JPEG_BUF_CNT` JPEG buffers. Each JPEG buffer is `JPEG_BUFSIZE` (46 256 bytes at 640x480) rounded up to a multiple of 32, i.e. 46 272 bytes, so that cache maintenance on one buffer never touches its neighbour. `CISDP_JPEG_BUF_CNT` is 2 (92 544 bytes); the default build uses only buffer 0, the Stage 0 build alternates both. Stage 3 needs 4, another 92 544 bytes.
-* **SRAM:** 987 KB of 1924 KB used (51.3 %, from the linker), with 2 JPEG buffers: about 45 KB more than with the single `jpegbuf`. The largest items are `demosbuf`, the model (251 568 bytes) and the tensor arena (128 000 bytes).
+* **Frame buffers:** all in `.bss.NoInit`, set up in `cis_sensor/cis_imx219/cisdp_sensor.c`: `demosbuf` (raw YUV420 at 640x480, 460 800 bytes, read by Inference), `jpegfilesizebuf` (100 bytes; the encoder writes the JPEG size here) and the `jpegbuf` array of `CISDP_JPEG_BUF_CNT` JPEG buffers. Each JPEG buffer is `JPEG_BUFSIZE` (46 256 bytes at 640x480) rounded up to a multiple of 32, i.e. 46 272 bytes, so that cache maintenance on one buffer never touches its neighbour. The driver's default for `CISDP_JPEG_BUF_CNT` is 2; the `.mk` sets 4 (185 088 bytes) for Stage 3 (section 2). The Stage 0 build alternates buffers 0 and 1 only.
+* **SRAM:** 1077 KB of 1924 KB used (56.0 %, from the linker), with 4 JPEG buffers: about 136 KB more than with the single `jpegbuf` (987 KB with 2). The largest items are `demosbuf`, the model (251 568 bytes) and the tensor arena (128 000 bytes).
 * **Overflow and heap checks:** `configCHECK_FOR_STACK_OVERFLOW` is 2, so FreeRTOS checks each task's stack at every context switch. `vApplicationStackOverflowHook()` prints `FATAL: stack overflow in task <name>`, `vApplicationMallocFailedHook()` prints `FATAL: pvPortMalloc() failed in task <name>` (or `(scheduler not started)`), and `vAssertCalled()` prints the file and line. All three use `xprintf()`, not the C library's `printf()`, and then halt.
 * **Concurrency:** Each process runs in its own thread (`osPriorityLow2`), created by `Run(..., ExecutionMode::StaticNetwork)` from `MainApp_Task` (`osPriorityLow3`).
 * **Console output:** one line per window (Stage 2; one per frame before), printed by the Reporter only (before, each result was printed twice, by Inference and by a Console process, and lines from different processes interleaved mid-string).
@@ -74,7 +78,7 @@ The console is a shared resource, and `xprintf()` has no locking, so two process
 ### 6. Formal Model
 [`Formal model/`](Formal%20model/) holds a CSP-M model of this network (Camera → Inference → Reporter, one report channel with three writers: Camera, Inference and MainApp), checked with ProB 1.16.1: deadlock and divergence freedom; refinement against a specification of the console's pipeline lines (the camera driver's log, the two `started` lines, then exactly one result line per frame, in frame order) and of its stack lines (complete groups, for ever); and, with Inference stalled, no deadlock and an unchanged stack report. Three positive controls fail as they should: a Reporter that reads per-writer channels in a fixed order (deadlock), an Inference that also prints (specification violated), and the previous design with the stack report in the Reporter (the stack report stops when the pipeline stalls).
 
-The model covers the network as it was before the uplink. The uplink's changes are not modelled yet: Stage 2's `release_chan` and the `Window` and `Image` reports once per window, the buffer alternation, and the Stage 0 build (Camera's per-frame reports, the stop after 100 frames, the buffer dump). Stage 4 adds the buffer ids as data.
+The model covers the network as it was before the uplink. The uplink's changes are not modelled yet: `release_chan` and `free_chan` with the buffer ids, the `Window` and `Image` reports and the free-token rule, and the Stage 0 build (Camera's per-frame reports, the stop after 100 frames, the buffer dump). Stage 4 adds the buffer ids as data.
 
 ### 7. Image Uplink, Stage 0: retargeting the JPEG buffer (gate test)
 The uplink design keeps several JPEG buffers and points WDMA2 at a different one before each capture. Stage 0 checks that the hardware follows before anything is built on it.
@@ -108,13 +112,28 @@ Stage 1 sends the last frame of every window of 20 frames to the PC, without sel
 
 ### 9. Image Uplink, Stage 2: the raw buffer as a token, one report per window
 Stage 2 makes the raw frame buffer an explicit token (`release_chan`, section 2) and takes the console off the camera's path: Inference sends one `Window` line and one `Image` report per window instead of a result line per frame, and Camera reports only at start-up (sections 3 and 4). The frame sent is still the window's last, not its best.
-* **Console:** `Window <w>: frames <a>-<b> best <f> score <s> merged <m>` once per window, followed by the window's binary image frame; the image's metadata now carries the frame's score. `uplink_rx.py` checks that each window starts one frame after the previous one ended, and counts `inference failed` lines as failures.
-* **The JPEG buffer being sent is protected by timing again, not by channel order.** In Stage 1 Camera sent the `Image` report itself, so its switch back to a buffer waited until the Reporter had taken the next report, i.e. had finished sending. Now Inference sends the `Image` report for frame 20w+19 after Camera has already switched WDMA2 to the other buffer and re-armed; the switch back to the sent buffer comes after frame 20w+39, about 1 s later, and the send takes about 62 ms. Nothing orders the two. Stage 3's `free_chan` (the uplink returns the buffer when the send is done) restores an argument from channel order alone.
+* **Console:** `Window <w>: frames <a>-<b> best <f> score <s> merged <m>` once per window, followed by the image of the window's last frame; the image's metadata now carries the frame's score. `uplink_rx.py` checks that each window starts one frame after the previous one ended, and counts `inference failed` lines as failures. (Stage 3 adds `failed <k>` and sends the best frame, section 10.)
+* **The JPEG buffer being sent is protected by timing again, not by channel order.** In Stage 1 Camera sent the `Image` report itself, so its switch back to a buffer waited until the Reporter had taken the next report, i.e. had finished sending. Now Inference sends the `Image` report for frame 20w+19 after Camera has already switched WDMA2 to the other buffer and re-armed. Camera switches buffers only on a window's last frame (`f.index % 20 == 19`); the per-frame alternation is the Stage 0 build's alone. Frames 20w+20 to 20w+39 therefore go to the other buffer, and the sent buffer is next written by the capture of frame 20w+40, which starts when Camera re-arms after frame 20w+39: 20 frame periods, about 1.03 s, after the `Image` report, against about 62 ms for the send. Nothing orders the two; the margin is about 0.97 s. Stage 3's `free_chan` (the uplink returns the buffer when the send is done) restores an argument from channel order alone.
 * **What still blocks:** the Reporter takes the `Image` report at once, because nothing else writes to `report_chan` near the end of a window except MainApp's stack lines (a few ms). If the Reporter were stalled for longer than a window, Inference would block on the next `Window` line and Camera behind it; the Stage 4 check of Camera and Inference cycling with the uplink stalled must therefore include `report_chan`.
 * **Run and pass:** as Stage 1 (section 8), plus no window gap and no inference failure.
 * **Result (2026-11-02, clean build with GCC 13.2):** PASS. The receiver started with the app running (first window seen ended at frame 519, no bootloader banner) and ran for 600 s: 582 images (0.97/s), one per window, 0 CRC errors, 0 sequence gaps, 0 bad frames, every image decoded (5503-5524 bytes), 0 EOI errors, 582 windows with 0 gaps, 0 inference failures.
 * **Frame rate:** 19.39 frames/s over frames 519-12139, against 18.47 frames/s in Stage 1 (+5.0 %) and the 19.4 frames/s baseline of the parent app (the same within the measurement). So the image no longer costs a frame per window, and re-arming after the rescale instead of at once still catches the next sensor frame: the rescale (96x96 outputs) is short against the frame period of 51.6 ms. The second raw buffer, the fallback in the plan, is not needed.
 * **Stacks (20-second check after flashing):** Camera 776/1536 bytes, Inference 592/1024, Reporter 488/1024, CSP_Main 688/1024.
+
+### 10. Image Uplink, Stage 3: best-of-20 with buffer tokens
+Stage 3 sends the best frame of each window, by person score, and never makes Camera or Inference wait for the uplink. The four JPEG buffers and their roles are in section 2, the selection, the free token and merging in section 3, and why nothing but MainApp and the start-up lines can block on the Reporter in section 4.
+* **The buffer being sent is protected by channel order again.** The Reporter gets a buffer only with an `Image` report and gives it back on `free_chan` when the send is done (or refused); until Inference has read it back, the buffer is in no other role, so Camera cannot be handed it as a DMA target. The ~0.97 s timing margin of Stage 2 (section 9) is no longer needed.
+* **Console:** `Window <w>: frames <a>-<b> best <f> score <s> merged <m> failed <k>`, then the image of frame `<f>`. `<a>-<b>` spans `<m>+1` windows; `best - score -` if every frame in it failed (no image then). Failed inferences no longer print a line of their own.
+* **Stall build:** `-DUPLINK_STALL_MS=<ms>` (commented out in the `.mk`) makes the Reporter sleep that long after each image before returning the buffer, so the uplink stays busy for the send plus the stall. Stopping reads on the PC cannot do this: the console has no flow control, so the board keeps sending and the USB bridge drops what the PC does not read.
+* **Receiver:** `uplink_rx.py` also checks that every image is the frame, score and window that the `Window` line before it names, and counts merged windows and failed inferences. `--pause <start> <seconds>` stops reading with the port open and then resynchronises (losses in the first 2 s after are counted separately), for the receiver-stopped check. It keeps the last stack line of each thread for the summary.
+* **Pass:** as Stage 2, plus every image is its line's best; with `UPLINK_STALL_MS=1500` the frame rate stays at about 19.4, `merged` rises, and every image is intact; with the receiver stopped for two minutes the board's frame rate across the pause is unchanged.
+* **Results (2026-11-02, clean builds with GCC 13.2, 10-minute runs unless stated):**
+  * **Default build:** PASS. 581 images, one per window, each the best of its window, all decode (5426-5518 bytes); 0 CRC errors, 0 sequence gaps, 0 EOI errors, 0 window gaps, 0 merged, 0 failed inferences. 19.39 frames/s (Stage 2: 19.39, parent app: 19.4). The best frame was at every position in the window; position 0 most often (56 times) and 19 least (18), because the scene was static, scores often tied, and the first of equal scores is kept.
+  * **Stall build, `UPLINK_STALL_MS=1500`:** PASS. 19.39 frames/s; 291 lines covering 582 windows with 0 gaps, every line `merged 1` (the uplink is busy about 1.56 s per image and a window lasts about 1.03 s, so every second window end finds the token back); 291 images, each the best of its two-window range, all intact.
+  * **Receiver stopped (default build, 300 s run, no reads for 122 s from 60 s on, port open):** PASS. Across the pause the board went from frame 13199 to 15559, 19.41 frames/s; after it the receiver lost one partial frame while resynchronising and found no errors.
+  * **Releasing after `cv_invoke()` on every frame** (an earlier version, see section 2): PASS, but 19.13 and 19.11 frames/s in two runs, 1.5 % slower.
+* **Stacks at the end of the 10-minute runs:** Camera 784/1536 bytes, Inference 736/1024 (720-760 across the Stage 3 runs: 264 bytes of headroom at worst, against 432 in Stage 2), Reporter 488/1024 (504 in the stall build), CSP_Main 784/1024.
+* **SRAM:** 1077 KB of 1924 KB (56.0 %).
 
 ---
 
@@ -160,19 +179,18 @@ void Camera::run() {
     f.index = m_frame_counter++;
     f.jpeg_addr = jpeg_addr;
     f.jpeg_sz = jpeg_sz;
+    f.buf = cur;
 
     m_frame_out.write(f);
     m_release_in.read(token);
 
-    if (f.index % UPLINK_WINDOW == UPLINK_WINDOW - 1) {
-      cur ^= 1;
-      cisdp_set_jpeg_buf(cur);
-    }
+    cur = token.buf;
+    cisdp_set_jpeg_buf(cur);
     sensordplib_retrigger_capture();
   }
 }
 ```
-This is the default (Stage 2) build. Under `-DUPLINK_STAGE0` the buffer switch is replaced, and the loop has three additions: before `m_frame_out.write(f)`, Camera checks the buffer (`check_jpeg_buf()`) and sends a `ReportKind::BufferCheck` and a `ReportKind::BufferTail` report; after it, at frame 100, it sends `ReportKind::BufferVerdict` and two `ReportKind::JpegDump` reports and then blocks on the trigger channel for good; otherwise it calls `arm_jpeg_buf()` on the other buffer (zero the whole buffer, clean it from the D-cache, `cisdp_set_jpeg_buf()`) and takes the CRC32 of the buffer it has just checked (`crc32_buf()`) before `sensordplib_retrigger_capture()`. Before `cisdp_sensor_start()` it arms buffer 0 and takes the CRC32 of buffer 1.
+This is the default (Stage 3) build. Under `-DUPLINK_STAGE0` the buffer switch is replaced (Camera alternates buffers 0 and 1 itself and ignores `token.buf`), and the loop has three additions: before `m_frame_out.write(f)`, Camera checks the buffer (`check_jpeg_buf()`) and sends a `ReportKind::BufferCheck` and a `ReportKind::BufferTail` report; after it, at frame 100, it sends `ReportKind::BufferVerdict` and two `ReportKind::JpegDump` reports and then blocks on the trigger channel for good; otherwise it calls `arm_jpeg_buf()` on the other buffer (zero the whole buffer, clean it from the D-cache, `cisdp_set_jpeg_buf()`) and takes the CRC32 of the buffer it has just checked (`crc32_buf()`) before `sensordplib_retrigger_capture()`. Before `cisdp_sensor_start()` it arms buffer 0 and takes the CRC32 of buffer 1.
 
 ### Inference Process (`inference_process.cpp`)
 ```cpp
@@ -180,61 +198,65 @@ void Inference::run()
 {
     frame_t f;
     m_frame_in.read(f);
+    // ... cv_init(); on failure: report Failed and return; otherwise report Started ...
 
-    report_t r = {};
-    r.name = name();
-    int err = cv_init(true, true);
-    // ... on failure: report Failed (code = err) and return; otherwise report Started ...
+    uint8_t spare[UPLINK_BUFFERS];
+    uint8_t spares = 0;
+    for (uint8_t id = 0; id < UPLINK_BUFFERS; id++) {
+        if (id != f.buf) spare[spares++] = id;
+    }
 
-    uint32_t first = f.index;
-    uint32_t best_index = f.index;
-    int8_t best_score = INT8_MIN;
+    uint8_t returned = 0;
+    RelTimeoutGuard skip(Milliseconds(0));
+    Alternative poll_free(m_free_in | returned, skip);
+    bool uplink_free = true;
+    // ... first = f.index, merged = 0, failed = 0, no best ...
 
     while (true) {
+        if (poll_free.priSelect() == 0) {
+            spare[spares++] = returned;
+            uplink_free = true;
+        }
+
         cv_prepare();
-        m_release_out.write(release_t {});
+        m_release_out.write(release_t { spare[--spares] });
 
         int8_t person_score = 0, no_person_score = 0;
         int status = cv_invoke(&person_score, &no_person_score);
 
         if (status != 0) {
-            // ... report Result (code = status, index = f.index) ...
-        } else if (person_score > best_score) {
+            failed++;
+            spare[spares++] = f.buf;
+        } else if (!have_best || person_score > best_score) {
+            if (have_best) spare[spares++] = best.buf;
+            best = f;
             best_score = person_score;
-            best_index = f.index;
+            have_best = true;
+        } else {
+            spare[spares++] = f.buf;
         }
 
         if (f.index % UPLINK_WINDOW == UPLINK_WINDOW - 1) {
-            r = {};
-            r.kind = ReportKind::Window;
-            r.name = name();
-            r.code = 0;
-            r.index = f.index / UPLINK_WINDOW;
-            r.value[0] = (int32_t)first;
-            r.value[1] = (int32_t)f.index;
-            r.value[2] = (int32_t)best_index;
-            r.value[3] = best_score;
-            m_report_out.write(r);
-#ifndef UPLINK_STAGE0
-            r = {};
-            r.kind = ReportKind::Image;
-            r.name = name();
-            r.index = f.index;
-            r.value[0] = (int32_t)f.jpeg_addr;
-            r.value[1] = (int32_t)f.jpeg_sz;
-            r.value[2] = (int32_t)(f.index / UPLINK_WINDOW);
-            r.value[3] = person_score;
-            m_report_out.write(r);
-#endif
-            first = f.index + 1;
-            best_index = first;
-            best_score = INT8_MIN;
+            if (uplink_free) {
+                // ... write the Window report: window, first, f.index, best or -1, score, merged, failed ...
+                if (have_best) {
+                    // ... write the Image report: best.buf, best.index, address, size, window, score ...
+                    uplink_free = false;
+                    have_best = false;
+                }
+                first = f.index + 1;
+                merged = 0;
+                failed = 0;
+            } else {
+                merged++;
+            }
         }
 
         m_frame_in.read(f);
     }
 }
 ```
+The Reporter, after sending an `Image` (or refusing to, section 8), returns its buffer: `m_free_out.write((uint8_t)r.code)`, after `SleepFor(Milliseconds(UPLINK_STALL_MS))` in the stall build.
 
 ### Network Construction (`csp4cmsis_spn.cpp`)
 ```cpp
@@ -246,11 +268,12 @@ void MainApp_Task(void* params)
 
     static Channel<frame_t>  frame_chan;
     static Channel<release_t> release_chan;
+    static BufferedChannel<uint8_t, 1> free_chan;
     static Channel<report_t> report_chan;
 
     static Camera    camera(frame_chan.writer(), release_chan.reader(), report_chan.writer());
-    static Inference inference(frame_chan.reader(), release_chan.writer(), report_chan.writer());
-    static Reporter  reporter(report_chan.reader());
+    static Inference inference(frame_chan.reader(), release_chan.writer(), free_chan.reader(), report_chan.writer());
+    static Reporter  reporter(report_chan.reader(), free_chan.writer());
 
     auto network = InParallel(camera, inference, reporter);
     Run(network, ExecutionMode::StaticNetwork, NETWORK_PRIORITY);
@@ -276,21 +299,21 @@ Because camera/inference/reporter all run forever, there's no natural "network f
 
 ### Sample Output
 ```text
-Window 10: frames 200-219 best 217 score -11 merged 0
-Camera: 776/1536 bytes used (760 bytes unused headroom, 190 words HWM)
-Inference: 592/1024 bytes used (432 bytes unused headroom, 108 words HWM)
+Window 10: frames 200-219 best 200 score -11 merged 0 failed 0
+Camera: 784/1536 bytes used (752 bytes unused headroom, 188 words HWM)
+Inference: 736/1024 bytes used (288 bytes unused headroom, 72 words HWM)
 Reporter: 488/1024 bytes used (536 bytes unused headroom, 134 words HWM)
-CSP_Main: 688/1024 bytes used (336 bytes unused headroom, 84 words HWM)
-Window 11: frames 220-239 best 234 score -11 merged 0
+CSP_Main: 784/1024 bytes used (240 bytes unused headroom, 60 words HWM)
+Window 11: frames 220-239 best 227 score -9 merged 0 failed 0
 ```
-(Stage 2 build, image frames between the lines not shown.)
+(Stage 3 build, image frames between the lines not shown; stack figures from the end of a 10-minute run.)
 
 | Task | Allocated | Used | Unused Headroom |
 |---|---|---|---|
-| Camera | 1536 bytes | 776 bytes | 760 bytes |
-| Inference | 1024 bytes | 592 bytes | 432 bytes |
+| Camera | 1536 bytes | 784 bytes | 752 bytes |
+| Inference | 1024 bytes | 736 bytes | 288 bytes |
 | Reporter | 1024 bytes | 488 bytes | 536 bytes |
-| CSP_Main (MainApp) | 1024 bytes | 688 bytes | 336 bytes |
+| CSP_Main (MainApp) | 1024 bytes | 784 bytes | 240 bytes |
 
 Before the uplink, Camera used 768 bytes (744 before it sent reports), Inference 560, the Reporter 472 and CSP_Main 464; CSP_Main's figure rose with the `CSP_Main: started` print. Before 2.0 Camera had only 1024 bytes (280 bytes of headroom); since CSP4CMSIS 2.0.1 it has 1536 bytes (384 words). Inference and the Reporter have comfortable margins. Inference has blocked in the semaphore wait during `Invoke()` since before the uplink (488 bytes when it spun); the Reporter's figure grows during the first seconds and depends on the run.
 
@@ -330,17 +353,17 @@ IMX219 on by app done
 g_cursensorstream: 0
 Camera: started
 Inference: started
-Window 0: frames 0-19 best 4 score -10 merged 0
-[image seq 0 window 0 frame 19 score -14 5652 bytes -> w000000_f0000019_s00000.jpg]   (printed by uplink_rx.py)
-Window 1: frames 20-39 best 33 score -9 merged 0
+Window 0: frames 0-19 best 4 score -10 merged 0 failed 0
+[image seq 0 window 0 frame 4 score -10 5512 bytes -> w000000_f0000004_s00000.jpg]   (printed by uplink_rx.py)
+Window 1: frames 20-39 best 33 score -9 merged 0 failed 0
 ...
-Camera: 768/1536 bytes used (768 bytes unused headroom, 192 words HWM)
-Inference: 560/1024 bytes used (464 bytes unused headroom, 116 words HWM)
-Reporter: 472/1024 bytes used (552 bytes unused headroom, 138 words HWM)
-CSP_Main: 464/1024 bytes used (560 bytes unused headroom, 140 words HWM)
+Camera: 784/1536 bytes used (752 bytes unused headroom, 188 words HWM)
+Inference: 736/1024 bytes used (288 bytes unused headroom, 72 words HWM)
+Reporter: 488/1024 bytes used (536 bytes unused headroom, 134 words HWM)
+CSP_Main: 784/1024 bytes used (240 bytes unused headroom, 60 words HWM)
 ...
 ```
-This is the default (Stage 2) build. The Stage 0 build prints two `Camera: frame ...` lines per frame and a `Window` line per window, but no images, and stops after frame 99 with the verdict and the two hex dumps (section 7).
+This is the default (Stage 3) build; the stall build prints `merged 1` in every line. The Stage 0 build prints two `Camera: frame ...` lines per frame and a `Window` line per window, but no images, and stops after frame 99 with the verdict and the two hex dumps (section 7).
 
 Stack occupancy lines like the block above are printed every `CSP_STACK_REPORT_INTERVAL_MS` (3 s by default) once the network is running -- see [Stack Occupancy Reporting](#-stack-occupancy-reporting) below.
 
@@ -362,7 +385,7 @@ app/scenario_app/csp4cmsis_neuropathway_image_uplink/
 ├── uplink.h / uplink.cpp   // CRC32 and the JPEG length rule (shared by Camera's Stage 0 checks and the Reporter)
 ├── tools/uplink_rx.py      // PC receiver: text lines, image frames, frame rate; parks the port (section 8)
 ├── tools/stage0_capture.py // PC side of the Stage 0 test
-└── csp4cmsis_neuropathway_image_uplink.mk  // App makefile (UPLINK_STAGE0, sensor selection)
+└── csp4cmsis_neuropathway_image_uplink.mk  // App makefile (UPLINK_STAGE0, CISDP_JPEG_BUF_CNT=4, UPLINK_STALL_MS, sensor selection)
 ```
 
 ## 🐛 Troubleshooting

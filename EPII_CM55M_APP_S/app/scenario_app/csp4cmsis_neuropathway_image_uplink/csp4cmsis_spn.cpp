@@ -42,11 +42,12 @@ void MainApp_Task(void* params)
 
     static Channel<frame_t>  frame_chan;
     static Channel<release_t> release_chan;
+    static BufferedChannel<uint8_t, 1> free_chan;
     static Channel<report_t> report_chan;
 
     static Camera    camera(frame_chan.writer(), release_chan.reader(), report_chan.writer());
-    static Inference inference(frame_chan.reader(), release_chan.writer(), report_chan.writer());
-    static Reporter  reporter(report_chan.reader());
+    static Inference inference(frame_chan.reader(), release_chan.writer(), free_chan.reader(), report_chan.writer());
+    static Reporter  reporter(report_chan.reader(), free_chan.writer());
 
     auto network = InParallel(camera, inference, reporter);
     Run(network, ExecutionMode::StaticNetwork, NETWORK_PRIORITY);
