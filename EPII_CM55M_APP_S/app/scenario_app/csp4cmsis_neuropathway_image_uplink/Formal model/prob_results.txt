@@ -32,3 +32,43 @@ CHECKING CSP: SYSTEM1 :[ deadlock free [F] ]
 Result trace for assertModelCheck: [GO:,camera_log,GO:,camera_report.(started.camera),GO:,g_trigger_chan,GO:,frame_chan.0,GO:,g_trigger_chan,GO:,line.(started.camera),GO:,inference_report.(started.inference),GO:,tau,GO:,line.(started.inference),DEADLOCKS]
 % CSP Assertion Checks Completed: [CSP: SPEC_PIPE [T= CSP: CONSOLE2=false,CSP: SPEC_STACK [F= CSP: CONSOLE_STACK3=false,CSP: SYSTEM1 :[ deadlock free [F] ]=false]
 [runtime/139,total/3,true/0,false/3,unknown/0]
+
+## probcli Uplink.csp -assertions
+CHECKING CSP: RUN((diff(Events,{error,overflow}))) [T= CSP: SYSTEM_OBS
+CSP: SYSTEM_OBS is a trace refinement of CSP: RUN(diff(Events,{error,overflow}))
+% Refinement Check [T=] CPU Time: 99534 ms
+CHECKING CSP: MCOUNT(0) [T= CSP: (SYSTEM)\((diff(Events,{|merge,report_chan.window|})))
+CSP: (SYSTEM)\(diff(Events,{|merge,report_chan.window|})) is a trace refinement of CSP: MCOUNT(0)
+% Refinement Check [T=] CPU Time: 64559 ms
+CHECKING CSP: CYCLE [F= CSP: (SYSTEM_STALL)\((diff(Events,{g_trigger_chan})))
+CSP: (SYSTEM_STALL)\(diff(Events,{g_trigger_chan})) is a failures refinement of CSP: CYCLE
+% Refinement Check [F=] CPU Time: 92442 ms
+CHECKING CSP: PRE [FD= CSP: (SYSTEM_STOP)\((diff(Events,STALL_VIEW)))
+CSP: (SYSTEM_STOP)\(diff(Events,(STALL_VIEW))) is a failure_divergences refinement of CSP: PRE
+% Refinement Check [FD=] CPU Time: 7763 ms
+CHECKING CSP: SYSTEM :[ livelock free ]
+CSP: SYSTEM is divergence free
+% Checking Time: 58223 ms
+Result trace for assertModelCheck: no_counter_example
+CHECKING CSP: SYSTEM :[ deadlock free [F] ]
+CSP: SYSTEM is deadlock free
+% Checking Time: 127293 ms
+Result trace for assertModelCheck: no_counter_example
+CHECKING CSP: SYSTEM_STALL :[ deadlock free [F] ]
+CSP: SYSTEM_STALL is deadlock free
+% Checking Time: 75132 ms
+Result trace for assertModelCheck: no_counter_example
+% CSP Assertion Checks Completed: [CSP: RUN((diff(Events,{error,overflow}))) [T= CSP: SYSTEM_OBS=true,CSP: MCOUNT(0) [T= CSP: (SYSTEM)\((diff(Events,{|merge,report_chan.window|})))=true,CSP: CYCLE [F= CSP: (SYSTEM_STALL)\((diff(Events,{g_trigger_chan})))=true,CSP: PRE [FD= CSP: (SYSTEM_STOP)\((diff(Events,STALL_VIEW)))=true,CSP: SYSTEM :[ livelock free ]=true,CSP: SYSTEM :[ deadlock free [F] ]=true,CSP: SYSTEM_STALL :[ deadlock free [F] ]=true]
+[runtime/524710,total/7,true/7,false/0,unknown/0]
+
+## probcli Uplink_controls.csp -assertions (counterexample traces shortened)
+CHECKING CSP: RUN((diff(Events,{error,overflow}))) [T= CSP: SYSTEM1_OBS
+CSP: SYSTEM1_OBS is *not* a trace refinement of CSP: RUN(diff(Events,{error,overflow}))
+% Refinement Check [T=] CPU Time: 3403 ms
+Could not execute trace from state 14: [go(camera_log,16),go(report_chan.(started.camera),18),go(g_trigger_chan,20),go(frame_chan.0.0,23),go(stack_tick,26),go(line.(started.camera),28),go(report_chan.(started.inference),29),go(poll_empty,31),go(tau,33),go(release_chan.1,37),go(tau,44),go(g_trigger_chan,47),go(scored.failed.0,53),go(frame_chan.1.1,55),go(poll_empty,57),go(tau,59),go(release_chan.0,63),go(tau,70),go(g_trigger_chan,73),go(scored.failed.1,79),go(line.(started.inference),81),go(report_chan.(window.0),82),go(frame_chan.2.0,84),go(poll_empty,86),go(tau,88),go(release_chan.1,92),go(ta ...
+CHECKING CSP: CYCLE [F= CSP: (SYSTEM2_STALL)\((diff(Events,{g_trigger_chan})))
+CSP: (SYSTEM2_STALL)\(diff(Events,{g_trigger_chan})) is *not* a failures refinement of CSP: CYCLE
+% Refinement Check [F=] CPU Time: 6291 ms
+Could not execute trace from state 5867: [go(tau,5868),go(tau,5870),go(g_trigger_chan,5872),go(tau,5908),go(tau,5909),go(tau,5910),go(tau,5914),go(tau,5916),go(tau,5918),go(tau,5922),go(tau,5925),go(g_trigger_chan,5928),go(tau,5931),go(tau,6124),go(tau,6409),go(tau,6410),go(tau,6413),go(tau,6415),go(g_trigger_chan,6417),go(tau,6419),go(tau,6153),go(tau,6155),go(tau,6443),go(tau,6584),go(tau,6585),go(tau,6588),go(tau,6590),go(g_trigger_chan,6592),go(tau,6594),go(tau,6937),go(tau,6938),go(tau,6939),go(tau,6942),go(tau,6944),go(g_trigger_chan,6946),go(tau,6948),go(tau,6674),go(tau,6677),go(tau,69 ...
+% CSP Assertion Checks Completed: [CSP: RUN((diff(Events,{error,overflow}))) [T= CSP: SYSTEM1_OBS=false,CSP: CYCLE [F= CSP: (SYSTEM2_STALL)\((diff(Events,{g_trigger_chan})))=false]
+[runtime/9783,total/2,true/0,false/2,unknown/0]

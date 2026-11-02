@@ -103,7 +103,7 @@ void Inference::run()
                 merged = 0;
                 failed = 0;
             } else {
-                merged++;
+                if (merged < INT16_MAX) merged++;
             }
         }
 
