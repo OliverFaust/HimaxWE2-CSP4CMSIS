@@ -9,22 +9,65 @@ using namespace csp;
 #ifdef UPLINK_STAGE0
 static constexpr uint32_t STAGE0_FRAMES = 100;
 
+static constexpr uint32_t EOI_SEARCH = 64;
+static constexpr uint32_t JPEG_SIZE_PAD = 32;
+static constexpr int32_t EOI_NONE = INT32_MIN;
+
 enum : int32_t {
   CHECK_INFO_ADDR = 1,
   CHECK_HW_ADDR   = 2,
   CHECK_SOI       = 4,
   CHECK_EOI       = 8,
-  CHECK_ALL       = 15,
+  CHECK_OTHER     = 16,
+  CHECK_ALL       = 31,
 };
+
+static uint32_t crc_table[256];
+
+static void crc32_init() {
+  for (uint32_t n = 0; n < 256; n++) {
+    uint32_t c = n;
+    for (int k = 0; k < 8; k++) c = (c & 1) ? 0xEDB88320u ^ (c >> 1) : c >> 1;
+    crc_table[n] = c;
+  }
+}
+
+static uint32_t crc32_buf(uint8_t id) {
+  const uint8_t* p = (const uint8_t*)cisdp_get_jpeg_buf_addr(id);
+  uint32_t n = cisdp_get_jpeg_buf_size();
+  uint32_t c = 0xFFFFFFFFu;
+  for (uint32_t i = 0; i < n; i++) c = crc_table[(c ^ p[i]) & 0xFF] ^ (c >> 8);
+  return c ^ 0xFFFFFFFFu;
+}
 
 static void arm_jpeg_buf(uint8_t id) {
   uint8_t* p = (uint8_t*)cisdp_get_jpeg_buf_addr(id);
-  memset(p, 0, 32);
-  SCB_CleanInvalidateDCache_by_Addr(p, 32);
+  memset(p, 0, cisdp_get_jpeg_buf_size());
+  SCB_CleanInvalidateDCache_by_Addr(p, cisdp_get_jpeg_buf_size());
   cisdp_set_jpeg_buf(id);
 }
 
-static int32_t check_jpeg_buf(uint8_t id, uint32_t jpeg_addr, uint32_t hw_addr, uint32_t jpeg_sz) {
+static void jpeg_tail(uint8_t id, uint32_t jpeg_sz, report_t& r) {
+  const uint8_t* p = (const uint8_t*)cisdp_get_jpeg_buf_addr(id);
+  uint32_t n = cisdp_get_jpeg_buf_size();
+  for (uint32_t k = 0; k < 16; k++) r.bytes[k] = (jpeg_sz >= 16 - k && jpeg_sz <= n) ? p[jpeg_sz - 16 + k] : 0;
+  r.value[0] = EOI_NONE;
+  r.value[1] = EOI_NONE;
+  r.value[2] = EOI_NONE;
+  if (jpeg_sz < 2 || jpeg_sz > n) return;
+  for (uint32_t i = jpeg_sz - 2; i + EOI_SEARCH >= jpeg_sz; i--) {
+    if (p[i] == 0xFF && p[i + 1] == 0xD9) { r.value[0] = (int32_t)(jpeg_sz - i); break; }
+    if (i == 0) break;
+  }
+  for (uint32_t i = jpeg_sz - 1; i + 1 < n && i < jpeg_sz + EOI_SEARCH; i++) {
+    if (p[i] == 0xFF && p[i + 1] == 0xD9) { r.value[1] = (int32_t)(i - jpeg_sz); break; }
+  }
+  for (uint32_t i = n; i > 0; i--) {
+    if (p[i - 1] != 0) { r.value[2] = (int32_t)i - (int32_t)jpeg_sz; break; }
+  }
+}
+
+static int32_t check_jpeg_buf(uint8_t id, uint32_t jpeg_addr, uint32_t hw_addr, uint32_t jpeg_sz, uint32_t other_crc) {
   uint32_t buf = cisdp_get_jpeg_buf_addr(id);
   const uint8_t* p = (const uint8_t*)buf;
   SCB_InvalidateDCache_by_Addr((void*)p, cisdp_get_jpeg_buf_size());
@@ -32,11 +75,14 @@ static int32_t check_jpeg_buf(uint8_t id, uint32_t jpeg_addr, uint32_t hw_addr, 
   if (jpeg_addr == buf) flags |= CHECK_INFO_ADDR;
   if (hw_addr == buf) flags |= CHECK_HW_ADDR;
   if (p[0] == 0xFF && p[1] == 0xD8) flags |= CHECK_SOI;
-  if (jpeg_sz >= 8 && jpeg_sz <= cisdp_get_jpeg_buf_size()) {
-    for (uint32_t i = jpeg_sz - 2; i + 5 >= jpeg_sz; i--) {
-      if (p[i] == 0xFF && p[i + 1] == 0xD9) { flags |= CHECK_EOI; break; }
+  if (jpeg_sz >= JPEG_SIZE_PAD + 4 && jpeg_sz <= cisdp_get_jpeg_buf_size()) {
+    for (uint32_t end = jpeg_sz - JPEG_SIZE_PAD; end + 4 > jpeg_sz - JPEG_SIZE_PAD; end--) {
+      if (p[end - 2] == 0xFF && p[end - 1] == 0xD9) { flags |= CHECK_EOI; break; }
     }
   }
+  uint8_t other = id ^ 1;
+  SCB_InvalidateDCache_by_Addr((void*)cisdp_get_jpeg_buf_addr(other), cisdp_get_jpeg_buf_size());
+  if (crc32_buf(other) == other_crc) flags |= CHECK_OTHER;
   return flags;
 }
 #endif
@@ -87,7 +133,9 @@ void Camera::run() {
   uint32_t passes = 0;
   uint32_t last_sz[2] = {0, 0};
   uint32_t last_index[2] = {0, 0};
+  crc32_init();
   arm_jpeg_buf(cur);
+  uint32_t other_crc = crc32_buf(cur ^ 1);
 #endif
 
   cisdp_sensor_start();
@@ -107,7 +155,7 @@ void Camera::run() {
 
 #ifdef UPLINK_STAGE0
     uint32_t hw_addr = cisdp_get_wdma2_hw_addr();
-    int32_t flags = check_jpeg_buf(cur, jpeg_addr, hw_addr, jpeg_sz);
+    int32_t flags = check_jpeg_buf(cur, jpeg_addr, hw_addr, jpeg_sz, other_crc);
     if (flags == CHECK_ALL) passes++;
     last_sz[cur] = jpeg_sz;
     last_index[cur] = f.index;
@@ -118,7 +166,14 @@ void Camera::run() {
     r.index = f.index;
     r.value[0] = (int32_t)jpeg_addr;
     r.value[1] = (int32_t)hw_addr;
-    r.value[2] = (int32_t)((jpeg_sz << 4) | (uint32_t)flags);
+    r.value[2] = (int32_t)((jpeg_sz << 5) | (uint32_t)flags);
+    m_report_out.write(r);
+    r = {};
+    r.kind = ReportKind::BufferTail;
+    r.name = name();
+    r.code = cur;
+    r.index = f.index;
+    jpeg_tail(cur, jpeg_sz, r);
     m_report_out.write(r);
 #endif
 
@@ -147,6 +202,7 @@ void Camera::run() {
     }
     cur ^= 1;
     arm_jpeg_buf(cur);
+    other_crc = crc32_buf(cur ^ 1);
 #endif
     sensordplib_retrigger_capture();
   }

@@ -21,6 +21,7 @@ CHECK = re.compile(r"Camera: frame (\d+) buf (\d) jpeg_addr (0x[0-9a-f]+) wdma2 
 VERDICT = re.compile(r"Camera: STAGE0 (PASS|FAIL) \((\d+) of (\d+) frames ok\)")
 BEGIN = re.compile(r"JPEG BEGIN buf=(\d) frame=(\d+) size=(\d+)")
 END = re.compile(r"JPEG END buf=(\d)")
+TAIL = re.compile(r"Camera: frame (\d+) buf (\d) tail ([0-9a-f ]+?) eoi_back (\S+) eoi_fwd (\S+) dma_end (\S+)")
 
 
 def lines_from_port(port, baud, timeout_s):
@@ -45,8 +46,9 @@ def check_jpeg(data):
     problems = []
     if data[:2] != b"\xff\xd8":
         problems.append("no SOI")
-    if b"\xff\xd9" not in data[-6:]:
-        problems.append("no EOI in last 6 bytes")
+    ends = [e for e in range(len(data) - 32, len(data) - 36, -1) if data[e - 2:e] == b"\xff\xd9"]
+    if not ends:
+        problems.append("no EOI 32-35 bytes before the reported size")
     try:
         from PIL import Image
         with Image.open(io.BytesIO(data)) as im:
@@ -74,6 +76,7 @@ def main():
     lines = lines_from_port(args.port, args.baud, args.timeout) if args.port else lines_from_log(args.log)
 
     checks, fails, addrs = 0, [], {}
+    tails = []
     verdict = None
     jpegs = {}
     current = None
@@ -103,6 +106,10 @@ def main():
             if ok != "ok":
                 fails.append(line)
             continue
+        m = TAIL.search(line)
+        if m:
+            tails.append(m.groups())
+            continue
         m = VERDICT.search(line)
         if m:
             verdict = m.groups()
@@ -123,6 +130,12 @@ def main():
         if a0 & a1:
             fails.append("both buffers report the same WDMA2 address")
             print("!! both buffers report the same WDMA2 address")
+    if tails:
+        from collections import Counter
+        print(f"tail lines: {len(tails)}")
+        for name, col in (("eoi_back", 3), ("eoi_fwd", 4), ("dma_end", 5)):
+            print(f"  {name}: {dict(Counter(t[col] for t in tails).most_common())}")
+        print(f"  last 4 bytes: {dict(Counter(t[2][-11:] for t in tails).most_common(8))}")
     print(f"board verdict: {verdict}")
 
     ok = verdict is not None and verdict[0] == "PASS" and not fails and len(jpegs) == 2
