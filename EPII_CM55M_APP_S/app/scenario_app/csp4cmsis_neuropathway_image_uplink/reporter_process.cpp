@@ -22,6 +22,31 @@ static void dump_jpeg(const report_t& r)
     xprintf("JPEG END buf=%d\r\n", (int)r.code);
 }
 
+static void print_offset(const char* label, int32_t v)
+{
+    if (v == INT32_MIN) {
+        xprintf(" %s none", label);
+    } else {
+        xprintf(" %s %ld", label, (long)v);
+    }
+}
+
+static void print_tail(const report_t& r)
+{
+    static const char hex[] = "0123456789abcdef";
+    static char line[3 * 16];
+    for (int k = 0; k < 16; k++) {
+        line[3 * k] = hex[r.bytes[k] >> 4];
+        line[3 * k + 1] = hex[r.bytes[k] & 15];
+        line[3 * k + 2] = (k == 15) ? 0 : ' ';
+    }
+    xprintf("%s: frame %lu buf %d tail %s", r.name, (unsigned long)r.index, (int)r.code, line);
+    print_offset("eoi_back", r.value[0]);
+    print_offset("eoi_fwd", r.value[1]);
+    print_offset("dma_end", r.value[2]);
+    xprintf("\r\n");
+}
+
 Reporter::Reporter(Chanin<report_t> in) : m_in(in)
 {
 }
@@ -59,8 +84,11 @@ void Reporter::run()
             xprintf("%s: frame %lu buf %d jpeg_addr 0x%08lx wdma2 0x%08lx size %lu flags %x %s\r\n",
                     r.name, (unsigned long)r.index, (int)r.code,
                     (unsigned long)(uint32_t)r.value[0], (unsigned long)(uint32_t)r.value[1],
-                    (unsigned long)((uint32_t)r.value[2] >> 4), (unsigned)(r.value[2] & 15),
-                    ((r.value[2] & 15) == 15) ? "ok" : "FAIL");
+                    (unsigned long)((uint32_t)r.value[2] >> 5), (unsigned)(r.value[2] & 31),
+                    ((r.value[2] & 31) == 31) ? "ok" : "FAIL");
+            break;
+        case ReportKind::BufferTail:
+            print_tail(r);
             break;
         case ReportKind::BufferVerdict:
             xprintf("%s: STAGE0 %s (%ld of %ld frames ok)\r\n", r.name,

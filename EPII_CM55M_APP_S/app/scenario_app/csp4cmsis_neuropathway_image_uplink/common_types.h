@@ -18,6 +18,7 @@ enum class ReportKind : uint8_t {
     Result,
     Stack,
     BufferCheck,
+    BufferTail,
     BufferVerdict,
     JpegDump,
 };
@@ -28,6 +29,9 @@ struct report_t {
     const char* name;
     uint32_t    index;
     int32_t     value[3];
+#ifdef UPLINK_STAGE0
+    uint8_t     bytes[16];
+#endif
 };
 static_assert(std::is_trivially_copyable<report_t>::value, "channel element types must be trivially copyable");
 
