@@ -11,7 +11,11 @@ public:
     const char* name() const override { return "Reporter"; }
 
 private:
+    void send_image(const report_t& r);
+
     csp::Chanin<report_t> m_in;
+    uint16_t m_seq;
+    uint32_t m_eoi_errors;
 };
 
 #endif

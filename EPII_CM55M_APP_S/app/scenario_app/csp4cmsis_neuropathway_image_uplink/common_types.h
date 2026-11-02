@@ -17,10 +17,13 @@ enum class ReportKind : uint8_t {
     Failed,
     Result,
     Stack,
+    Image,
+#ifdef UPLINK_STAGE0
     BufferCheck,
     BufferTail,
     BufferVerdict,
     JpegDump,
+#endif
 };
 
 struct report_t {
