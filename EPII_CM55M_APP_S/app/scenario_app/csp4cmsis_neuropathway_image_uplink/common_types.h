@@ -6,18 +6,20 @@
 
 struct trigger_t {};
 
-struct release_t {};
+struct release_t {
+    uint8_t buf;
+};
 
 struct frame_t {
     uint32_t index;
     uint32_t jpeg_addr;
     uint32_t jpeg_sz;
+    uint8_t  buf;
 };
 
 enum class ReportKind : uint8_t {
     Started,
     Failed,
-    Result,
     Stack,
     Image,
     Window,
@@ -34,7 +36,7 @@ struct report_t {
     int16_t     code;
     const char* name;
     uint32_t    index;
-    int32_t     value[4];
+    int32_t     value[5];
 #ifdef UPLINK_STAGE0
     uint8_t     bytes[16];
 #endif

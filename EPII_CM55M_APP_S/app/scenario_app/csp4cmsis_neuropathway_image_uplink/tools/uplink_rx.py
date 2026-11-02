@@ -6,11 +6,21 @@ The console carries plain text lines and binary frames:
     body (length bytes) | CRC32 of body (u32), all little-endian.
 Type 1 (image): body = frame index u32, score i8, window id u32, JPEG.
 
-Inference sends one text line per window,
-    Window W: frames A-B best F score S merged M
-and the frame rate is taken from these lines (frames B per second). A window
-must start one frame after the previous one ended; a gap fails the run, and so
-does an "inference failed" line.
+Inference sends one text line per window it reports,
+    Window W: frames A-B best F score S merged M failed K
+followed by the image of frame F (best and score are "-" if every frame
+failed). M windows that could not be sent (the uplink was still busy) are
+merged into this one, so A-B spans M+1 windows. The frame rate is taken from
+these lines (frame B against the PC's clock). A line must start one frame
+after the previous one ended, and the image that follows must be frame F with
+score S and window id W; otherwise the run fails, and so does K > 0.
+
+`--pause START SECONDS` stops reading for SECONDS after START seconds, with the
+port open, to check that the board carries on when the host stalls: data sent
+meanwhile is lost in the USB bridge, so after the pause the receiver flushes
+its input, resynchronises on the next frame and line (errors in the first
+2 s are counted as resync losses, not failures), and the frame rate across the
+pause shows whether the board slowed down.
 
 The board's USB bridge (WCH CH343, cdc_acm) resets the WE2 on a rising edge of
 RTS, and Linux raises DTR and RTS in open() unless the port's stored baud rate
@@ -39,9 +49,10 @@ import zlib
 MAGIC = b"\xa5\x5aIM"
 HEADER = struct.Struct("<4sBBHI")
 IMAGE_META = struct.Struct("<IbI")
-MAX_BODY = 1 << 20
-WINDOW_LINE = re.compile(rb"^Window (\d+): frames (\d+)-(\d+) best (\d+) score (-?\d+) merged (\d+)")
-INFERENCE_FAILED = re.compile(rb"^Frame \d+: inference failed")
+MAX_BODY = 1 << 16
+WINDOW_LINE = re.compile(rb"^Window (\d+): frames (\d+)-(\d+) best (\d+|-) score (-?\d+|-) merged (\d+) failed (\d+)")
+STACK_LINE = re.compile(rb"^(\w+): (\d+)/(\d+) bytes used")
+RESYNC_S = 2.0
 UPLINK_WINDOW = 20
 BOOT_BANNER = b"1st BL Modem"
 EOI_ERROR = b"Uplink: frame"
@@ -96,17 +107,51 @@ class Stats:
         self.windows = 0
         self.window_gaps = 0
         self.windows_merged = 0
+        self.lines_merged = 0
         self.inference_failures = 0
+        self.not_best = 0
         self.last_window_end = None
+        self.expect = None
+        self.stacks = {}
+        self.resync_until = self.t0 + RESYNC_S
+        self.resync_losses = 0
+        self.pauses = []
 
-    def window_line(self, first, last, merged, now):
-        self.windows += 1
+    def resyncing(self, now):
+        return now < self.resync_until
+
+    def resync(self, now):
+        self.last_seq = None
+        self.last_window_end = None
+        self.expect = None
+        self.resync_until = now + RESYNC_S
+
+    def window_line(self, window, first, last, best, score, merged, failed, now):
+        self.windows += merged + 1
         self.windows_merged += merged
+        self.lines_merged += merged > 0
+        self.inference_failures += failed
         if self.last_window_end is not None and first != self.last_window_end + 1:
             self.window_gaps += 1
             print(f"!! window gap: previous window ended at frame {self.last_window_end}, next starts at {first}")
+        if self.expect is not None:
+            self.not_best += 1
+            print(f"!! no image for the window line ending at frame {self.expect[3]}")
         self.last_window_end = last
+        self.expect = None if best is None else (window, best, score, last)
         self.frame_line(last, now)
+
+    def image(self, window, index, score, now):
+        if self.expect is None:
+            if not self.resyncing(now):
+                self.not_best += 1
+                print(f"!! image of frame {index} without a window line naming it")
+            return
+        if self.expect[:3] != (window, index, score):
+            self.not_best += 1
+            print(f"!! image (window {window}, frame {index}, score {score}) is not the best of its "
+                  f"window line (window {self.expect[0]}, frame {self.expect[1]}, score {self.expect[2]})")
+        self.expect = None
 
     def frame_line(self, index, now):
         if self.first_frame is None:
@@ -126,17 +171,39 @@ class Stats:
             f"images {self.images} ({self.images / elapsed:.2f}/s), CRC errors {self.crc_errors}, "
             f"bad frames {self.bad_frames}, seq gaps {self.seq_gaps}, decode failures {self.decode_failures}, "
             f"EOI errors reported by the board {self.eoi_errors}",
-            f"windows {self.windows}, window gaps {self.window_gaps}, windows merged {self.windows_merged}, "
-            f"inference failures {self.inference_failures}",
+            f"windows {self.windows}, window gaps {self.window_gaps}, windows merged {self.windows_merged} "
+            f"(in {self.lines_merged} lines), images not the window's best {self.not_best}, "
+            f"inference failures {self.inference_failures}, resync losses {self.resync_losses}",
             f"board resets seen {self.resets}",
         ]
+        for start, end, f0, f1 in self.pauses:
+            if f0 is not None and f1 is not None and end > start:
+                lines.append(f"paused {end - start:.0f} s: frames {f0}..{f1} across the pause, "
+                             f"{(f1 - f0) / (end - start):.2f} frames/s (approximate)")
+        if self.stacks:
+            lines.append("last stack lines: " + ", ".join(f"{k} {u}/{a}" for k, (u, a) in self.stacks.items()))
         if fps is not None:
             lines.append(f"frame rate {fps:.2f} frames/s over frames {self.first_frame[0]}..{self.last_frame[0]}")
         return "\n".join(lines)
 
 
 def receive(s, st, buf, deadline, next_summary, text, out, args):
+    pause = None
+    if args.pause:
+        pause = (st.t0 + args.pause[0], st.t0 + args.pause[0] + args.pause[1])
     while time.monotonic() < deadline:
+        now = time.monotonic()
+        if pause and pause[0] <= now < pause[1]:
+            f0 = st.last_frame[0] if st.last_frame else None
+            print(f"-- pausing reads for {pause[1] - now:.0f} s (port stays open)", flush=True)
+            time.sleep(pause[1] - now)
+            s.reset_input_buffer()
+            buf.clear()
+            now = time.monotonic()
+            st.resync(now)
+            st.pauses.append([pause[0], None, f0, None])
+            print("-- reading again", flush=True)
+            pause = None
         buf += s.read(8192)
         now = time.monotonic()
         while True:
@@ -154,7 +221,10 @@ def receive(s, st, buf, deadline, next_summary, text, out, args):
                 break
             _, ftype, _, seq, length = HEADER.unpack_from(buf)
             if length > MAX_BODY or length < IMAGE_META.size:
-                st.bad_frames += 1
+                if st.resyncing(now):
+                    st.resync_losses += 1
+                else:
+                    st.bad_frames += 1
                 del buf[:1]
                 continue
             total = HEADER.size + length + 4
@@ -162,11 +232,15 @@ def receive(s, st, buf, deadline, next_summary, text, out, args):
                 break
             body = bytes(buf[HEADER.size:HEADER.size + length])
             (crc,) = struct.unpack_from("<I", buf, HEADER.size + length)
-            del buf[:total]
             if zlib.crc32(body) != crc:
+                del buf[:1]
+                if st.resyncing(now):
+                    st.resync_losses += 1
+                    continue
                 st.crc_errors += 1
                 print(f"!! CRC error in frame seq {seq}")
                 continue
+            del buf[:total]
             if st.last_seq is not None and seq != (st.last_seq + 1) & 0xFFFF:
                 st.seq_gaps += 1
                 print(f"!! seq gap: {st.last_seq} -> {seq}")
@@ -177,6 +251,7 @@ def receive(s, st, buf, deadline, next_summary, text, out, args):
             index, score, window = IMAGE_META.unpack_from(body)
             jpeg = body[IMAGE_META.size:]
             st.images += 1
+            st.image(window, index, score, now)
             path = out / f"w{window:06d}_f{index:07d}_s{seq:05d}.jpg"
             path.write_bytes(jpeg)
             ok = jpeg[:2] == b"\xff\xd8" and jpeg[-2:] == b"\xff\xd9"
@@ -198,6 +273,8 @@ def main():
     ap.add_argument("--duration", type=float, default=60.0)
     ap.add_argument("--out", default="uplink_images")
     ap.add_argument("--quiet", action="store_true", help="do not echo text lines")
+    ap.add_argument("--pause", nargs=2, type=float, metavar=("START", "SECONDS"),
+                    help="stop reading for SECONDS after START seconds, port open")
     mode = ap.add_mutually_exclusive_group()
     mode.add_argument("--park", action="store_true", help="only park the port at B0 (resets the board if it was not parked)")
     mode.add_argument("--unpark", action="store_true", help="only restore 921600 Bd, for the flasher")
@@ -232,9 +309,17 @@ def main():
                 st.eoi_errors += 1
             m = WINDOW_LINE.match(line)
             if m:
-                st.window_line(int(m.group(2)), int(m.group(3)), int(m.group(6)), now)
-            if INFERENCE_FAILED.match(line):
-                st.inference_failures += 1
+                best = None if m.group(4) == b"-" else int(m.group(4))
+                score = None if m.group(5) == b"-" else int(m.group(5))
+                st.window_line(int(m.group(1)), int(m.group(2)), int(m.group(3)), best, score,
+                               int(m.group(6)), int(m.group(7)), now)
+                for pz in st.pauses:
+                    if pz[1] is None:
+                        pz[1] = now
+                        pz[3] = int(m.group(3))
+            m = STACK_LINE.match(line)
+            if m:
+                st.stacks[m.group(1).decode()] = (int(m.group(2)), int(m.group(3)))
             if not args.quiet or BOOT_BANNER in line or line.startswith(EOI_ERROR):
                 print(line.decode("ascii", "replace"))
 
@@ -249,7 +334,7 @@ def main():
     print(st.summary())
     ok = (st.images > 0 and st.crc_errors == 0 and st.bad_frames == 0 and st.seq_gaps == 0
           and st.decode_failures == 0 and st.eoi_errors == 0 and st.resets == 0
-          and st.window_gaps == 0 and st.inference_failures == 0
+          and st.window_gaps == 0 and st.inference_failures == 0 and st.not_best == 0
           and st.first_frame is not None and st.first_frame[0] >= UPLINK_WINDOW)
     if st.first_frame is not None and st.first_frame[0] < UPLINK_WINDOW:
         print("!! the first window seen was window 0: the board started (or restarted) while the receiver was open")
