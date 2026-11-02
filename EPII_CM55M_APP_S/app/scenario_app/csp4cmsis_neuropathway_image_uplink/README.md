@@ -9,7 +9,7 @@ The work follows a staged plan; each stage must pass on the board before the nex
 * **Stage 3, best-of-20:** four JPEG buffers in fixed roles (DMA target, being scored, best of the window, being sent); the uplink returns its buffer when the send is done, and a window whose best cannot be sent yet is merged into the next. Inference writes to `report_chan` only while it holds the free token, i.e. knows that the Reporter has finished sending; the `Window` line and the `Image` go together, and a failed inference is counted in the next `Window` line instead of getting a line of its own. Only the start-up lines and MainApp's stack report can still block on the Reporter. A board-side stall (`-DUPLINK_STALL_MS`) makes merging happen; stopping reads on the PC does not slow the board (there is no flow control) and is a separate check that the board carries on. Until Stage 3 nothing can merge, so every `Window` line says `merged 0`; the check with the uplink stalled is where the count must start to rise. Stack high-water marks are taken at the end of the 10-minute run, not shortly after flashing: the selection logic and the non-blocking poll on `free_chan` run in Inference (592/1024 bytes in Stage 2).
 * **Stage 4, formal model:** the CSP-M model extended with buffer ids as data. The check that Camera and Inference keep cycling while the uplink is stalled must include `report_chan`, not only the buffer tokens: a stalled Reporter blocks every writer of `report_chan`.
 
-**Status (2026-11-02):** Stages 0, 1 and 2 pass on the board (sections 7, 8 and 9); Stage 3 passes on the board (section 10). The default build is the Stage 3 build; `-DUPLINK_STAGE0` builds the Stage 0 test instead. Sections 1-6 describe the network and note what the uplink changes.
+**Status (2026-11-02):** Stages 0, 1 and 2 pass on the board (sections 7, 8 and 9); Stage 3 passes on the board (section 10), and the Stage 4 model holds in ProB (section 6). The default build is the Stage 3 build; `-DUPLINK_STAGE0` builds the Stage 0 test instead. Sections 1-6 describe the network and note what the uplink changes.
 
 The explanations for this code are in the book; the source files deliberately contain no comments.
 
@@ -76,9 +76,11 @@ The console is a shared resource, and `xprintf()` has no locking, so two process
 * **Console output:** one line per window (Stage 2; one per frame before), printed by the Reporter only (before, each result was printed twice, by Inference and by a Console process, and lines from different processes interleaved mid-string).
 
 ### 6. Formal Model
-[`Formal model/`](Formal%20model/) holds a CSP-M model of this network (Camera → Inference → Reporter, one report channel with three writers: Camera, Inference and MainApp), checked with ProB 1.16.1: deadlock and divergence freedom; refinement against a specification of the console's pipeline lines (the camera driver's log, the two `started` lines, then exactly one result line per frame, in frame order) and of its stack lines (complete groups, for ever); and, with Inference stalled, no deadlock and an unchanged stack report. Three positive controls fail as they should: a Reporter that reads per-writer channels in a fixed order (deadlock), an Inference that also prints (specification violated), and the previous design with the stack report in the Reporter (the stack report stops when the pipeline stalls).
+[`Formal model/`](Formal%20model/) holds a CSP-M model of the parent network (Camera → Inference → Reporter, one report channel with three writers: Camera, Inference and MainApp), checked with ProB 1.16.1: deadlock and divergence freedom; refinement against a specification of the console's pipeline lines (the camera driver's log, the two `started` lines, then exactly one result line per frame, in frame order) and of its stack lines (complete groups, for ever); and, with Inference stalled, no deadlock and an unchanged stack report. Three positive controls fail as they should: a Reporter that reads per-writer channels in a fixed order (deadlock), an Inference that also prints (specification violated), and the previous design with the stack report in the Reporter (the stack report stops when the pipeline stalls).
 
-The model covers the network as it was before the uplink. The uplink's changes are not modelled yet: `release_chan` and `free_chan` with the buffer ids, the `Window` and `Image` reports and the free-token rule, and the Stage 0 build (Camera's per-frame reports, the stop after 100 frames, the buffer dump). Stage 4 adds the buffer ids as data.
+That model, `Neuropathway.csp`, covers the network as it was before the uplink.
+
+**Stage 4: the uplink model.** `Uplink.csp` models the Stage 3 network with the four JPEG buffer ids as data: `frame_chan` carries the frame's buffer, `release_chan` the next DMA target, the `Image` report the buffer to send, and `free_chan` (one slot; Inference's PRI ALT with a zero timeout modelled exactly) brings it back. To keep the state space small it uses windows of 2 frames instead of 20, frame indices 0..3 and a merged count that saturates at 2. Checked with ProB 1.16.1, 7 of 7 assertions hold: deadlock and divergence freedom; the four ids always form a permutation across the roles next, pending, best, sending and spare (an observer follows every id through the events), Camera is only handed a spare, only the best is sent, and `free_chan`'s slot never overflows; every `Window` line carries the number of windows merged since the last; with the Reporter stalled for ever after any image, Camera and Inference keep cycling, with `report_chan` and MainApp in the model; and after a stall only the merges go on, one per window. Two positive controls fail as they should: Camera retargeted to the best buffer (the observer finds the best handed out as a DMA target), and Inference writing to `report_chan` without the free token (with the Reporter stalled, Camera stops). Details in [`Formal model/readme.md`](Formal%20model/readme.md). Not modelled: timing, the JPEG contents and the D-cache, and the Stage 0 build.
 
 ### 7. Image Uplink, Stage 0: retargeting the JPEG buffer (gate test)
 The uplink design keeps several JPEG buffers and points WDMA2 at a different one before each capture. Stage 0 checks that the hardware follows before anything is built on it.
@@ -134,6 +136,7 @@ Stage 3 sends the best frame of each window, by person score, and never makes Ca
   * **Releasing after `cv_invoke()` on every frame** (an earlier version, see section 2): PASS, but 19.13 and 19.11 frames/s in two runs, 1.5 % slower.
 * **Stacks at the end of the 10-minute runs:** Camera 784/1536 bytes, Inference 736/1024 (720-760 across the Stage 3 runs: 264 bytes of headroom at worst, against 432 in Stage 2), Reporter 488/1024 (504 in the stall build), CSP_Main 784/1024.
 * **SRAM:** 1077 KB of 1924 KB (56.0 %).
+* **Stage 4 changes to the firmware:** the merged count saturates at `INT16_MAX` (the model found that it would otherwise overflow after 32 767 merged windows, about 9.4 hours of stall), and Inference's stack is 1536 bytes instead of 1024. Checked on the board for 3 minutes: PASS, 174 images, each its window's best, 19.41 frames/s, Inference 736/1536 bytes.
 
 ---
 
@@ -301,21 +304,21 @@ Because camera/inference/reporter all run forever, there's no natural "network f
 ```text
 Window 10: frames 200-219 best 200 score -11 merged 0 failed 0
 Camera: 784/1536 bytes used (752 bytes unused headroom, 188 words HWM)
-Inference: 736/1024 bytes used (288 bytes unused headroom, 72 words HWM)
+Inference: 736/1536 bytes used (800 bytes unused headroom, 200 words HWM)
 Reporter: 488/1024 bytes used (536 bytes unused headroom, 134 words HWM)
 CSP_Main: 784/1024 bytes used (240 bytes unused headroom, 60 words HWM)
 Window 11: frames 220-239 best 227 score -9 merged 0 failed 0
 ```
-(Stage 3 build, image frames between the lines not shown; stack figures from the end of a 10-minute run.)
+(Stage 3 build, image frames between the lines not shown; stack figures from the end of a 10-minute run, with Inference's stack at 1536 bytes since Stage 4.)
 
 | Task | Allocated | Used | Unused Headroom |
 |---|---|---|---|
 | Camera | 1536 bytes | 784 bytes | 752 bytes |
-| Inference | 1024 bytes | 736 bytes | 288 bytes |
+| Inference | 1536 bytes | 736 bytes | 800 bytes |
 | Reporter | 1024 bytes | 488 bytes | 536 bytes |
 | CSP_Main (MainApp) | 1024 bytes | 784 bytes | 240 bytes |
 
-Before the uplink, Camera used 768 bytes (744 before it sent reports), Inference 560, the Reporter 472 and CSP_Main 464; CSP_Main's figure rose with the `CSP_Main: started` print. Before 2.0 Camera had only 1024 bytes (280 bytes of headroom); since CSP4CMSIS 2.0.1 it has 1536 bytes (384 words). Inference and the Reporter have comfortable margins. Inference has blocked in the semaphore wait during `Invoke()` since before the uplink (488 bytes when it spun); the Reporter's figure grows during the first seconds and depends on the run.
+Before the uplink, Camera used 768 bytes (744 before it sent reports), Inference 560, the Reporter 472 and CSP_Main 464; CSP_Main's figure rose with the `CSP_Main: started` print. Before 2.0 Camera had only 1024 bytes (280 bytes of headroom); since CSP4CMSIS 2.0.1 it has 1536 bytes (384 words). Inference has had 1536 bytes (384 words) since Stage 4, after its use rose to 720-760 of 1024 bytes in Stage 3; the Reporter has a comfortable margin. Inference has blocked in the semaphore wait during `Invoke()` since before the uplink (488 bytes when it spun); the Reporter's figure grows during the first seconds and depends on the run.
 
 ## 🚀 How to Run
 ### Prerequisites
@@ -358,7 +361,7 @@ Window 0: frames 0-19 best 4 score -10 merged 0 failed 0
 Window 1: frames 20-39 best 33 score -9 merged 0 failed 0
 ...
 Camera: 784/1536 bytes used (752 bytes unused headroom, 188 words HWM)
-Inference: 736/1024 bytes used (288 bytes unused headroom, 72 words HWM)
+Inference: 736/1536 bytes used (800 bytes unused headroom, 200 words HWM)
 Reporter: 488/1024 bytes used (536 bytes unused headroom, 134 words HWM)
 CSP_Main: 784/1024 bytes used (240 bytes unused headroom, 60 words HWM)
 ...
@@ -381,7 +384,7 @@ app/scenario_app/csp4cmsis_neuropathway_image_uplink/
 ├── common_types.h          // Shared structs (frame_t, release_t, report_t)
 ├── csp4cmsis_spn.cpp       // Network construction & Main task
 ├── cis_sensor/cis_imx219/  // IMX219 driver: frame buffers, cisdp_set_jpeg_buf()
-├── Formal model/           // CSP-M model of the network (default build), positive controls, ProB results
+├── Formal model/           // CSP-M models: the parent network and the uplink (Stage 3), positive controls, ProB results
 ├── uplink.h / uplink.cpp   // CRC32 and the JPEG length rule (shared by Camera's Stage 0 checks and the Reporter)
 ├── tools/uplink_rx.py      // PC receiver: text lines, image frames, frame rate; parks the port (section 8)
 ├── tools/stage0_capture.py // PC side of the Stage 0 test

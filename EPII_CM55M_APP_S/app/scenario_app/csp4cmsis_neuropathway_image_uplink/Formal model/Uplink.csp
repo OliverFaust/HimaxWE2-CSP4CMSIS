@@ -1,0 +1,155 @@
+-- Uplink (csp4cmsis_neuropathway_image_uplink, Stage 3): Camera -> Inference -> Reporter, plus
+-- MainApp, with the four JPEG buffers as tokens. Buffer ids travel with the frames
+-- (frame_chan), back to Camera as the next DMA target (release_chan), to the Reporter with the
+-- Image report (report_chan) and back to Inference when the send is done (free_chan, one slot).
+-- Inference writes to report_chan only while it holds the free token.
+-- Bounded for exhaustive checking: windows of W = 2 frames (20 on the board), frame indices
+-- 0..3 wrapping, the merged count saturating at MAXM.
+
+W         = 2
+MAX_INDEX = 4
+IDS       = {0..3}
+NONE      = 4                                  -- no buffer
+MAXM      = 2
+
+sat(m) = if m > MAXM then MAXM else m
+
+datatype source_t  = camera | inference
+datatype outcome_t = better | worse | failed   -- the frame's score against the window's best
+datatype report_t  = started.source_t | stack | window.{0..MAXM} | image.IDS
+
+TEXT = diff(report_t, {| image |})
+
+channel g_trigger_chan                         -- frame-ready interrupt -> Camera
+channel frame_chan   : {0..MAX_INDEX-1}.IDS    -- Camera -> Inference: frame index, its buffer
+channel release_chan : IDS                     -- Inference -> Camera: raw buffer free, next DMA target
+channel free_in      : IDS                     -- Reporter -> free_chan's slot
+channel free_out     : IDS                     -- free_chan's slot -> Inference (poll, value ready)
+channel poll_empty                             -- free_chan's slot -> Inference (poll, SKIP taken)
+channel report_chan  : report_t                -- Camera, Inference, MainApp -> Reporter
+channel line         : report_t                -- the Reporter's text lines
+channel uplink       : IDS                     -- the Reporter sends the JPEG in this buffer
+channel scored       : outcome_t.IDS           -- Inference has scored the frame in this buffer
+channel merge                                  -- Inference merges a window (uplink busy)
+channel camera_log, stack_tick
+channel overflow, error
+
+ENV = g_trigger_chan -> ENV
+
+RUN(A) = [] x : A @ x -> RUN(A)
+
+-- Camera: the next DMA target is buffer 0 at start, then whatever Inference releases.
+Camera = camera_log -> report_chan!started.camera -> CameraLoop(0, 0)
+CameraLoop(i, b) = g_trigger_chan -> frame_chan!i!b -> release_chan?nb -> CameraLoop((i + 1) % MAX_INDEX, nb)
+
+-- Inference: sp = spare buffers, best = the window's best (NONE if none yet), tok = holds the
+-- free token, m = windows merged since the last Window line. Per frame: poll free_chan, rescale
+-- and release a spare as the next DMA target, score, and on a window's last frame either report
+-- (token held) or merge.
+Inference = frame_chan?i?p -> report_chan!started.inference -> Infer(i, p, diff(IDS, {p}), NONE, true, 0)
+
+Infer(i, p, sp, best, tok, m) =
+    (free_out?b -> Release(i, p, union(sp, {b}), best, true, m))
+    [] (poll_empty -> Release(i, p, sp, best, tok, m))
+
+Release(i, p, sp, best, tok, m) = |~| s : sp @ release_chan!s -> Score(i, p, diff(sp, {s}), best, tok, m)
+
+Score(i, p, sp, best, tok, m) =
+    if best == NONE then
+        (scored!failed!p -> End(i, union(sp, {p}), best, tok, m))
+        |~| (scored!better!p -> End(i, sp, p, tok, m))
+    else
+        (scored!failed!p -> End(i, union(sp, {p}), best, tok, m))
+        |~| (scored!better!p -> End(i, union(sp, {best}), p, tok, m))
+        |~| (scored!worse!p -> End(i, union(sp, {p}), best, tok, m))
+
+End(i, sp, best, tok, m) =
+    if i % W == W - 1 then
+        if tok then
+            report_chan!window.m ->
+                (if best != NONE then report_chan!image.best -> Next(sp, NONE, false, 0)
+                 else Next(sp, NONE, true, 0))
+        else
+            merge -> Next(sp, best, false, sat(m + 1))
+    else
+        Next(sp, best, tok, m)
+
+Next(sp, best, tok, m) = frame_chan?j?p -> Infer(j, p, sp, best, tok, m)
+
+-- free_chan: a one-slot buffered channel. Inference's PRI ALT with SKIP sees either the value
+-- (free_out) or an empty slot (poll_empty), never both. A second write to a full slot would
+-- block the Reporter; overflow marks it.
+FREE = (free_in?b -> FREE_FULL(b)) [] (poll_empty -> FREE)
+FREE_FULL(b) = (free_out!b -> FREE) [] (free_in?x -> overflow -> STOP)
+
+-- MainApp: one stack report per timer tick, over its own writer end.
+MainApp = stack_tick -> report_chan!stack -> MainApp
+
+-- Reporter: a text line per text report; for an Image, send the JPEG and return the buffer.
+Reporter = (report_chan?r:TEXT -> line!r -> Reporter)
+           [] (report_chan.image?b -> uplink!b -> free_in!b -> Reporter)
+
+WRITERS(Rep) = ((Camera [| {| frame_chan, release_chan |} |] Inference) ||| MainApp)
+NETWORK(Rep) = (WRITERS(Rep) [| {| report_chan |} |] Rep) [| {| free_in, free_out, poll_empty |} |] FREE
+SYSTEM       = ENV [| {| g_trigger_chan |} |] NETWORK(Reporter)
+
+assert SYSTEM :[deadlock free [F]]
+assert SYSTEM :[divergence free]
+
+-- Buffer roles: an observer that follows each id through the events, from the role it must be
+-- in to the next one: next (Camera's DMA target), pending (being scored), best, sending (from the
+-- Image report until Inference has read it back; slot = in free_chan), and spare. It starts with
+-- 0 as next and 1..3 spare and moves exactly one id per event, so as long as no event finds an id
+-- in the wrong role (error), the four ids are always a permutation across the roles.
+OBS(cam, pend, best, sp, send, slot) =
+    (frame_chan?i?b -> (if b == cam then OBS(NONE, b, best, sp, send, slot) else error -> STOP))
+ [] (release_chan?b -> (if cam == NONE and pend != NONE and member(b, sp)
+                        then OBS(b, pend, best, diff(sp, {b}), send, slot) else error -> STOP))
+ [] (scored?o?b -> (if b != pend then error -> STOP
+                    else if o == better
+                    then OBS(cam, NONE, b, if best == NONE then sp else union(sp, {best}), send, slot)
+                    else OBS(cam, NONE, best, union(sp, {b}), send, slot)))
+ [] (report_chan.image?b -> (if b == best and send == NONE and slot == NONE
+                             then OBS(cam, pend, NONE, sp, b, slot) else error -> STOP))
+ [] (free_in?b -> (if b == send then OBS(cam, pend, best, sp, NONE, b) else error -> STOP))
+ [] (free_out?b -> (if b == slot then OBS(cam, pend, best, union(sp, {b}), send, NONE) else error -> STOP))
+
+ROLE_EVENTS = {| frame_chan, release_chan, scored, report_chan.image, free_in, free_out |}
+SYSTEM_OBS  = SYSTEM [| ROLE_EVENTS |] OBS(0, NONE, NONE, {1, 2, 3}, NONE, NONE)
+
+assert RUN(diff(Events, {error, overflow})) [T= SYSTEM_OBS
+
+-- The merged count: every Window line carries the number of windows merged since the previous
+-- line (saturating at MAXM). Nothing forces the Reporter to finish soon, so merges happen.
+MCOUNT(k) = (merge -> MCOUNT(sat(k + 1))) [] (report_chan.window!k -> MCOUNT(0))
+
+assert MCOUNT(0) [T= SYSTEM \ diff(Events, {| merge, report_chan.window |})
+
+-- Uplink stalled: after any image the Reporter may stop for ever, without returning the buffer
+-- and without reading report_chan again (MainApp's stack report then blocks too). Camera and
+-- Inference must keep cycling: the frame-ready trigger is never refused. Camera takes a trigger
+-- only after it has passed the previous frame on and Inference has released a buffer, and
+-- Inference releases only between frames it has finished, including any write to report_chan.
+ReporterStall = (report_chan?r:TEXT -> line!r -> ReporterStall)
+                [] (report_chan.image?b -> uplink!b -> ((free_in!b -> ReporterStall) |~| STOP))
+SYSTEM_STALL  = ENV [| {| g_trigger_chan |} |] NETWORK(ReporterStall)
+
+CYCLE = g_trigger_chan -> CYCLE
+
+assert SYSTEM_STALL :[deadlock free [F]]
+assert CYCLE [F= SYSTEM_STALL \ diff(Events, {g_trigger_chan})
+
+-- Uplink stalled after the first image, MainApp left out (it only blocks): from then on only
+-- the merges go on, one per window, for ever; no Window line, no Image.
+ReporterStop = (report_chan?r:TEXT -> line!r -> ReporterStop)
+               [] (report_chan.image?b -> uplink!b -> STOP)
+NETWORK_STOP = ((Camera [| {| frame_chan, release_chan |} |] Inference) [| {| report_chan |} |] ReporterStop)
+               [| {| free_in, free_out, poll_empty |} |] FREE
+SYSTEM_STOP  = ENV [| {| g_trigger_chan |} |] NETWORK_STOP
+
+STALL_VIEW = {| report_chan.window, report_chan.image, uplink, merge |}
+PRE        = |~| k : {0..MAXM} @ report_chan.window!k ->
+                 (PRE |~| (|~| b : IDS @ report_chan.image!b -> ((uplink!b -> STOP) ||| MERGING)))
+MERGING    = merge -> MERGING
+
+assert PRE [FD= SYSTEM_STOP \ diff(Events, STALL_VIEW)
