@@ -9,6 +9,7 @@
 /* FreeRTOS kernel includes. */
 #include "FreeRTOS.h"
 #include "task.h"
+#include "xprintf.h"
 #include "queue.h"
 #include "timers.h"
 #endif
@@ -64,18 +65,18 @@ void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer,
 
 
 void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
-	/* Silence warning about unused parameters. */
 	(void) xTask;
-
-	/* Force an assert. */
-	configASSERT(pcTaskName == 0);
+	taskDISABLE_INTERRUPTS();
+	xprintf("\r\nFATAL: stack overflow in task %s\r\n", pcTaskName);
+	for (;;) {
+	}
 }
 
 /*-----------------------------------------------------------*/
 
 void vAssertCalled(const char *file, int line) {
 	taskDISABLE_INTERRUPTS();
-	printf("\r\nconfigASSERT failed: %s:%d\r\n", file, line);
+	xprintf("\r\nconfigASSERT failed: %s:%d\r\n", file, line);
 	for (;;) {
 	}
 }

@@ -99,13 +99,9 @@ void pinmux_init();
 
 void vApplicationMallocFailedHook(void)
 {
-    /* pvPortMalloc() has just failed. Avoid calling printf() here --
-     * depending on the C library and toolchain, printf() can itself
-     * trigger a heap allocation (see Section 3.6.1), which is the last
-     * thing you want to do inside a hook that exists because the heap
-     * is already exhausted. Halt in a way that's easy to catch with a
-     * debugger instead. */
     taskDISABLE_INTERRUPTS();
+    xprintf("\r\nFATAL: pvPortMalloc() failed in task %s\r\n",
+            (xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED) ? "(scheduler not started)" : pcTaskGetName(NULL));
     for (;;) {
         ;
     }

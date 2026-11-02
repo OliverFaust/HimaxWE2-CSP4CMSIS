@@ -37,6 +37,7 @@ static report_t stackReport(const char* name, uint32_t allocated_bytes, uint32_t
 void MainApp_Task(void* params)
 {
     (void)params;
+    xprintf("CSP_Main: started\r\n");
     SleepFor(Milliseconds(500));
 
     static Channel<frame_t>  frame_chan;
