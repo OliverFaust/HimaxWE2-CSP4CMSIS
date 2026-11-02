@@ -196,12 +196,12 @@ int cv_init(bool security_enable, bool privilege_enable)
 	return ercode;
 }
 
-int cv_run(int8_t* person_score_out, int8_t* no_person_score_out) {
-
-	//give image to input tensor
+void cv_prepare(void) {
 	img_rescale((uint8_t*)app_get_raw_addr(), app_get_raw_width(), app_get_raw_height(), INPUT_SIZE_X, INPUT_SIZE_Y,
 			input->data.int8, SC(app_get_raw_width(), INPUT_SIZE_X), SC(app_get_raw_height(), INPUT_SIZE_Y));
+}
 
+int cv_invoke(int8_t* person_score_out, int8_t* no_person_score_out) {
 	TfLiteStatus invoke_status = int_ptr->Invoke();
 
 	if(invoke_status != kTfLiteOk)
