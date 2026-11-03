@@ -66,7 +66,9 @@ DRAIN_BUDGET_S = 0.04
 CONSOLE_LINES = 5000
 STRIP = 10
 KEEP_IMAGES = 200
-PLOT_S = 300
+PLOT_S = 60
+FRAME_HISTORY = 4000
+DEFAULT_FPS = 8.26
 PLOT_EVERY_S = 0.5
 STATS_EVERY_S = 1.0
 SPEEDS = ("1", "2", "5", "10", "20", "50")
@@ -76,9 +78,10 @@ CONNECTED = "-- connected to"
 IMAGE_W, IMAGE_H = 640, 480
 LINE_LENGTH_PCK = 3448
 PIXEL_RATE = 182.4e6
-DEFAULTS = {"again": 0x40, "dgain": 0x200, "exposure": 0xA40, "framelen": 0xAA8, "window": 20}
-SLIDERS = (("again", 0, 232), ("dgain", 0x100, 0xFFF), ("exposure", 1, 0xAA8 - 4),
-           ("framelen", 2464 + 32, 8000), ("window", 2, 20))
+DEFAULTS = {"again": 0xB4, "dgain": 0xDDF, "exposure": 0x11CC, "framelen": 0x1908, "window": 8,
+            "threshold": 0, "k": 1}
+SLIDERS = (("again", 0, 232), ("dgain", 0x100, 0xFFF), ("exposure", 1, 0x1908 - 4),
+           ("framelen", 2464 + 32, 8000), ("window", 2, 20), ("k", 1, 20))
 PREVIEW_WINDOW = 4
 CFG_DEFINES = (("exposure", "IMX219_EXPOSURE_SETTING"), ("again", "IMX219_AGAIN_SETTING"),
                ("dgain", "IMX219_DGAIN_SETTING"), ("framelen", "IMX219_FRAMELEN_SETTING"))
@@ -133,6 +136,8 @@ def setting_note(name, v):
         return f"applied {v} lines ({v * LINE_LENGTH_PCK / PIXEL_RATE * 1e3:.1f} ms)"
     if name == "framelen":
         return f"applied {v} lines ({PIXEL_RATE / (LINE_LENGTH_PCK * v):.2f} frames/s)"
+    if name == "k":
+        return f"applied {v} frame(s) >= T per window"
     return f"applied {v} frames"
 
 
@@ -156,6 +161,8 @@ def snapshot(st):
         "not_best": st.not_best, "resets": st.resets, "bad_frames": st.bad_frames,
         "resync_losses": st.resync_losses, "windows": st.windows, "lines": st.text_lines,
         "stacks": dict(st.stacks), "first_frame": st.first_frame, "last_frame": st.last_frame,
+        "sent": st.windows_sent, "suppressed": st.suppressed, "above": st.frames_above, "scored": st.scored,
+        "score_gaps": st.score_gaps, "max_batch": st.max_batch, "scores_lost": st.scores_lost,
     }
 
 
@@ -170,7 +177,8 @@ class Source(threading.Thread):
         session.on_window = lambda w, now: self.put("window", w, now - session.st.t0)
         session.on_image = lambda path, window, index, score, seq, jpeg, ok, now: self.put(
             "image", {"path": path, "window": window, "frame": index, "score": score, "seq": seq,
-                      "jpeg": jpeg, "ok": ok})
+                      "jpeg": jpeg, "ok": ok, "t": now - session.st.t0})
+        session.on_scores = lambda first, pairs, now: self.put("scores", first, pairs, now - session.st.t0)
         self.last_stats = 0.0
 
     def put(self, kind, *payload):
@@ -343,6 +351,11 @@ class App:
         self.slider_notes = {}
         self.dragging = set()
         self.yhist = []
+        self.frame_pts = collections.deque(maxlen=FRAME_HISTORY)
+        self.frame_t = {}
+        self.sent_frames = collections.deque(maxlen=200)
+        self.hide_scores = tk.BooleanVar(value=True)
+        self.last_caption = 0.0
         self.lines = []
         self.windows = {}
         self.images = collections.deque(maxlen=KEEP_IMAGES)
@@ -399,8 +412,10 @@ class App:
         ttk.Checkbutton(bar, text="Record", variable=self.record,
                         state="normal" if live else "disabled").pack(side=tk.LEFT, padx=(px(4), px(10)))
         ttk.Label(bar, text="Threshold").pack(side=tk.LEFT)
-        ttk.Scale(bar, from_=0, to=100, variable=self.threshold, length=px(150),
-                  command=lambda v: self.threshold.set(round(float(v) * 2) / 2)).pack(side=tk.LEFT, padx=px(2))
+        thr_scale = ttk.Scale(bar, from_=0, to=100, variable=self.threshold, length=px(150),
+                              command=lambda v: self.threshold.set(round(float(v) * 2) / 2))
+        thr_scale.pack(side=tk.LEFT, padx=px(2))
+        thr_scale.bind("<ButtonRelease-1>", lambda e: self.send_threshold())
         self.threshold_label = ttk.Label(bar, width=16)
         self.threshold_label.pack(side=tk.LEFT, padx=(px(2), px(10)))
         ttk.Label(bar, text="Speed").pack(side=tk.LEFT)
@@ -476,6 +491,8 @@ class App:
         ttk.Button(cbar, text="Clear", command=self.console_clear).pack(side=tk.LEFT)
         ttk.Checkbutton(cbar, text="Hide Window lines", variable=self.hide_windows,
                         command=self.console_rebuild).pack(side=tk.LEFT, padx=px(8))
+        ttk.Checkbutton(cbar, text="Hide Scores lines", variable=self.hide_scores,
+                        command=self.console_rebuild).pack(side=tk.LEFT, padx=px(8))
         cbody = ttk.Frame(bottom)
         cbody.pack(fill=tk.BOTH, expand=True)
         self.text = tk.Text(cbody, font="TkFixedFont", wrap=tk.NONE, height=6, width=40, state=tk.DISABLED)
@@ -549,6 +566,10 @@ class App:
         if self.send_command(f"set {name} {v}"):
             self.tune_status.configure(text=f"sent set {name} {v}", foreground="#555")
 
+    def send_threshold(self):
+        if self.send_command(f"set threshold {self.score_min()}"):
+            self.tune_status.configure(text=f"sent set threshold {self.score_min()}", foreground="#555")
+
     def toggle_preview(self):
         w = self.applied["window"]
         self.send_command(f"set window {UPLINK_WINDOW if w == PREVIEW_WINDOW else PREVIEW_WINDOW}")
@@ -574,6 +595,8 @@ class App:
             self.slider_widgets["exposure"].configure(to=v - 4)
         if name == "exposure":
             self.slider_widgets["framelen"].configure(from_=max(SLIDERS[3][1], v + 4))
+        if name == "threshold":
+            self.threshold.set(round(probability(v) * 200) / 2)
         if name == "window":
             self.preview_button.configure(
                 text=f"Normal (window {UPLINK_WINDOW})" if v == PREVIEW_WINDOW else f"Preview (window {PREVIEW_WINDOW})")
@@ -732,6 +755,8 @@ class App:
             elif kind == "image":
                 self.image_added(ev[2])
                 new_image = True
+            elif kind == "scores":
+                self.scores_added(ev[2], ev[3], ev[4])
             elif kind == "stats":
                 self.snap = ev[2]
                 changed = True
@@ -747,7 +772,26 @@ class App:
             self.render_stats()
         if self.plot_dirty and time.monotonic() - self.last_plot >= PLOT_EVERY_S:
             self.render_plot()
+        if time.monotonic() - self.last_caption >= 1.0 and self.shown is not None:
+            self.last_caption = time.monotonic()
+            self.update_caption(self.shown)
         self.root.after(DRAIN_MS, self.drain)
+
+    def frame_period(self):
+        fps = self.snap["fps"] if self.snap and self.snap["fps"] else DEFAULT_FPS
+        return 1.0 / fps
+
+    def scores_added(self, first, pairs, t):
+        period = self.frame_period()
+        n = len(pairs)
+        for k, (person, _) in enumerate(pairs):
+            tk_ = t - (n - 1 - k) * period
+            frame = first + k
+            self.frame_pts.append((tk_, frame, probability(person) * 100))
+            self.frame_t[frame] = (tk_, probability(person) * 100)
+        while len(self.frame_t) > FRAME_HISTORY:
+            del self.frame_t[next(iter(self.frame_t))]
+        self.plot_dirty = True
 
     def score_min(self):
         return math.ceil(score_at(self.threshold.get() / 100) - 1e-9)
@@ -761,6 +805,8 @@ class App:
             for k in sorted(self.windows)[:KEEP_IMAGES]:
                 del self.windows[k]
         self.lines.append((t, w.score))
+        if w.sent:
+            self.sent_frames.append(w.best)
         if w.y is not None:
             self.yhist.append((t, w.y, w.clip))
         self.last_window = w
@@ -800,7 +846,7 @@ class App:
         if rec is None:
             self.image_label.configure(image=self.blank)
             self.image_box.configure(bg=GREY)
-            self.caption.configure(text="no image yet" if not self.images else "no image at or above the threshold")
+            self.caption.configure(text="no detection yet" if not self.images else "no image at or above the threshold")
             return
         if rec is self.shown and not force:
             self.update_caption(rec)
@@ -819,9 +865,11 @@ class App:
     def update_caption(self, rec):
         p = probability(rec["score"]) * 100
         self.image_box.configure(bg=GREEN if self.above(rec["score"]) else GREY)
-        extra = "" if rec["merged"] is None else f"  merged {rec['merged']}  failed {rec['failed']}"
-        self.caption.configure(text=f"window {rec['window']}  frame {rec['frame']}  score {rec['score']}  "
-                                    f"p {p:.1f} %{extra}" + ("" if self.follow.get() else "   (selected)"))
+        age = max(0.0, self.session.st.elapsed() - rec.get("t", 0.0))
+        age_text = f"{age:.0f} s ago" if age < 120 else f"{age / 60:.0f} min ago"
+        self.caption.configure(text=f"detection: window {rec['window']}  frame {rec['frame']}  p {p:.1f} % "
+                                    f"(score {rec['score']})  {age_text}"
+                                    + ("" if self.follow.get() else "   (selected)"))
 
     def thumb_photo(self, rec):
         key = rec["n"]
@@ -887,17 +935,18 @@ class App:
             fps = "-" if s["fps"] is None else f"{s['fps']:.2f}"
             el = s["elapsed"]
             out += [
-                f"Link        elapsed {int(el) // 60}:{int(el) % 60:02d}   frames/s {fps}   images {s['images']}",
+                f"Link        elapsed {int(el) // 60}:{int(el) % 60:02d}   frames/s {fps}   detections {s['images']}",
                 f"  errors    CRC {s['crc']}   seq gaps {s['seq_gaps']}   EOI {s['eoi']}   "
-                f"window gaps {s['window_gaps']}   decode {s['decode']}",
-                f"  windows   {s['windows']}   merged {s['merged']}   failed inferences {s['failed']}",
-                f"  checks    images not the window's best {s['not_best']}   board resets {s['resets']}",
+                f"window gaps {s['window_gaps']}   decode {s['decode']}   resets {s['resets']}",
+                f"Windows     {s['windows']}   sent {s['sent']}   suppressed {s['suppressed']}   "
+                f"merged {s['merged']}   frames >= T {s['above']}   failed {s['failed']}",
+                f"Scores      {s['scored']} frames   gaps {s['score_gaps']}   max batch {s['max_batch']}   "
+                f"lost on board {s['scores_lost']}   not best {s['not_best']}",
             ]
-        n, hits, run, longest = self.detection()
-        pct = f"{100 * hits / n:.1f} %" if n else "-"
         out += [
-            f"Detection   threshold {self.threshold.get():.1f} % (score >= {self.score_min()})",
-            f"  at or above  {hits} of {n} windows ({pct})   current run {run}   longest run {longest}",
+            f"Threshold   {self.threshold.get():.1f} % (score >= {self.score_min()})   k "
+            f"{self.applied.get('k') if self.applied.get('k') is not None else '-'}   window "
+            f"{self.applied.get('window') if self.applied.get('window') is not None else '-'}",
             "Stacks      " + stack_text(s["stacks"] if s else {}),
             f"GUI lag     last {1000 * self.lag_last:.0f} ms   max {1000 * self.lag_max:.0f} ms",
         ]
@@ -909,18 +958,20 @@ class App:
         thr = self.threshold.get()
         ax = self.ax_t
         ax.clear()
-        if self.lines:
-            t_now = self.lines[-1][0]
-            i = bisect.bisect_left([t for t, _ in self.lines], t_now - PLOT_S)
-            pts = [(t, probability(s) * 100) for t, s in self.lines[i:] if s is not None]
-            if pts:
-                xs, ys = zip(*pts)
-                ax.plot(xs, ys, color="#1f5fa8", linewidth=1)
-                ax.scatter(xs, ys, s=6, c=[GREEN if y >= thr else GREY for y in ys], zorder=3)
-            ax.set_xlim(max(0, t_now - PLOT_S), max(t_now, 10))
+        t_now = self.frame_pts[-1][0] if self.frame_pts else 0.0
+        if self.frame_pts:
+            pts = [(t, pr) for t, _, pr in self.frame_pts if t >= t_now - PLOT_S]
+            xs, ys = zip(*pts)
+            ax.plot(xs, ys, color="#1f5fa8", linewidth=1)
+            ax.fill_between(xs, thr, ys, where=[y >= thr for y in ys], color=GREEN, alpha=0.25, linewidth=0)
+            sent = [self.frame_t[f] for f in self.sent_frames if f in self.frame_t and self.frame_t[f][0] >= t_now - PLOT_S]
+            if sent:
+                sx, sy = zip(*sent)
+                ax.scatter(sx, sy, s=40, marker="*", color="#e08a1e", zorder=3, label="sent")
+        ax.set_xlim(max(0, t_now - PLOT_S), max(t_now, 10))
         ax.axhline(thr, color="#c62828", linewidth=1, linestyle="--")
         ax.set_ylim(0, 100)
-        ax.set_title("window-best person probability, last 5 min", fontsize=9)
+        ax.set_title("person probability per frame, last 60 s (stars: sent)", fontsize=9)
         ax.set_xlabel("time (s)", fontsize=8)
         ax.set_ylabel("%", fontsize=8)
         ax.tick_params(labelsize=7)
@@ -928,18 +979,18 @@ class App:
         ax = self.ax_f
         ax.clear()
         w = self.last_window
-        if w is not None and w.p is not None:
-            probs = [probability(v) * 100 for v in w.p]
-            k = None if w.best is None else w.best - w.first
-            colours = ["#e08a1e" if j == k else "#7aa6d6" for j in range(len(probs))]
-            ax.bar(range(len(probs)), probs, color=colours)
-            ax.set_title(f"window {w.window}: frame probabilities (selected: frame {w.best})", fontsize=9)
+        if w is not None and w.first in self.frame_t:
+            frames = list(range(w.first, w.last + 1))
+            probs = [self.frame_t[f][1] if f in self.frame_t else 0 for f in frames]
+            colours = ["#e08a1e" if f == w.best else "#7aa6d6" for f in frames]
+            ax.bar(range(len(frames)), probs, color=colours)
+            state = "" if w.sent is None else (" sent" if w.sent else " suppressed")
+            ax.set_title(f"window {w.window}: frames {w.first}-{w.last}, best {w.best}{state}", fontsize=9)
+            ax.set_xlim(-0.6, max(len(frames), 2) - 0.4)
         else:
-            ax.set_title("frame probabilities (score-log build only)", fontsize=9)
+            ax.set_title("frame probabilities of the latest window", fontsize=9)
         ax.axhline(thr, color="#c62828", linewidth=1, linestyle="--")
         ax.set_ylim(0, 100)
-        ax.set_xlim(-0.6, UPLINK_WINDOW - 0.4)
-        ax.set_xticks(range(0, UPLINK_WINDOW, 2))
         ax.tick_params(labelsize=7)
         ax, axc = self.ax_y, self.ax_c
         ax.clear()
@@ -962,11 +1013,14 @@ class App:
         ax.grid(alpha=0.3)
         self.canvas.draw_idle()
 
+    def hidden(self, text):
+        return ((text.startswith("Window ") and self.hide_windows.get())
+                or (text.startswith("Scores ") and self.hide_scores.get()))
+
     def console_add(self, text):
         err = any(m in text for m in ERROR_MARKS)
-        win = text.startswith("Window ")
-        self.console.append((text, err, win))
-        if not self.paused.get() and not (win and self.hide_windows.get()):
+        self.console.append((text, err, False))
+        if not self.paused.get() and not self.hidden(text):
             self.console_insert(text, err)
 
     def console_insert(self, text, err):
@@ -989,9 +1043,8 @@ class App:
         t.configure(state=tk.NORMAL)
         t.delete("1.0", tk.END)
         self.console_count = 0
-        hide = self.hide_windows.get()
-        for text, err, win in self.console:
-            if not (win and hide):
+        for text, err, _ in self.console:
+            if not self.hidden(text):
                 t.insert(tk.END, text + "\n", ("err",) if err else ())
                 self.console_count += 1
         t.configure(state=tk.DISABLED)
@@ -1003,10 +1056,9 @@ class App:
 
     def report(self):
         st = self.stats
-        n, hits, run, longest = self.detection()
         print(st.summary())
-        print(f"detection: threshold {self.threshold.get():.1f} % (score >= {self.score_min()}): "
-              f"{hits} of {n} window lines at or above, longest run {longest}")
+        print(f"threshold {self.threshold.get():.1f} % (score >= {self.score_min()}); "
+              f"plotted frames {len(self.frame_pts)}, sent frames marked {len(self.sent_frames)}")
         mins = " ".join(f"{1000 * self.lag_minute[m]:.0f}" for m in sorted(self.lag_minute))
         print(f"GUI lag: max {1000 * self.lag_max:.0f} ms; max per minute (ms): {mins}")
         print("applied settings: " + ", ".join(f"{k}={v}" for k, v in self.applied.items()))
