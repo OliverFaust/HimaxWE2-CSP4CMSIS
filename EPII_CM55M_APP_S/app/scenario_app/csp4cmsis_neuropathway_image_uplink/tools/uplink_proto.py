@@ -33,11 +33,15 @@ MAX_BODY = 1 << 17
 WINDOW_LINE = re.compile(rb"^Window (\d+): frames (\d+)-(\d+) best (\d+|-) score (-?\d+|-) merged (\d+) failed (\d+)")
 SCORES = re.compile(rb" p((?: -?\d+){2,20}) n((?: -?\d+){2,20})\s*$")
 WINDOW_Y = re.compile(rb" y (\d+\.\d) clip (\d+\.\d\d)")
-APPLIED_LINE = re.compile(r"^(Camera|Inference): (\w+)=(\d+) applied at frame (\d+)")
+WINDOW_FILTER = re.compile(rb" above (\d+) sent ([01]) suppressed (\d+) lost (\d+)")
+SCORES_LINE = re.compile(rb"^Scores (\d+) (\d+):((?: -?\d+/-?\d+)*)\s*$")
+MODEL_LINE = re.compile(r"^Inference: output tensor type (\d+) scale (\S+) zero point (-?\d+)")
+APPLIED_LINE = re.compile(r"^(Camera|Inference): (\w+)=(-?\d+) applied at frame (\d+)")
 APPLY_FAILED_LINE = re.compile(r"^(Camera|Inference): (\w+) write FAILED at frame (\d+), still (\d+)")
-SETTINGS_LINE = re.compile(r"^Camera: again=(\d+) dgain=(\d+) exposure=(\d+) framelen=(\d+) window=(\d+)")
+SETTINGS_LINE = re.compile(r"^Camera: again=(\d+) dgain=(\d+) exposure=(\d+) framelen=(\d+) window=(\d+)"
+                           r"(?: threshold=(-?\d+) k=(\d+))?")
 COMMAND_LINE = re.compile(r"^Command: (.*)")
-SETTING_NAMES = ("again", "dgain", "exposure", "framelen", "window")
+SETTING_NAMES = ("again", "dgain", "exposure", "framelen", "window", "threshold", "k")
 STACK_LINE = re.compile(rb"^(\w+): (\d+)/(\d+) bytes used")
 IMAGE_LOG = re.compile(r"^\[image seq (\d+) window (\d+) frame (\d+) score (-?\d+) (\d+) bytes -> (\S+)\]$")
 RESYNC_S = 2.0
@@ -49,7 +53,8 @@ RX_PREFIX = "# "
 SCORE_SCALE = 1 / 256
 SCORE_ZERO_POINT = -128
 
-Window = namedtuple("Window", "window first last best score merged failed p n y clip", defaults=(None, None))
+Window = namedtuple("Window", "window first last best score merged failed p n y clip above sent suppressed lost",
+                    defaults=(None,) * 6)
 
 
 def probability(score):
@@ -115,9 +120,21 @@ def parse_window(line):
     p = [int(v) for v in sc.group(1).split()] if sc else None
     n = [int(v) for v in sc.group(2).split()] if sc else None
     yc = WINDOW_Y.search(line)
+    fl = WINDOW_FILTER.search(line)
     return Window(int(m.group(1)), int(m.group(2)), int(m.group(3)), best, score,
                   int(m.group(6)), int(m.group(7)), p, n,
-                  float(yc.group(1)) if yc else None, float(yc.group(2)) if yc else None)
+                  float(yc.group(1)) if yc else None, float(yc.group(2)) if yc else None,
+                  *([int(v) for v in fl.groups()] if fl else [None] * 4))
+
+
+def parse_scores(line):
+    m = SCORES_LINE.match(line)
+    if not m:
+        return None
+    pairs = [tuple(int(v) for v in t.split(b"/")) for t in m.group(3).split()]
+    if len(pairs) != int(m.group(2)):
+        return None
+    return int(m.group(1)), pairs
 
 
 def parse_applied(text):
@@ -132,7 +149,7 @@ def parse_applied(text):
 
 def parse_settings(text):
     m = SETTINGS_LINE.match(text)
-    return dict(zip(SETTING_NAMES, map(int, m.groups()))) if m else None
+    return {k: int(v) for k, v in zip(SETTING_NAMES, m.groups()) if v is not None} if m else None
 
 
 def window_text(w):
@@ -141,6 +158,8 @@ def window_text(w):
     s += f" merged {w.merged} failed {w.failed}"
     if w.y is not None:
         s += f" y {w.y:.1f} clip {w.clip:.2f}"
+    if w.sent is not None:
+        s += f" above {w.above} sent {w.sent} suppressed {w.suppressed} lost {w.lost}"
     if w.p is not None:
         s += " p " + " ".join(map(str, w.p)) + " n " + " ".join(map(str, w.n))
     return s
@@ -233,6 +252,15 @@ class Stats:
         self.resync_until = self.t0 + RESYNC_S
         self.resync_losses = 0
         self.pauses = []
+        self.scored = 0
+        self.score_gaps = 0
+        self.score_lines = 0
+        self.max_batch = 0
+        self.next_score = None
+        self.scores_lost = 0
+        self.windows_sent = 0
+        self.suppressed = 0
+        self.frames_above = 0
 
     def resyncing(self, now):
         return now < self.resync_until
@@ -240,7 +268,17 @@ class Stats:
     def resync(self, now):
         self.last_window_end = None
         self.expect = None
+        self.next_score = None
         self.resync_until = now + RESYNC_S
+
+    def scores(self, first, pairs, now):
+        self.score_lines += 1
+        self.scored += len(pairs)
+        self.max_batch = max(self.max_batch, len(pairs))
+        if self.next_score is not None and first != self.next_score:
+            self.score_gaps += 1
+            self.say(f"!! score gap: expected frame {self.next_score}, line starts at {first}")
+        self.next_score = first + len(pairs)
 
     def window_line(self, w, now):
         self.windows += w.merged + 1
@@ -254,7 +292,16 @@ class Stats:
             self.not_best += 1
             self.say(f"!! no image for the window line ending at frame {self.expect[3]}")
         self.last_window_end = w.last
-        self.expect = None if w.best is None else (w.window, w.best, w.score, w.last)
+        if w.sent is not None:
+            self.windows_sent += w.sent
+            self.suppressed = w.suppressed
+            self.frames_above += w.above
+            if w.lost != self.scores_lost:
+                if w.lost > self.scores_lost:
+                    self.say(f"!! {w.lost - self.scores_lost} scores lost on the board (batch full)")
+                self.scores_lost = w.lost
+        image_due = w.best is not None and (w.sent is None or w.sent == 1)
+        self.expect = (w.window, w.best, w.score, w.last) if image_due else None
         self.frame_line(w.last, now)
 
     def image(self, window, index, score, now):
@@ -295,6 +342,10 @@ class Stats:
             f"inference failures {self.inference_failures}, resync losses {self.resync_losses}",
             f"board resets seen {self.resets}",
         ]
+        if self.score_lines:
+            lines.append(f"scores: {self.scored} frames in {self.score_lines} lines, gaps {self.score_gaps}, "
+                         f"max batch {self.max_batch}, lost on the board {self.scores_lost}; windows sent "
+                         f"{self.windows_sent}, suppressed {self.suppressed}, frames >= T {self.frames_above}")
         for start, end, f0, f1 in self.pauses:
             if f0 is not None and f1 is not None and end > start:
                 lines.append(f"paused {end - start:.0f} s: frames {f0}..{f1} across the pause, "
@@ -306,9 +357,10 @@ class Stats:
         return "\n".join(lines)
 
     def passed(self):
-        return (self.images > 0 and self.crc_errors == 0 and self.bad_frames == 0 and self.seq_gaps == 0
+        return ((self.images > 0 or self.windows_sent == 0 and self.score_lines > 0) and self.crc_errors == 0 and self.bad_frames == 0 and self.seq_gaps == 0
                 and self.decode_failures == 0 and self.eoi_errors == 0 and self.resets == 0
                 and self.window_gaps == 0 and self.inference_failures == 0 and self.not_best == 0
+                and self.score_gaps == 0 and self.scores_lost == 0
                 and self.first_frame is not None and self.first_frame[0] >= UPLINK_WINDOW)
 
 
@@ -330,17 +382,26 @@ class Recorder:
         self.windows_csv = csv.writer(self.windows_file)
         self.windows_csv.writerow(["window", "first", "last", "best", "best_score", "merged", "failed", "t_pc"]
                                   + [f"p{k}" for k in range(UPLINK_WINDOW)]
-                                  + [f"n{k}" for k in range(UPLINK_WINDOW)] + ["y_mean", "clip_pct"])
+                                  + [f"n{k}" for k in range(UPLINK_WINDOW)] + ["y_mean", "clip_pct",
+                                                                               "above", "sent", "suppressed", "lost"])
         self.images_file = open(self.out / "images.csv", "w", newline="")
         self.images_csv = csv.writer(self.images_file)
         self.images_csv.writerow(["window", "frame", "score", "seq", "file", "bytes", "decoded"])
         self.console_file = open(self.out / "console.log", "w") if console else None
+        self.scores_file = open(self.out / "scores.csv", "w", newline="")
+        self.scores_csv = csv.writer(self.scores_file)
+        self.scores_csv.writerow(["frame", "person", "no_person", "t_pc", "batch"])
 
     def window(self, w, now):
         self.windows_csv.writerow([w.window, w.first, w.last, "" if w.best is None else w.best,
                                    "" if w.score is None else w.score, w.merged, w.failed, f"{now - self.t0:.2f}"]
                                   + (pad(w.p) + pad(w.n) if w.p is not None else [""] * (2 * UPLINK_WINDOW))
-                                  + ["" if w.y is None else f"{w.y:.1f}", "" if w.clip is None else f"{w.clip:.2f}"])
+                                  + ["" if w.y is None else f"{w.y:.1f}", "" if w.clip is None else f"{w.clip:.2f}"]
+                                  + ["" if v is None else v for v in (w.above, w.sent, w.suppressed, w.lost)])
+
+    def scores(self, first, pairs, now):
+        for k, (pp, nn) in enumerate(pairs):
+            self.scores_csv.writerow([first + k, pp, nn, f"{now - self.t0:.2f}", len(pairs)])
 
     def image_path(self, window, index, seq):
         return self.out / f"w{window:06d}_f{index:07d}_s{seq:05d}.jpg"
@@ -354,12 +415,12 @@ class Recorder:
             self.console_file.write(f"{now - self.t0:10.3f} {RX_PREFIX if rx else ''}{text}\n")
 
     def flush(self):
-        for f in (self.windows_file, self.images_file, self.console_file):
+        for f in (self.windows_file, self.images_file, self.console_file, self.scores_file):
             if f:
                 f.flush()
 
     def close(self):
-        for f in (self.windows_file, self.images_file, self.console_file):
+        for f in (self.windows_file, self.images_file, self.console_file, self.scores_file):
             if f:
                 f.close()
 
@@ -373,7 +434,7 @@ class Session:
     """
 
     def __init__(self, stats, recorder=None, on_text=None, on_message=None, on_window=None, on_image=None,
-                 out=None):
+                 out=None, on_scores=None):
         self.st = stats
         self.rec = recorder
         self.out = pathlib.Path(out) if out else (recorder.out if recorder else None)
@@ -382,6 +443,7 @@ class Session:
         self.on_message = on_message
         self.on_window = on_window
         self.on_image = on_image
+        self.on_scores = on_scores
         stats.say = self.message
 
     def message(self, text, now=None):
@@ -441,6 +503,13 @@ class Session:
         s = parse_stack(line)
         if s:
             st.stacks[s[0]] = (s[1], s[2])
+        sc = parse_scores(line)
+        if sc:
+            st.scores(sc[0], sc[1], now)
+            if self.rec:
+                self.rec.scores(sc[0], sc[1], now)
+            if self.on_scores:
+                self.on_scores(sc[0], sc[1], now)
         text = line.decode("ascii", "replace")
         if self.rec:
             self.rec.console(text, now)

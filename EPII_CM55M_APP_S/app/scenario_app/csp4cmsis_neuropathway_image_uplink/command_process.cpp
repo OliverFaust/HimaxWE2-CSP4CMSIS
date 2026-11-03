@@ -29,8 +29,13 @@ static void console_rx_cb(void* ptr)
     }
 }
 
-static bool parse_number(const char* s, uint32_t* out)
+static bool parse_number(const char* s, int32_t* out)
 {
+    bool negative = false;
+    if (*s == '-') {
+        negative = true;
+        s++;
+    }
     uint32_t v = 0;
     uint32_t base = 10;
     if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
@@ -47,7 +52,7 @@ static bool parse_number(const char* s, uint32_t* out)
         v = v * base + d;
         if (v > 0xFFFF) return false;
     }
-    *out = v;
+    *out = negative ? -(int32_t)v : (int32_t)v;
     return true;
 }
 
@@ -106,15 +111,15 @@ void Command::handle(char* line)
         reject(REJECT_UNKNOWN_SETTING);
         return;
     }
-    uint32_t v;
+    int32_t v;
     if (!parse_number(arg, &v)) {
         reject(REJECT_BAD_VALUE, setting);
         return;
     }
-    uint16_t lo = setting_min(setting, m_settings);
-    uint16_t hi = setting_max(setting, m_settings);
+    int32_t lo = setting_min(setting, m_settings);
+    int32_t hi = setting_max(setting, m_settings);
     if (v < lo || v > hi) {
-        reject(REJECT_OUT_OF_RANGE, setting, (int32_t)v, lo, hi);
+        reject(REJECT_OUT_OF_RANGE, setting, v, lo, hi);
         return;
     }
     m_settings.value[setting] = (uint16_t)v;

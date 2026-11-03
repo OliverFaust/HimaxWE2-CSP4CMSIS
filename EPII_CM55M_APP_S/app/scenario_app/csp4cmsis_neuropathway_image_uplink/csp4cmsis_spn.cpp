@@ -16,7 +16,7 @@ using namespace csp;
 static constexpr osPriority_t MAIN_APP_PRIORITY = osPriorityLow3;
 static constexpr osPriority_t NETWORK_PRIORITY  = osPriorityLow2;
 
-alignas(8) static uint8_t mainAppStack[1024];
+alignas(8) static uint8_t mainAppStack[1536];
 static StaticTask_t mainAppControlBlock;
 
 static report_t stackReport(const char* name, uint32_t allocated_bytes, uint32_t hwm_words)
@@ -44,12 +44,14 @@ void MainApp_Task(void* params)
     static Channel<frame_t>  frame_chan;
     static Channel<release_t> release_chan;
     static BufferedChannel<uint8_t, 1> free_chan;
+    static BufferedChannel<uint8_t, 1> ready_chan;
     static BufferedChannel<command_t, 1> cmd_chan;
     static Channel<report_t> report_chan;
 
     static Camera    camera(frame_chan.writer(), release_chan.reader(), cmd_chan.reader(), report_chan.writer());
-    static Inference inference(frame_chan.reader(), release_chan.writer(), free_chan.reader(), report_chan.writer());
-    static Reporter  reporter(report_chan.reader(), free_chan.writer());
+    static Inference inference(frame_chan.reader(), release_chan.writer(), free_chan.reader(), ready_chan.reader(),
+                               report_chan.writer());
+    static Reporter  reporter(report_chan.reader(), free_chan.writer(), ready_chan.writer());
     static Command   command(cmd_chan.writer(), report_chan.writer());
 
     auto network = InParallel(camera, inference, reporter, command);
