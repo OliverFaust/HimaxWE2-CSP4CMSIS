@@ -1,6 +1,6 @@
 # Neuropathway: Formal Model (CSP-M)
 
-This directory holds two models. `Neuropathway.csp` (with `Neuropathway_controls.csp`) models the network of the parent app, before the uplink; the sections below up to *Uplink model* describe it. `Uplink.csp` (with `Uplink_controls.csp`) models this app's Stage 3 network with the four JPEG buffers as tokens; see [Uplink model](#uplink-model-uplinkcsp).
+This directory holds two models. `Neuropathway.csp` (with `Neuropathway_controls.csp`) models the network of the parent app, before the uplink; the sections below up to *Uplink model* describe it. `Uplink.csp` (with `Uplink_defs.csp` and `Uplink_controls.csp`) models this app's network with the four JPEG buffers and the Reporter's ready token as tokens, and `Uplink_command.csp` (with `Uplink_command_defs.csp` and `Uplink_command_controls.csp`) its command path; see [Uplink model](#uplink-model-uplinkcsp).
 
 This directory contains the CSPm formal specification for the neuropathway vision pipeline described in the *Neuropathways* chapter of the book: the three-stage `Camera` → `Inference` → `Reporter` network that processes camera frames through NPU-based person detection, and `MainApp`, which sends the stack report. It provides a mathematical abstraction of the pipeline's communication structure, isolating the CSP-level synchronisation guarantees from the low-level FreeRTOS task scheduling, hardware interrupt handling, and TensorFlow Lite Micro / Ethos-U55 driver details covered in the book. The model is checked with [ProB](https://prob.hhu.de/) 1.16.1 (`probcli Neuropathway.csp -assertions`); FDR can check it as well.
 
@@ -74,31 +74,48 @@ SPEC_STACK    = line!stack.cam -> line!stack.inf -> line!stack.rep -> line!stack
 
 ## Uplink model (`Uplink.csp`)
 
-`Uplink.csp` models the Stage 3 network (`csp4cmsis_spn.cpp`, `camera_process.cpp`, `inference_process.cpp`, `reporter_process.cpp`) with the JPEG buffer ids as data. It is bounded for exhaustive checking: 4 buffer ids (as on the board), windows of `W = 2` frames instead of 20, frame indices 0..3 wrapping, and the merged count saturating at `MAXM = 2`. Checked with ProB 1.16.1 (`probcli Uplink.csp -assertions`, about 9.5 minutes).
+The uplink network (`csp4cmsis_spn.cpp`, `camera_process.cpp`, `inference_process.cpp`, `reporter_process.cpp`, `command_process.cpp`; app README sections 2-4, 10, 14 and 15) is modelled in two parts, each with its definitions in a `_defs` file that the assertions and the positive controls `include`:
 
-1. **`ENV`, `MainApp`:** as in `Neuropathway.csp`; MainApp sends one stack report per tick.
-2. **`Camera`:** reports `started.camera`, then per frame: trigger, `frame_chan!i!b` (frame index and the buffer the DMA wrote), `release_chan?nb` (the next DMA target). Its first target is buffer 0.
-3. **`Inference`:** after the first frame, its spares are the three other ids. Per frame: poll `free_chan` (a returned buffer joins the spares, and Inference holds the free token again); release a spare to Camera (an internal choice over the spares: the code takes the top of its array, the model allows any); score the frame (internal choice: `better`, `worse`, or `failed`; `worse` only once there is a best), with a visible `scored.o.b` event; on a window's last frame either write `window.m` and, if there is a best, `image.best` (token held; it then gives the token up), or `merge` (token not held; best and count carry over).
-4. **`FREE`:** `free_chan`, a one-slot buffered channel. Inference's PRI ALT with a zero timeout is modelled exactly: the slot offers either its value (`free_out`) or `poll_empty`, never both. A second write to a full slot leads to `overflow`.
-5. **`Reporter`:** a text report becomes a `line`; an image becomes `uplink.b` (the send) and then `free_in!b` (the buffer goes back). A refused send (no EOI, section 8 of the app README) also returns the buffer, so the model does not distinguish it.
-6. **`OBS`, the buffer-role observer:** follows each id through the events from the role it must be in to the next: next (Camera's target), pending (`frame_chan` to `scored`), best, sending (`report_chan.image` to `free_out`, including the slot), and spare. It starts with 0 as next and 1, 2, 3 spare and moves exactly one id per event; an event that finds an id in the wrong role leads to `error`. So if `error` can never happen, the four ids are always a permutation across the roles.
+* `Uplink.csp`: Camera, Inference, MainApp and the Reporter with the four JPEG buffer ids as data, `free_chan` and the ready token (`ready_chan`), the per-frame `Scores` reports and the event filter.
+* `Uplink_command.csp`: the command path (Command, `cmd_chan`, Camera's poll, the acknowledgements under the ready token), with Inference reduced to what that path touches.
+
+A single model of both did not finish: with command lines able to arrive between any two events of the other processes, a ProB run reached 13.6 GB in 9.5 hours without completing one check. Commands and buffers do not interact (a command changes settings, not buffer roles), so the two parts are checked apart.
+
+Bounds: 4 buffer ids (as on the board), windows of `W = 2` frames instead of 8, frame indices 0..1 (only the position in the window matters), and the merged count saturating at `MAXM = 2`. With indices 0..3 the main model's checks ran out of memory; 0..1 lose nothing, since nothing depends on the index but `i % W`. Checked with ProB 1.16.1; the nine assertions of `Uplink.csp` each in a run of their own to bound memory (25 to 336 s, at most 6.2 GB), `Uplink_command.csp` in 73 s.
+
+### `Uplink_defs.csp`
+
+1. **`Camera`:** reports `started.camera`, then per frame: trigger, `frame_chan!i!b` (the frame's position in the window and the buffer the DMA wrote), `release_chan?nb` (the next DMA target).
+2. **`Inference`:** starts with the free token and the ready token. Per frame: poll `free_chan` (a returned buffer joins the spares), poll `ready_chan` (the token is back), release a spare (internal choice), score (`better`, `worse`, `failed`, a visible `scored.o.b`), then `End`: holding the ready token it writes one report: at a window end, if it also holds the free token, a `Window` report, with the image (`wimage.m.b`) or, when the filter fails, `suppress.b` (the best goes back to the spares) and `window.m`; otherwise `scores` (with `merge` first at a window end). Without the ready token it writes nothing and merges a window that ends. The filter (best >= T and at least K frames >= T) depends on the scores, so it is an internal choice.
+3. **`FREE`, `READY`:** one-slot buffered channels, polled with a PRI ALT and SKIP (value or empty, never both); a second write to a full slot leads to `overflow`.
+4. **`Reporter`:** a text report becomes a `line`; a `wimage` report its line, the send (`uplink.b`) and `free_in!b`; after each of Inference's reports it returns the token (`ready_in`). `ReporterStall` may stop for ever after any of Inference's reports, without returning the token (or the buffer). `MainApp` sends stack reports (`MainAppN(n)`: n of them).
+5. **`OBS`:** the buffer-role observer of before (next, pending, best, sending including the slot, spare), extended by `suppress`, which moves the best back to the spares.
+
+### Assertions (`Uplink.csp`)
 
 | Assertion | Meaning | Result |
 |---|---|---|
-| `SYSTEM :[deadlock free [F]]` | the system never stops | holds |
-| `SYSTEM :[divergence free]` | no internal loop without an event. With nothing hidden this is immediate; the divergence check that matters is part of the last row | holds |
-| `RUN(diff(Events, {error, overflow})) [T= SYSTEM_OBS` | buffer roles: every id is always in exactly one role (a permutation across next, pending, best, sending, spare); Camera is only ever handed a spare; only the best is sent; `free_chan`'s one slot never overflows | holds |
-| `MCOUNT(0) [T= SYSTEM \ ...` | every `Window` line carries the number of windows merged since the previous line (saturating). The Reporter is not forced to finish quickly, so merges happen in this check | holds |
-| `SYSTEM_STALL :[deadlock free [F]]`, `CYCLE [F= SYSTEM_STALL \ ...` | uplink stalled: after any image the Reporter may stop for ever, without returning the buffer or reading `report_chan` again (MainApp's stack report then blocks). The trigger is never refused: Camera and Inference keep cycling. `report_chan` is part of this check, not only the buffer tokens: a write to it by Inference would block | holds |
-| `PRE [FD= SYSTEM_STOP \ ...` | uplink stalled after its first image (MainApp left out, since it only blocks): from then on only `merge` events follow, one per window, for ever; no `Window` line, no `Image`, and no divergence with everything else hidden (each window produces a visible line or merge) | holds |
+| `SYSTEM :[deadlock free [F]]`, `SYSTEM :[divergence free]` | the network never stops; no internal loop | holds |
+| `RUN(diff(Events, {error, overflow})) [T= OBSERVED(SYSTEM)` | the four ids always form a permutation across the roles; Camera is only handed a spare; only the window's best is sent; neither slot (`free_chan`, `ready_chan`) overflows | holds |
+| `MCOUNT(0) [T= SYSTEM \ ...` | every `Window` line, with or without an image, carries the number of windows merged since the last | holds |
+| `TOKEN [T= SYSTEM \ ...` | Inference's reports and the Reporter's token returns alternate: Inference never writes a report while the Reporter is still busy with its previous one | holds |
+| `SYSTEM_STALL :[deadlock free [F]]` | with the Reporter stalled for ever after any report, nothing stops | holds |
+| `CYCLE [FD= SYS(Inference, Reporter, MainAppN(2)) \ ...` and `... ReporterStall ...` | Camera and Inference keep cycling (the trigger is never refused), with the Reporter running and with it stalled. Everything but the trigger is hidden and the refinement is failures-divergences, so a refused trigger and any loop of hidden events both fail it. MainApp sends two reports here: its stack reports would otherwise be such a loop while the Reporter runs, and on such a loop a blocked Camera would go unseen (a state on it is never stable, so it has no refusals; an earlier version of this check, with `[F=` and an unbounded MainApp, passed with Camera blocked, see control 3) | holds |
+| `PRE [FD= SYSTEM_STOP \ ...` | after the uplink stops following an image, only merges follow, one per window, for ever; before it, `Window` lines and merges in any order | holds |
 
-What the model does not cover: timing (how long a send or a stall takes; that is what the board's stall build measures), the JPEG contents and the D-cache, the frame-ready ISR's buffered channel (as in `Neuropathway.csp`), the console's text lines beyond their kinds, and the Stage 0 build. The merged count saturates in the model at `MAXM`; the code's count, an `int16_t`, originally had no limit and would have overflowed after 32 767 merged windows (about 9.4 hours of continuous stall); it now saturates at `INT16_MAX`, as the model's does.
+### Command path (`Uplink_command.csp`)
 
-### Positive controls (`Uplink_controls.csp`)
+Camera polls `cmd_chan` (one slot) after each frame and marks the next frame when it has written the sensor; Inference keeps the ready token, the window position and a pending acknowledgement, and with the token writes one report per frame: the `Window` report at a window end, else the acknowledgement, else `Scores`. Command reads abstract lines (`rx`), writes valid ones to `cmd_chan` or reports them as rejected; `CommandN(n)` handles n lines, `CommandValid` valid lines for ever (each needs a frame), `CommandNone` none. All 11 assertions hold: deadlock and divergence freedom, no overflow of `ready_chan`, the token alternation (acknowledgements included), deadlock freedom with the Reporter stalled, and Camera and Inference cycling (`[FD=`, MainApp with two reports) in all six combinations of {`CommandN(2)`, `CommandValid`, `CommandNone`} and {`Reporter`, `ReporterStall`}.
 
-| Control | Design | Check | Result |
-|---|---|---|---|
-| 1 | Camera may be retargeted to the window's best: Inference releases from its spares and its best, as if the best were free, and still keeps it as the best | `RUN(...) [T= SYSTEM1_OBS` | **fails** (as it should): the observer reaches `error` when the best buffer is handed to Camera as the next DMA target |
-| 2 | Inference writes the `Window` line and the `Image` on every window's last frame without the free token (as in Stage 2) | `CYCLE [F= SYSTEM2_STALL \ ...` | **fails** (as it should): with the uplink stalled, Inference blocks on `report_chan` and Camera stops taking triggers |
+What the models do not cover: timing (how long a send or a stall takes, how many scores a batch must hold; the board's stall build measures that), the scores' values and the batch contents, the JPEG contents and the D-cache, the frame-ready ISR's buffered channel and the UART's receive interrupt, the console's text beyond the report kinds, and the Stage 0 build.
 
-ProB's output for both files is in `prob_results.txt` (7 of 7 assertions hold for the model, 2 of 2 fail for the controls).
+### Positive controls
+
+| Control | File | Design | Check | Result |
+|---|---|---|---|---|
+| 1 | `Uplink_controls.csp` | Camera may be retargeted to the window's best: Inference releases from its spares and its best | `RUN(...) [T= OBSERVED(SYS(Inference1, ...))` | **fails** (as it should): the best is handed out as a DMA target |
+| 2 | `Uplink_controls.csp` | Inference sends a `Window` report with an image while holding the ready token but not the free token | `RUN(...) [T= OBSERVED(SYS(Inference2, ...))` | **fails** (as it should): a second image while the previous buffer is not yet read back |
+| 3 | `Uplink_command_controls.csp` | Camera reads `cmd_chan` with a blocking read instead of polling it | `CYCLE [FD= SYS(Camera3, Reporter, MainAppN(2), CommandNone) \ ...` | **fails** (as it should): with no command, Camera stops after one frame |
+| 4 | `Uplink_controls.csp` | Inference writes its `Scores` report on every frame, with or without the ready token | `CYCLE [FD= SYS(Inference4, ReporterStall, MainAppN(2)) \ ...` | **fails** (as it should): with the Reporter stalled, Inference blocks on `report_chan` and Camera stops |
+
+ProB's output is in `prob_results.txt` (9 of 9 and 11 of 11 assertions hold; 4 of 4 controls fail). The variants of controls 1, 2 and 4 are copies of `Inference` from `Uplink_defs.csp` with a suffix and one part changed.

@@ -1,0 +1,11 @@
+-- Positive control for Uplink_command.csp: must FAIL its check.
+
+include "Uplink_command_defs.csp"
+
+-- Control 3 (must stall Camera when no command arrives): Camera reads cmd_chan with a blocking
+-- read after each frame instead of polling it with SKIP.
+Camera3 = report_chan!started -> CameraLoop3(0)
+CameraLoop3(i) = g_trigger_chan -> frame_chan!i!true -> cmd_out -> sensor_write -> release_chan ->
+                 CameraLoop3((i + 1) % W)
+
+assert CYCLE [FD= SYS(Camera3, Reporter, MainAppN(2), CommandNone) \ diff(Events, {g_trigger_chan})   -- expected: false

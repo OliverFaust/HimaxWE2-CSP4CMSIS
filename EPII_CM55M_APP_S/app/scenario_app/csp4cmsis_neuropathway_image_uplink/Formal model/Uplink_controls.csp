@@ -1,178 +1,146 @@
 -- Positive controls for Uplink.csp: plausible wrong designs. Each must FAIL its check, showing
--- that the checks of the real model can detect these faults. The definitions below are those of
--- Uplink.csp; each control replaces one part of Inference.
+-- that the checks of the real model can detect these faults. Each control is the Inference of
+-- Uplink_defs.csp with one part changed (the variants are copies with a suffix).
 
-W         = 2
-MAX_INDEX = 4
-IDS       = {0..3}
-NONE      = 4                                  -- no buffer
-MAXM      = 2
-
-sat(m) = if m > MAXM then MAXM else m
-
-datatype source_t  = camera | inference
-datatype outcome_t = better | worse | failed   -- the frame's score against the window's best
-datatype report_t  = started.source_t | stack | window.{0..MAXM} | image.IDS
-
-TEXT = diff(report_t, {| image |})
-
-channel g_trigger_chan                         -- frame-ready interrupt -> Camera
-channel frame_chan   : {0..MAX_INDEX-1}.IDS    -- Camera -> Inference: frame index, its buffer
-channel release_chan : IDS                     -- Inference -> Camera: raw buffer free, next DMA target
-channel free_in      : IDS                     -- Reporter -> free_chan's slot
-channel free_out     : IDS                     -- free_chan's slot -> Inference (poll, value ready)
-channel poll_empty                             -- free_chan's slot -> Inference (poll, SKIP taken)
-channel report_chan  : report_t                -- Camera, Inference, MainApp -> Reporter
-channel line         : report_t                -- the Reporter's text lines
-channel uplink       : IDS                     -- the Reporter sends the JPEG in this buffer
-channel scored       : outcome_t.IDS           -- Inference has scored the frame in this buffer
-channel merge                                  -- Inference merges a window (uplink busy)
-channel camera_log, stack_tick
-channel overflow, error
-
-ENV = g_trigger_chan -> ENV
-
-RUN(A) = [] x : A @ x -> RUN(A)
-
--- Camera: the next DMA target is buffer 0 at start, then whatever Inference releases.
-Camera = camera_log -> report_chan!started.camera -> CameraLoop(0, 0)
-CameraLoop(i, b) = g_trigger_chan -> frame_chan!i!b -> release_chan?nb -> CameraLoop((i + 1) % MAX_INDEX, nb)
-
--- Inference: sp = spare buffers, best = the window's best (NONE if none yet), tok = holds the
--- free token, m = windows merged since the last Window line. Per frame: poll free_chan, rescale
--- and release a spare as the next DMA target, score, and on a window's last frame either report
--- (token held) or merge.
-Inference = frame_chan?i?p -> report_chan!started.inference -> Infer(i, p, diff(IDS, {p}), NONE, true, 0)
-
-Infer(i, p, sp, best, tok, m) =
-    (free_out?b -> Release(i, p, union(sp, {b}), best, true, m))
-    [] (poll_empty -> Release(i, p, sp, best, tok, m))
-
-Release(i, p, sp, best, tok, m) = |~| s : sp @ release_chan!s -> Score(i, p, diff(sp, {s}), best, tok, m)
-
-Score(i, p, sp, best, tok, m) =
-    if best == NONE then
-        (scored!failed!p -> End(i, union(sp, {p}), best, tok, m))
-        |~| (scored!better!p -> End(i, sp, p, tok, m))
-    else
-        (scored!failed!p -> End(i, union(sp, {p}), best, tok, m))
-        |~| (scored!better!p -> End(i, union(sp, {best}), p, tok, m))
-        |~| (scored!worse!p -> End(i, union(sp, {p}), best, tok, m))
-
-End(i, sp, best, tok, m) =
-    if i % W == W - 1 then
-        if tok then
-            report_chan!window.m ->
-                (if best != NONE then report_chan!image.best -> Next(sp, NONE, false, 0)
-                 else Next(sp, NONE, true, 0))
-        else
-            merge -> Next(sp, best, false, sat(m + 1))
-    else
-        Next(sp, best, tok, m)
-
-Next(sp, best, tok, m) = frame_chan?j?p -> Infer(j, p, sp, best, tok, m)
-
--- free_chan: a one-slot buffered channel. Inference's PRI ALT with SKIP sees either the value
--- (free_out) or an empty slot (poll_empty), never both. A second write to a full slot would
--- block the Reporter; overflow marks it.
-FREE = (free_in?b -> FREE_FULL(b)) [] (poll_empty -> FREE)
-FREE_FULL(b) = (free_out!b -> FREE) [] (free_in?x -> overflow -> STOP)
-
--- MainApp: one stack report per timer tick, over its own writer end.
-MainApp = stack_tick -> report_chan!stack -> MainApp
-
--- Reporter: a text line per text report; for an Image, send the JPEG and return the buffer.
-Reporter = (report_chan?r:TEXT -> line!r -> Reporter)
-           [] (report_chan.image?b -> uplink!b -> free_in!b -> Reporter)
-
--- Buffer roles: an observer that follows each id through the events, from the role it must be
--- in to the next one: next (Camera's DMA target), pending (being scored), best, sending (from the
--- Image report until Inference has read it back; slot = in free_chan), and spare. It starts with
--- 0 as next and 1..3 spare and moves exactly one id per event, so as long as no event finds an id
--- in the wrong role (error), the four ids are always a permutation across the roles.
-OBS(cam, pend, best, sp, send, slot) =
-    (frame_chan?i?b -> (if b == cam then OBS(NONE, b, best, sp, send, slot) else error -> STOP))
- [] (release_chan?b -> (if cam == NONE and pend != NONE and member(b, sp)
-                        then OBS(b, pend, best, diff(sp, {b}), send, slot) else error -> STOP))
- [] (scored?o?b -> (if b != pend then error -> STOP
-                    else if o == better
-                    then OBS(cam, NONE, b, if best == NONE then sp else union(sp, {best}), send, slot)
-                    else OBS(cam, NONE, best, union(sp, {b}), send, slot)))
- [] (report_chan.image?b -> (if b == best and send == NONE and slot == NONE
-                             then OBS(cam, pend, NONE, sp, b, slot) else error -> STOP))
- [] (free_in?b -> (if b == send then OBS(cam, pend, best, sp, NONE, b) else error -> STOP))
- [] (free_out?b -> (if b == slot then OBS(cam, pend, best, union(sp, {b}), send, NONE) else error -> STOP))
-
-ROLE_EVENTS = {| frame_chan, release_chan, scored, report_chan.image, free_in, free_out |}
-
-ReporterStall = (report_chan?r:TEXT -> line!r -> ReporterStall)
-                [] (report_chan.image?b -> uplink!b -> ((free_in!b -> ReporterStall) |~| STOP))
-
-CYCLE = g_trigger_chan -> CYCLE
+include "Uplink_defs.csp"
 
 -- Control 1 (must break the buffer roles): Camera may be retargeted to the window's best. The
 -- release picks from the spares and the best, as if the best buffer were free; Inference still
 -- keeps it as the best, so the DMA overwrites the JPEG that may be sent next.
-Release1(i, p, sp, best, tok, m) =
+Inference1 = frame_chan?i?p -> report_chan!started.inference -> Infer1(i, p, diff(IDS, {p}), NONE, true, true, 0)
+
+Infer1(i, p, sp, best, tok, rdy, m) =
+    (free_out?b -> PollReady1(i, p, union(sp, {b}), best, true, rdy, m))
+    [] (poll_empty -> PollReady1(i, p, sp, best, tok, rdy, m))
+
+PollReady1(i, p, sp, best, tok, rdy, m) =
+    (ready_out -> Release1(i, p, sp, best, tok, true, m))
+    [] (ready_empty -> Release1(i, p, sp, best, tok, rdy, m))
+
+Release1(i, p, sp, best, tok, rdy, m) =
     |~| s : union(sp, if best == NONE then {} else {best}) @
-        release_chan!s -> Score1(i, p, diff(sp, {s}), best, tok, m)
-Inference1 = frame_chan?i?p -> report_chan!started.inference -> Infer1(i, p, diff(IDS, {p}), NONE, true, 0)
-Infer1(i, p, sp, best, tok, m) =
-    (free_out?b -> Release1(i, p, union(sp, {b}), best, true, m))
-    [] (poll_empty -> Release1(i, p, sp, best, tok, m))
-Score1(i, p, sp, best, tok, m) =
+        release_chan!s -> Score1(i, p, diff(sp, {s}), best, tok, rdy, m)
+
+Score1(i, p, sp, best, tok, rdy, m) =
     if best == NONE then
-        (scored!failed!p -> End1(i, union(sp, {p}), best, tok, m))
-        |~| (scored!better!p -> End1(i, sp, p, tok, m))
+        (scored!failed!p -> End1(i, union(sp, {p}), best, tok, rdy, m))
+        |~| (scored!better!p -> End1(i, sp, p, tok, rdy, m))
     else
-        (scored!failed!p -> End1(i, union(sp, {p}), best, tok, m))
-        |~| (scored!better!p -> End1(i, union(sp, {best}), p, tok, m))
-        |~| (scored!worse!p -> End1(i, union(sp, {p}), best, tok, m))
-End1(i, sp, best, tok, m) =
-    if i % W == W - 1 then
-        if tok then
-            report_chan!window.m ->
-                (if best != NONE then report_chan!image.best -> Next1(sp, NONE, false, 0)
-                 else Next1(sp, NONE, true, 0))
+        (scored!failed!p -> End1(i, union(sp, {p}), best, tok, rdy, m))
+        |~| (scored!better!p -> End1(i, union(sp, {best}), p, tok, rdy, m))
+        |~| (scored!worse!p -> End1(i, union(sp, {p}), best, tok, rdy, m))
+
+-- The filter (best >= T and at least K frames >= T) depends on the scores, so the model
+-- chooses internally between sending and suppressing a window that has a best.
+End1(i, sp, best, tok, rdy, m) =
+    if rdy then
+        if i % W == W - 1 and tok then
+            if best == NONE then report_chan!window.m -> Next1(sp, NONE, tok, false, 0)
+            else (report_chan!wimage.m.best -> Next1(sp, NONE, false, false, 0))
+                 |~| (suppress!best -> report_chan!window.m -> Next1(union(sp, {best}), NONE, tok, false, 0))
+        else if i % W == W - 1 then
+            merge -> report_chan!scores -> Next1(sp, best, tok, false, sat(m + 1))
         else
-            merge -> Next1(sp, best, false, sat(m + 1))
+            report_chan!scores -> Next1(sp, best, tok, false, m)
+    else if i % W == W - 1 then
+        merge -> Next1(sp, best, tok, rdy, sat(m + 1))
     else
-        Next1(sp, best, tok, m)
-Next1(sp, best, tok, m) = frame_chan?j?p -> Infer1(j, p, sp, best, tok, m)
+        Next1(sp, best, tok, rdy, m)
 
-SYSTEM1 = ENV [| {| g_trigger_chan |} |]
-    ((((Camera [| {| frame_chan, release_chan |} |] Inference1) ||| MainApp) [| {| report_chan |} |] Reporter)
-     [| {| free_in, free_out, poll_empty |} |] FREE)
-SYSTEM1_OBS = SYSTEM1 [| ROLE_EVENTS |] OBS(0, NONE, NONE, {1, 2, 3}, NONE, NONE)
+Next1(sp, best, tok, rdy, m) = frame_chan?j?p -> Infer1(j, p, sp, best, tok, rdy, m)
 
-assert RUN(diff(Events, {error, overflow})) [T= SYSTEM1_OBS          -- expected: false
 
--- Control 2 (must stall Camera when the uplink stalls): Inference writes the Window line and
--- the Image on every window's last frame, without waiting for the free token, as Stage 2 did.
-End2(i, sp, best, tok, m) =
-    if i % W == W - 1 then
-        report_chan!window.m ->
-            (if best != NONE then report_chan!image.best -> Next2(sp, NONE, false, 0)
-             else Next2(sp, NONE, tok, 0))
-    else
-        Next2(sp, best, tok, m)
-Inference2 = frame_chan?i?p -> report_chan!started.inference -> Infer2(i, p, diff(IDS, {p}), NONE, true, 0)
-Infer2(i, p, sp, best, tok, m) =
-    (free_out?b -> Release2(i, p, union(sp, {b}), best, true, m))
-    [] (poll_empty -> Release2(i, p, sp, best, tok, m))
-Release2(i, p, sp, best, tok, m) = |~| s : sp @ release_chan!s -> Score2(i, p, diff(sp, {s}), best, tok, m)
-Score2(i, p, sp, best, tok, m) =
+assert RUN(diff(Events, {error, overflow})) [T= OBSERVED(SYS(Inference1, Reporter, MainApp))   -- expected: false
+
+-- Control 2 (must break the buffer roles): Inference sends a Window report with an image when
+-- it holds the ready token but not the free token, i.e. before it has read back the buffer of
+-- the previous image.
+Inference2 = frame_chan?i?p -> report_chan!started.inference -> Infer2(i, p, diff(IDS, {p}), NONE, true, true, 0)
+
+Infer2(i, p, sp, best, tok, rdy, m) =
+    (free_out?b -> PollReady2(i, p, union(sp, {b}), best, true, rdy, m))
+    [] (poll_empty -> PollReady2(i, p, sp, best, tok, rdy, m))
+
+PollReady2(i, p, sp, best, tok, rdy, m) =
+    (ready_out -> Release2(i, p, sp, best, tok, true, m))
+    [] (ready_empty -> Release2(i, p, sp, best, tok, rdy, m))
+
+Release2(i, p, sp, best, tok, rdy, m) =
+    |~| s : sp @ release_chan!s -> Score2(i, p, diff(sp, {s}), best, tok, rdy, m)
+
+Score2(i, p, sp, best, tok, rdy, m) =
     if best == NONE then
-        (scored!failed!p -> End2(i, union(sp, {p}), best, tok, m))
-        |~| (scored!better!p -> End2(i, sp, p, tok, m))
+        (scored!failed!p -> End2(i, union(sp, {p}), best, tok, rdy, m))
+        |~| (scored!better!p -> End2(i, sp, p, tok, rdy, m))
     else
-        (scored!failed!p -> End2(i, union(sp, {p}), best, tok, m))
-        |~| (scored!better!p -> End2(i, union(sp, {best}), p, tok, m))
-        |~| (scored!worse!p -> End2(i, union(sp, {p}), best, tok, m))
-Next2(sp, best, tok, m) = frame_chan?j?p -> Infer2(j, p, sp, best, tok, m)
+        (scored!failed!p -> End2(i, union(sp, {p}), best, tok, rdy, m))
+        |~| (scored!better!p -> End2(i, union(sp, {best}), p, tok, rdy, m))
+        |~| (scored!worse!p -> End2(i, union(sp, {p}), best, tok, rdy, m))
 
-SYSTEM2_STALL = ENV [| {| g_trigger_chan |} |]
-    ((((Camera [| {| frame_chan, release_chan |} |] Inference2) ||| MainApp) [| {| report_chan |} |] ReporterStall)
-     [| {| free_in, free_out, poll_empty |} |] FREE)
+-- The filter (best >= T and at least K frames >= T) depends on the scores, so the model
+-- chooses internally between sending and suppressing a window that has a best.
+End2(i, sp, best, tok, rdy, m) =
+    if rdy then
+        if i % W == W - 1 then
+            if best == NONE then report_chan!window.m -> Next2(sp, NONE, tok, false, 0)
+            else (report_chan!wimage.m.best -> Next2(sp, NONE, false, false, 0))
+                 |~| (suppress!best -> report_chan!window.m -> Next2(union(sp, {best}), NONE, tok, false, 0))
+        else if i % W == W - 1 then
+            merge -> report_chan!scores -> Next2(sp, best, tok, false, sat(m + 1))
+        else
+            report_chan!scores -> Next2(sp, best, tok, false, m)
+    else if i % W == W - 1 then
+        merge -> Next2(sp, best, tok, rdy, sat(m + 1))
+    else
+        Next2(sp, best, tok, rdy, m)
 
-assert CYCLE [F= SYSTEM2_STALL \ diff(Events, {g_trigger_chan})    -- expected: false
+Next2(sp, best, tok, rdy, m) = frame_chan?j?p -> Infer2(j, p, sp, best, tok, rdy, m)
+
+
+assert RUN(diff(Events, {error, overflow})) [T= OBSERVED(SYS(Inference2, Reporter, MainApp))   -- expected: false
+
+-- Control 4 (must stall Camera when the uplink stalls): Inference writes its Scores report on
+-- every frame, whether or not it holds the ready token.
+Inference4 = frame_chan?i?p -> report_chan!started.inference -> Infer4(i, p, diff(IDS, {p}), NONE, true, true, 0)
+
+Infer4(i, p, sp, best, tok, rdy, m) =
+    (free_out?b -> PollReady4(i, p, union(sp, {b}), best, true, rdy, m))
+    [] (poll_empty -> PollReady4(i, p, sp, best, tok, rdy, m))
+
+PollReady4(i, p, sp, best, tok, rdy, m) =
+    (ready_out -> Release4(i, p, sp, best, tok, true, m))
+    [] (ready_empty -> Release4(i, p, sp, best, tok, rdy, m))
+
+Release4(i, p, sp, best, tok, rdy, m) =
+    |~| s : sp @ release_chan!s -> Score4(i, p, diff(sp, {s}), best, tok, rdy, m)
+
+Score4(i, p, sp, best, tok, rdy, m) =
+    if best == NONE then
+        (scored!failed!p -> End4(i, union(sp, {p}), best, tok, rdy, m))
+        |~| (scored!better!p -> End4(i, sp, p, tok, rdy, m))
+    else
+        (scored!failed!p -> End4(i, union(sp, {p}), best, tok, rdy, m))
+        |~| (scored!better!p -> End4(i, union(sp, {best}), p, tok, rdy, m))
+        |~| (scored!worse!p -> End4(i, union(sp, {p}), best, tok, rdy, m))
+
+-- The filter (best >= T and at least K frames >= T) depends on the scores, so the model
+-- chooses internally between sending and suppressing a window that has a best.
+End4(i, sp, best, tok, rdy, m) =
+    if rdy then
+        if i % W == W - 1 and tok then
+            if best == NONE then report_chan!window.m -> Next4(sp, NONE, tok, false, 0)
+            else (report_chan!wimage.m.best -> Next4(sp, NONE, false, false, 0))
+                 |~| (suppress!best -> report_chan!window.m -> Next4(union(sp, {best}), NONE, tok, false, 0))
+        else if i % W == W - 1 then
+            merge -> report_chan!scores -> Next4(sp, best, tok, false, sat(m + 1))
+        else
+            report_chan!scores -> Next4(sp, best, tok, false, m)
+    else if i % W == W - 1 then
+        merge -> report_chan!scores -> Next4(sp, best, tok, rdy, sat(m + 1))
+    else
+        report_chan!scores -> Next4(sp, best, tok, rdy, m)
+
+Next4(sp, best, tok, rdy, m) = frame_chan?j?p -> Infer4(j, p, sp, best, tok, rdy, m)
+
+
+assert CYCLE [FD= SYS(Inference4, ReporterStall, MainAppN(2)) \ diff(Events, {g_trigger_chan})   -- expected: false

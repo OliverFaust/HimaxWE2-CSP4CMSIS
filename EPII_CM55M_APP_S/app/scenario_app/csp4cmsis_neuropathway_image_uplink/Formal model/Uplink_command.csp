@@ -1,0 +1,27 @@
+-- The command path: the assertions. The processes are in Uplink_command_defs.csp.
+
+include "Uplink_command_defs.csp"
+
+SYSTEM = SYS(Camera, Reporter, MainApp, Command)
+
+assert SYSTEM :[deadlock free [F]]
+assert SYSTEM :[divergence free]
+assert RUN(diff(Events, {overflow})) [T= SYSTEM
+
+-- Acknowledgements go under the ready token: Inference's reports (acknowledgements included)
+-- and the Reporter's token returns alternate.
+TOKEN = ([] r : {| report_chan.x | x <- INF_REPORTS |} @ r -> ready_in -> TOKEN)
+
+assert TOKEN [T= SYSTEM \ diff(Events, union({| report_chan.x | x <- INF_REPORTS |}, {ready_in}))
+
+-- Camera and Inference keep cycling whether or not commands arrive (two lines, valid or
+-- rejected; valid lines for ever; none) and whether or not the Reporter is stalled.
+-- Failures-divergences refinement with everything but the trigger hidden; MainApp with two
+-- reports (see Uplink.csp).
+assert SYS(Camera, ReporterStall, MainApp, Command) :[deadlock free [F]]
+assert CYCLE [FD= SYS(Camera, Reporter, MainAppN(2), CommandN(2)) \ diff(Events, {g_trigger_chan})
+assert CYCLE [FD= SYS(Camera, Reporter, MainAppN(2), CommandValid) \ diff(Events, {g_trigger_chan})
+assert CYCLE [FD= SYS(Camera, Reporter, MainAppN(2), CommandNone) \ diff(Events, {g_trigger_chan})
+assert CYCLE [FD= SYS(Camera, ReporterStall, MainAppN(2), CommandN(2)) \ diff(Events, {g_trigger_chan})
+assert CYCLE [FD= SYS(Camera, ReporterStall, MainAppN(2), CommandValid) \ diff(Events, {g_trigger_chan})
+assert CYCLE [FD= SYS(Camera, ReporterStall, MainAppN(2), CommandNone) \ diff(Events, {g_trigger_chan})
