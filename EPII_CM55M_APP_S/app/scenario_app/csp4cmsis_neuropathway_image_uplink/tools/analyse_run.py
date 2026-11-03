@@ -14,6 +14,8 @@ and writes to analysis.txt:
   - a threshold table: for thresholds T on the window-best score, the
     fraction of windows with best > T, per phase;
   - a contact sheet per phase, sheet_<phase>.png (needs Pillow).
+The person probability of a score s is (s + 128) / 256 (int8 output, scale
+1/256, zero point -128), so 50 % is s = 0.
 
 A window belongs to the phase in force at its midpoint (the line's PC time
 minus half a window). Windows that start less than --settle seconds after the
@@ -141,6 +143,8 @@ def main():
     used = [w for w in windows if w["phase"] and not w["settling"] and w["p"] is not None]
     say(f"run {run}: {len(windows)} window lines, {len(used)} in the statistics "
         f"(settle {args.settle:.0f} s), {len(images)} images")
+    at50 = sum(w["best_score"] is not None and w["best_score"] >= 0 for w in windows)
+    say(f"window lines with best score >= 0 (person probability >= 50 %): {at50} of {len(windows)}")
     say()
 
     say("person score per frame / window-best score, per phase")
