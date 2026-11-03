@@ -53,8 +53,9 @@ matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
-from uplink_proto import (IMAGE_LOG, RX_PREFIX, UPLINK_WINDOW, Recorder, Session, Stats, Window, list_ports,
-                          open_port, park, probability, score_at, window_text)
+from uplink_proto import (COMMAND_LINE, IMAGE_LOG, RX_PREFIX, SETTING_NAMES, UPLINK_WINDOW, Recorder, Session,
+                          Stats, Window, list_ports, open_port, park, parse_applied, parse_settings, probability,
+                          score_at, window_text)
 
 DRAIN_MS = 50
 DRAIN_BUDGET_S = 0.04
@@ -69,6 +70,14 @@ GREEN = "#2e9e44"
 GREY = "#9a9a9a"
 CONNECTED = "-- connected to"
 IMAGE_W, IMAGE_H = 640, 480
+LINE_LENGTH_PCK = 3448
+PIXEL_RATE = 182.4e6
+DEFAULTS = {"again": 0x40, "dgain": 0x200, "exposure": 0xA40, "framelen": 0xAA8, "window": 20}
+SLIDERS = (("again", 0, 232), ("dgain", 0x100, 0xFFF), ("exposure", 1, 0xAA8 - 4),
+           ("framelen", 2464 + 32, 8000), ("window", 2, 20))
+PREVIEW_WINDOW = 4
+CFG_DEFINES = (("exposure", "IMX219_EXPOSURE_SETTING"), ("again", "IMX219_AGAIN_SETTING"),
+               ("dgain", "IMX219_DGAIN_SETTING"), ("framelen", "IMX219_FRAMELEN_SETTING"))
 RIGHT_MIN_W = 560
 GAMMA = 2.2
 ERROR_MARKS = ("!!", "FAIL", "FATAL", "not sent")
@@ -80,6 +89,32 @@ def display_correction(im):
     a = a * (means.mean() / np.maximum(means, 1.0))
     a = np.power(np.clip(a, 0, 255) / 255.0, 1.0 / GAMMA) * 255.0
     return Image.fromarray((a + 0.5).astype(np.uint8), "RGB")
+
+
+def setting_note(name, v):
+    if v is None:
+        return "applied -"
+    if name == "again":
+        return f"applied {v} (x{256 / (256 - v):.2f})"
+    if name == "dgain":
+        return f"applied 0x{v:X} (x{v / 256:.2f})"
+    if name == "exposure":
+        return f"applied {v} lines ({v * LINE_LENGTH_PCK / PIXEL_RATE * 1e3:.1f} ms)"
+    if name == "framelen":
+        return f"applied {v} lines ({PIXEL_RATE / (LINE_LENGTH_PCK * v):.2f} frames/s)"
+    return f"applied {v} frames"
+
+
+def cfg_lines(values):
+    return "\n".join(f"#define {define}\t\t\t(0x{values[name]:X})" for name, define in CFG_DEFINES) + "\n"
+
+
+def stack_text(stacks):
+    items = [f"{name} {used}/{alloc}" for name, (used, alloc) in stacks.items()]
+    if not items:
+        return "-"
+    half = (len(items) + 1) // 2
+    return "  ".join(items[:half]) + ("\n            " + "  ".join(items[half:]) if items[half:] else "")
 
 
 def snapshot(st):
@@ -127,10 +162,12 @@ class LiveSource(Source):
         self.port = port
         self.baud = baud
         self.recorder = recorder
+        self.tx = queue.Queue()
 
     def run(self):
         try:
             s = open_port(self.port, self.baud)
+            s.timeout = 0.05
         except Exception as e:
             self.q.put(("ended", time.monotonic(), f"cannot open {self.port}: {e}"))
             return
@@ -143,6 +180,10 @@ class LiveSource(Source):
         try:
             while not self.stop.is_set():
                 self.session.rec = self.recorder()
+                while not self.tx.empty():
+                    cmd = self.tx.get_nowait()
+                    s.write((cmd + "\n").encode("ascii"))
+                    self.session.message(f"-> {cmd}", time.monotonic())
                 buf += s.read(8192)
                 self.session.feed(buf, time.monotonic())
                 self.tick()
@@ -182,11 +223,13 @@ def replay_timeline(folder):
         images = {int(r["window"]): r for r in csv.DictReader(f)}
     with open(folder / "windows.csv", newline="") as f:
         for r in csv.DictReader(f):
-            p = [int(r[f"p{k}"]) for k in range(UPLINK_WINDOW)] if r.get("p0") else None
-            n = [int(r[f"n{k}"]) for k in range(UPLINK_WINDOW)] if r.get("n0") else None
+            p = [int(r[f"p{k}"]) for k in range(UPLINK_WINDOW) if r[f"p{k}"]] if r.get("p0") else None
+            n = [int(r[f"n{k}"]) for k in range(UPLINK_WINDOW) if r[f"n{k}"]] if r.get("n0") else None
+            y = float(r["y_mean"]) if r.get("y_mean") else None
+            c = float(r["clip_pct"]) if r.get("clip_pct") else None
             w = Window(int(r["window"]), int(r["first"]), int(r["last"]),
                        int(r["best"]) if r["best"] else None, int(r["best_score"]) if r["best_score"] else None,
-                       int(r["merged"]), int(r["failed"]), p, n)
+                       int(r["merged"]), int(r["failed"]), p, n, y, c)
             t = float(r["t_pc"])
             items.append((t, "line", window_text(w)))
             img = images.get(w.window)
@@ -263,6 +306,12 @@ class App:
         self.layout_pending = False
         self.scale = None
         self.strip_recs = []
+        self.applied = {name: None for name in SETTING_NAMES}
+        self.slider_vars = {}
+        self.slider_widgets = {}
+        self.slider_notes = {}
+        self.dragging = set()
+        self.yhist = []
         self.lines = []
         self.windows = {}
         self.images = collections.deque(maxlen=KEEP_IMAGES)
@@ -292,6 +341,8 @@ class App:
             self.toggle_connect()
         for t in args.toggle_at:
             self.root.after(int(t * 1000), self.toggle_connect)
+        for t, cmd in args.send_at or []:
+            self.root.after(int(float(t) * 1000), lambda c=cmd: self.send_command(c))
         if args.exit_after:
             self.root.after(int(args.exit_after * 1000), self.quit)
 
@@ -369,15 +420,24 @@ class App:
         plot_frame = ttk.Frame(right)
         right.add(plot_frame, weight=3)
         self.fig = Figure(figsize=(5, 3), dpi=80, layout="constrained")
-        gs = self.fig.add_gridspec(2, 1, height_ratios=(3, 2))
+        gs = self.fig.add_gridspec(3, 1, height_ratios=(3, 2, 2))
         self.ax_t = self.fig.add_subplot(gs[0])
         self.ax_f = self.fig.add_subplot(gs[1])
+        self.ax_y = self.fig.add_subplot(gs[2])
+        self.ax_c = self.ax_y.twinx()
         self.canvas = FigureCanvasTkAgg(self.fig, master=plot_frame)
         self.canvas.get_tk_widget().configure(height=200)
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
-        bottom = ttk.Frame(right, padding=(4, 2))
-        right.add(bottom, weight=2)
+        notebook = ttk.Notebook(right)
+        right.add(notebook, weight=2)
+        bottom = ttk.Frame(notebook, padding=(4, 2))
+        notebook.add(bottom, text="Console")
+        tune = ttk.Frame(notebook, padding=(4, 2))
+        notebook.add(tune, text="Tuning")
+        self.build_tuning(tune)
+        if self.args.tab == "tuning":
+            notebook.select(tune)
         cbar = ttk.Frame(bottom)
         cbar.pack(fill=tk.X)
         ttk.Label(cbar, text="Console").pack(side=tk.LEFT)
@@ -400,6 +460,103 @@ class App:
         self.update_threshold_label()
         self.render_stats()
         self.render_plot()
+
+    def build_tuning(self, tune):
+        live = not self.args.replay
+        for row, (name, lo, hi) in enumerate(SLIDERS):
+            ttk.Label(tune, text=name, width=9).grid(row=row, column=0, sticky="w")
+            var = tk.IntVar(value=DEFAULTS[name])
+            sc = tk.Scale(tune, from_=lo, to=hi, orient=tk.HORIZONTAL, variable=var, showvalue=False,
+                          resolution=1, length=240, state="normal" if live else "disabled")
+            sc.grid(row=row, column=1, sticky="we")
+            sc.bind("<ButtonPress-1>", lambda e, n=name: self.dragging.add(n))
+            sc.bind("<ButtonRelease-1>", lambda e, n=name: self.slider_released(n))
+            ent = ttk.Entry(tune, textvariable=var, width=7, state="normal" if live else "disabled")
+            ent.grid(row=row, column=2, padx=4)
+            ent.bind("<Return>", lambda e, n=name: self.send_setting(n))
+            note = ttk.Label(tune, text=setting_note(name, None), width=34)
+            note.grid(row=row, column=3, sticky="w")
+            self.slider_vars[name] = var
+            self.slider_widgets[name] = sc
+            self.slider_notes[name] = note
+        tune.columnconfigure(1, weight=1)
+        buttons = ttk.Frame(tune)
+        buttons.grid(row=len(SLIDERS), column=0, columnspan=4, sticky="w", pady=(4, 0))
+        state = "normal" if live else "disabled"
+        ttk.Button(buttons, text="Get", command=lambda: self.send_command("get"), state=state).pack(side=tk.LEFT)
+        self.preview_button = ttk.Button(buttons, text=f"Preview (window {PREVIEW_WINDOW})",
+                                         command=self.toggle_preview, state=state)
+        self.preview_button.pack(side=tk.LEFT, padx=6)
+        ttk.Button(buttons, text="Copy settings", command=self.copy_settings).pack(side=tk.LEFT)
+        self.tune_status = ttk.Label(tune, text="", foreground="#555")
+        self.tune_status.grid(row=len(SLIDERS) + 1, column=0, columnspan=4, sticky="w")
+
+    def send_command(self, cmd):
+        src = self.source
+        if self.args.replay or not isinstance(src, LiveSource) or not src.is_alive():
+            self.tune_status.configure(text="not connected", foreground="#c62828")
+            return False
+        src.tx.put(cmd)
+        return True
+
+    def slider_released(self, name):
+        self.dragging.discard(name)
+        self.send_setting(name)
+
+    def send_setting(self, name):
+        try:
+            v = int(self.slider_vars[name].get())
+        except (tk.TclError, ValueError):
+            self.tune_status.configure(text=f"{name}: not a number", foreground="#c62828")
+            return
+        if self.send_command(f"set {name} {v}"):
+            self.tune_status.configure(text=f"sent set {name} {v}", foreground="#555")
+
+    def toggle_preview(self):
+        w = self.applied["window"]
+        self.send_command(f"set window {UPLINK_WINDOW if w == PREVIEW_WINDOW else PREVIEW_WINDOW}")
+
+    def current_settings(self):
+        return {name: (self.applied[name] if self.applied[name] is not None else DEFAULTS[name])
+                for name in SETTING_NAMES}
+
+    def copy_settings(self):
+        text = cfg_lines(self.current_settings())
+        self.root.clipboard_clear()
+        self.root.clipboard_append(text)
+        self.tune_status.configure(text="copied: " + text.replace("\n", "  ").replace("\t\t\t", " "),
+                                   foreground="#555")
+
+    def setting_applied(self, name, v):
+        self.applied[name] = v
+        if name in self.slider_notes:
+            self.slider_notes[name].configure(text=setting_note(name, v))
+            if name not in self.dragging:
+                self.slider_vars[name].set(v)
+        if name == "framelen":
+            self.slider_widgets["exposure"].configure(to=v - 4)
+        if name == "exposure":
+            self.slider_widgets["framelen"].configure(from_=max(SLIDERS[3][1], v + 4))
+        if name == "window":
+            self.preview_button.configure(
+                text=f"Normal (window {UPLINK_WINDOW})" if v == PREVIEW_WINDOW else f"Preview (window {PREVIEW_WINDOW})")
+
+    def tuning_text(self, text):
+        a = parse_applied(text)
+        if a:
+            name, v, frame, ok = a
+            self.setting_applied(name, v)
+            self.tune_status.configure(text=text, foreground="#555" if ok else "#c62828")
+            return
+        values = parse_settings(text)
+        if values:
+            for name, v in values.items():
+                self.setting_applied(name, v)
+            self.tune_status.configure(text=text, foreground="#555")
+            return
+        m = COMMAND_LINE.match(text)
+        if m and "bytes used" not in text:
+            self.tune_status.configure(text=text, foreground="#c62828")
 
     def root_configured(self, event):
         if event.widget is self.root and not self.layout_pending:
@@ -500,6 +657,7 @@ class App:
         self.source = LiveSource(self.q, self.session, port, self.args.baud, lambda: self.rec)
         self.connect_button.configure(text="Disconnect")
         self.source.start()
+        self.source.tx.put("get")
 
     def start_replay(self):
         self.source = ReplaySource(self.q, self.session, self.args.replay, self.replay_speed)
@@ -530,6 +688,7 @@ class App:
             self.lag_minute[minute] = max(self.lag_minute[minute], lag)
             if kind == "text":
                 self.console_add(ev[2])
+                self.tuning_text(ev[2])
             elif kind == "window":
                 self.window_added(ev[2], ev[3])
                 changed = True
@@ -565,6 +724,8 @@ class App:
             for k in sorted(self.windows)[:KEEP_IMAGES]:
                 del self.windows[k]
         self.lines.append((t, w.score))
+        if w.y is not None:
+            self.yhist.append((t, w.y, w.clip))
         self.last_window = w
         self.plot_dirty = True
 
@@ -700,8 +861,7 @@ class App:
         out += [
             f"Detection   threshold {self.threshold.get():.1f} % (score >= {self.score_min()})",
             f"  at or above  {hits} of {n} windows ({pct})   current run {run}   longest run {longest}",
-            "Stacks      " + ("  ".join(f"{name} {used}/{alloc}" for name, (used, alloc) in s["stacks"].items())
-                              if s and s["stacks"] else "-"),
+            "Stacks      " + stack_text(s["stacks"] if s else {}),
             f"GUI lag     last {1000 * self.lag_last:.0f} ms   max {1000 * self.lag_max:.0f} ms",
         ]
         self.stats_label.configure(text="\n".join(out))
@@ -744,6 +904,25 @@ class App:
         ax.set_xlim(-0.6, UPLINK_WINDOW - 0.4)
         ax.set_xticks(range(0, UPLINK_WINDOW, 2))
         ax.tick_params(labelsize=7)
+        ax, axc = self.ax_y, self.ax_c
+        ax.clear()
+        axc.clear()
+        if self.yhist:
+            t_now = self.yhist[-1][0]
+            i = bisect.bisect_left([t for t, _, _ in self.yhist], t_now - PLOT_S)
+            xs = [t for t, _, _ in self.yhist[i:]]
+            ax.plot(xs, [y for _, y, _ in self.yhist[i:]], color="#1f5fa8", linewidth=1)
+            axc.plot(xs, [c for _, _, c in self.yhist[i:]], color="#c62828", linewidth=1)
+            ax.set_xlim(max(0, t_now - PLOT_S), max(t_now, 10))
+            ax.set_title(f"input Y mean {self.yhist[-1][1]:.1f} (blue), clipped {self.yhist[-1][2]:.2f} % (red)",
+                         fontsize=9)
+        else:
+            ax.set_title("input Y mean and % clipped (Y >= 250)", fontsize=9)
+        ax.set_ylim(0, 255)
+        axc.set_ylim(0, max(5.0, max((c for _, _, c in self.yhist), default=0) * 1.2))
+        ax.tick_params(labelsize=7)
+        axc.tick_params(labelsize=7, colors="#c62828")
+        ax.grid(alpha=0.3)
         self.canvas.draw_idle()
 
     def console_add(self, text):
@@ -793,6 +972,8 @@ class App:
               f"{hits} of {n} window lines at or above, longest run {longest}")
         mins = " ".join(f"{1000 * self.lag_minute[m]:.0f}" for m in sorted(self.lag_minute))
         print(f"GUI lag: max {1000 * self.lag_max:.0f} ms; max per minute (ms): {mins}")
+        print("applied settings: " + ", ".join(f"{k}={v}" for k, v in self.applied.items()))
+        print("copy settings:\n" + cfg_lines(self.current_settings()), end="")
 
     def quit(self):
         if self.source and self.source.is_alive():
@@ -827,6 +1008,9 @@ def main():
     ap.add_argument("--exit-after", type=float, metavar="S", help="close the window after S seconds")
     ap.add_argument("--toggle-at", type=float, nargs="*", default=[], metavar="S",
                     help="press Connect/Disconnect after S seconds (tests)")
+    ap.add_argument("--send-at", nargs=2, action="append", metavar=("S", "COMMAND"),
+                    help="send COMMAND through the tuning path after S seconds (tests)")
+    ap.add_argument("--tab", choices=("console", "tuning"), default="console", help="tab shown at start")
     ap.add_argument("--no-correction", action="store_true", help="start with Display correction off")
     ap.add_argument("--geometry", default="1500x980", help="window size (and position), as for Tk")
     ap.add_argument("--report", action="store_true", help="print the statistics when the window closes")

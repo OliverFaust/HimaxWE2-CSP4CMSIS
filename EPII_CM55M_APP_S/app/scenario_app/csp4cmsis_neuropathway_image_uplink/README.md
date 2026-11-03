@@ -207,6 +207,8 @@ The PC can change the sensor settings and the window size while the network runs
   * **Window 4 for 2 minutes, a command every 200 ms:** 4.85 images/s (19.39 / 4), `merged 0`, images about 10.6 KB (115 ms per image against 206 ms per window); merges would start with images above about 19 KB.
   * **Camera never waits on `cmd_chan`:** a command every 10 ms for 60 s (5 times what Camera takes, one per frame): 19.39 frames/s, 0 merges; Command waited on the full slot, its receive buffer overflowed and it reported 90 times that bytes were lost (18 556 bytes in all), without parsing a damaged line.
   * The Stage 0 and score-log builds compile; they were not run with commands.
+* **GUI tuning (`uplink_gui.py`, tab "Tuning" next to "Console"):** a slider and an entry for each of the five settings; a slider sends `set <name> <value>` when it is released, an entry when Return is pressed. Next to each, the applied value from the acknowledgements, with its meaning (gain as a factor, exposure in ms, frame length as frames/s at 3448 pixels per line and 182.4 Mpix/s); the exposure slider ends at `framelen` - 4 and the frame-length slider starts at `exposure` + 4, as the board checks. `Get` asks for all values (also sent on Connect), `Preview (window 4)` switches to window 4 and back to 20, and `Copy settings` puts the `cisdp_cfg.h` lines for the applied values on the clipboard, e.g. `#define IMX219_EXPOSURE_SETTING (0xA40)` (exposure, analogue and digital gain, frame length). The last acknowledgement or rejection is shown under the buttons, rejections in red. A third plot shows the input's mean Y and % clipped over the last 5 minutes. Commands go through the reader thread, which owns the port, and are logged as `-> <command>`; in replay the tab shows the recorded acknowledgements and does not send. `--tab tuning` opens on the tab, `--send-at S COMMAND` sends through the same path (tests).
+* **GUI check (live, 45 s, 1366x768, Record on):** commands sent through the tuning path and by dragging sliders were all acknowledged (exposure, gains, window 4 and back), one out-of-range exposure was rejected; 19.40 frames/s, no errors. At window 4 nothing merged while the images were 7.5-10.7 KB; after the digital gain was raised to 2768 (Y about 160) they grew to 18-20 KB and every line merged two windows (`merged 1`), as the 19 KB estimate above predicts. In replay of the command test (`console.log`), the applied values, the preview button and the copied lines followed the recorded acknowledgements.
 
 ---
 
@@ -463,7 +465,7 @@ app/scenario_app/csp4cmsis_neuropathway_image_uplink/
 ├── command_process.h/.cpp  // Command: console UART receive (interrupt), command lines, cmd_chan (section 14)
 ├── tools/uplink_rx.py      // PC receiver: text lines, image frames, frame rate, windows.csv, operator prompts; parks the port (sections 8, 11)
 ├── tools/uplink_proto.py   // Protocol shared by the receiver and the GUI: port, frames, lines, statistics, recording (section 12)
-├── tools/uplink_gui.py     // PC monitor: images, statistics, plots, console; live and replay (sections 12, 13)
+├── tools/uplink_gui.py     // PC monitor: images, statistics, plots, console, sensor tuning; live and replay (sections 12-14)
 ├── tools/analyse_run.py    // Score-log run analysis: per-phase scores, best-frame check, threshold table, contact sheets (section 11)
 ├── tools/phases.csv        // Protocol of the person detection test (section 11)
 ├── tools/stage0_capture.py // PC side of the Stage 0 test
