@@ -1,0 +1,86 @@
+-- The command path of csp4cmsis_neuropathway_image_uplink, definitions shared by
+-- Uplink_command.csp and Uplink_command_controls.csp. Command reads command lines from the
+-- console UART (rx), writes valid ones to cmd_chan (one slot) and reports invalid ones on
+-- report_chan. Camera polls cmd_chan once per frame, writes the sensor and marks the next frame;
+-- Inference acknowledges with a report of its own under the ready token.
+-- The JPEG buffers are left out (Uplink.csp checks them): Inference here keeps only what the
+-- command path touches, the ready token, the window position and a pending acknowledgement.
+-- Windows of W = 2 frames; a command is abstract (one value).
+
+W = 2
+
+datatype report_t = started | stack | scores | window | applied | rejected
+
+INF_REPORTS = {scores, window, applied}
+OTHER       = {started, stack, rejected}
+
+channel g_trigger_chan                         -- frame-ready interrupt -> Camera
+channel frame_chan   : {0..W-1}.Bool           -- Camera -> Inference: position in the window,
+                                               -- a setting was written before this frame
+channel release_chan                           -- Inference -> Camera: raw buffer free
+channel ready_in, ready_out, ready_empty       -- ready_chan (one slot), as in Uplink.csp
+channel rx                                     -- a command line arrives on the console UART
+channel cmd_in                                 -- Command -> cmd_chan's slot
+channel cmd_out                                -- cmd_chan's slot -> Camera (poll, value ready)
+channel cmd_empty                              -- cmd_chan's slot -> Camera (poll, SKIP taken)
+channel sensor_write                           -- Camera writes the sensor's registers
+channel report_chan  : report_t
+channel line         : report_t
+channel stack_tick
+channel overflow
+
+ENV = g_trigger_chan -> ENV
+
+RUN(A) = [] x : A @ x -> RUN(A)
+
+-- Camera: after passing a frame on it polls cmd_chan (PRI ALT with SKIP): a command is
+-- applied to the sensor and marked on the next frame; an empty slot is skipped.
+Camera = report_chan!started -> CameraLoop(0, false)
+CameraLoop(i, a) = g_trigger_chan -> frame_chan!i!a -> Poll(i)
+Poll(i) = (cmd_out -> sensor_write -> release_chan -> CameraLoop((i + 1) % W, true))
+          [] (cmd_empty -> release_chan -> CameraLoop((i + 1) % W, false))
+
+-- Inference: q = an acknowledgement is pending, rdy = holds the ready token. With the token it
+-- writes one report per frame: the Window report at a window end, else a pending
+-- acknowledgement, else Scores. Without it, the acknowledgement stays pending.
+Inference = frame_chan?i?a -> Infer(i, a, true)
+Infer(i, q, rdy) = (ready_out -> InferRelease(i, q, true)) [] (ready_empty -> InferRelease(i, q, rdy))
+InferRelease(i, q, rdy) = release_chan -> InferEnd(i, q, rdy)
+InferEnd(i, q, rdy) =
+    if rdy then
+        if i == W - 1 then report_chan!window -> InferNext(q, false)
+        else if q then report_chan!applied -> InferNext(false, false)
+        else report_chan!scores -> InferNext(q, false)
+    else InferNext(q, rdy)
+InferNext(q, rdy) = frame_chan?j?a -> Infer(j, q or a, rdy)
+
+READY = (ready_in -> READY_FULL) [] (ready_empty -> READY)
+READY_FULL = (ready_out -> READY) [] (ready_in -> overflow -> STOP)
+
+CMD = (cmd_in -> CMD_FULL) [] (cmd_empty -> CMD)
+CMD_FULL = cmd_out -> CMD
+
+MainApp = stack_tick -> report_chan!stack -> MainApp
+MainAppN(n) = if n == 0 then STOP else stack_tick -> report_chan!stack -> MainAppN(n - 1)
+
+-- Command: each line received is either valid (to cmd_chan) or rejected (a report). Command:
+-- lines for ever; CommandN(n): n lines; CommandValid: valid lines for ever, each of which needs
+-- a frame; CommandNone: no line.
+Command = rx -> ((cmd_in -> Command) |~| (report_chan!rejected -> Command))
+CommandN(n) = if n == 0 then STOP else rx -> ((cmd_in -> CommandN(n - 1)) |~| (report_chan!rejected -> CommandN(n - 1)))
+CommandValid = rx -> cmd_in -> CommandValid
+CommandNone = STOP
+
+Reporter = (report_chan?r:INF_REPORTS -> line!r -> ready_in -> Reporter)
+           [] (report_chan?r:OTHER -> line!r -> Reporter)
+ReporterStall = (report_chan?r:INF_REPORTS -> line!r -> ((ready_in -> ReporterStall) |~| STOP))
+                [] (report_chan?r:OTHER -> line!r -> ReporterStall)
+
+NET(Cam, Rep, Main, Cmd) =
+    (((((Cam [| {| frame_chan, release_chan |} |] Inference) ||| Main ||| Cmd)
+       [| {| report_chan |} |] Rep)
+      [| {| ready_in, ready_out, ready_empty |} |] READY)
+     [| {| cmd_in, cmd_out, cmd_empty |} |] CMD)
+SYS(Cam, Rep, Main, Cmd) = ENV [| {| g_trigger_chan |} |] NET(Cam, Rep, Main, Cmd)
+
+CYCLE = g_trigger_chan -> CYCLE
