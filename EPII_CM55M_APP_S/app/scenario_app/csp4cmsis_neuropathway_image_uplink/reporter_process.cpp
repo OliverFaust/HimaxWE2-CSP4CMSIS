@@ -121,14 +121,52 @@ void Reporter::run()
             } else {
                 xprintf(" best %lu score %d", (unsigned long)(uint32_t)r.value[2], (int)r.value[3]);
             }
-            xprintf(" merged %d failed %ld", (int)r.code, (long)r.value[4]);
+            xprintf(" merged %d failed %ld y %ld.%ld clip %ld.%02ld", (int)r.code, (long)r.value[4],
+                    (long)(r.value[5] / 10), (long)(r.value[5] % 10), (long)(r.value[6] / 100), (long)(r.value[6] % 100));
 #ifdef UPLINK_SCORE_LOG
             xprintf(" p");
-            for (uint32_t k = 0; k < UPLINK_WINDOW; k++) xprintf(" %d", (int)r.scores[k]);
+            for (uint32_t k = 0; k < r.score_count; k++) xprintf(" %d", (int)r.scores[k]);
             xprintf(" n");
-            for (uint32_t k = 0; k < UPLINK_WINDOW; k++) xprintf(" %d", (int)r.scores[UPLINK_WINDOW + k]);
+            for (uint32_t k = 0; k < r.score_count; k++) xprintf(" %d", (int)r.scores[UPLINK_WINDOW + k]);
 #endif
             xprintf("\r\n");
+            break;
+        case ReportKind::Applied:
+            if (r.code == 0) {
+                xprintf("%s: %s=%ld applied at frame %lu\r\n", r.name, setting_name((uint8_t)r.value[0]),
+                        (long)r.value[1], (unsigned long)r.index);
+            } else {
+                xprintf("%s: %s write FAILED at frame %lu, still %ld\r\n", r.name, setting_name((uint8_t)r.value[0]),
+                        (unsigned long)r.index, (long)r.value[1]);
+            }
+            break;
+        case ReportKind::Settings:
+            xprintf("%s: again=%ld dgain=%ld exposure=%ld framelen=%ld window=%ld\r\n", r.name,
+                    (long)r.value[SETTING_AGAIN], (long)r.value[SETTING_DGAIN], (long)r.value[SETTING_EXPOSURE],
+                    (long)r.value[SETTING_FRAMELEN], (long)r.value[SETTING_WINDOW]);
+            break;
+        case ReportKind::Rejected:
+            switch (r.code) {
+            case REJECT_UNKNOWN_SETTING:
+                xprintf("%s: rejected: unknown setting\r\n", r.name);
+                break;
+            case REJECT_BAD_VALUE:
+                xprintf("%s: rejected %s: bad value\r\n", r.name, setting_name((uint8_t)r.value[0]));
+                break;
+            case REJECT_OUT_OF_RANGE:
+                xprintf("%s: rejected %s=%ld: out of range %ld..%ld\r\n", r.name, setting_name((uint8_t)r.value[0]),
+                        (long)r.value[1], (long)r.value[2], (long)r.value[3]);
+                break;
+            case REJECT_LINE_TOO_LONG:
+                xprintf("%s: rejected: line too long\r\n", r.name);
+                break;
+            case REJECT_BYTES_LOST:
+                xprintf("%s: %ld received bytes lost (buffer full)\r\n", r.name, (long)r.value[1]);
+                break;
+            default:
+                xprintf("%s: rejected: unknown command (set again|dgain|exposure|framelen|window <value>, get)\r\n", r.name);
+                break;
+            }
             break;
         case ReportKind::Stack:
             if (r.value[2] < 0) {

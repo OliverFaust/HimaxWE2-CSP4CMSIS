@@ -9,7 +9,7 @@ The work follows a staged plan; each stage must pass on the board before the nex
 * **Stage 3, best-of-20:** four JPEG buffers in fixed roles (DMA target, being scored, best of the window, being sent); the uplink returns its buffer when the send is done, and a window whose best cannot be sent yet is merged into the next. Inference writes to `report_chan` only while it holds the free token, i.e. knows that the Reporter has finished sending; the `Window` line and the `Image` go together, and a failed inference is counted in the next `Window` line instead of getting a line of its own. Only the start-up lines and MainApp's stack report can still block on the Reporter. A board-side stall (`-DUPLINK_STALL_MS`) makes merging happen; stopping reads on the PC does not slow the board (there is no flow control) and is a separate check that the board carries on. Until Stage 3 nothing can merge, so every `Window` line says `merged 0`; the check with the uplink stalled is where the count must start to rise. Stack high-water marks are taken at the end of the 10-minute run, not shortly after flashing: the selection logic and the non-blocking poll on `free_chan` run in Inference (592/1024 bytes in Stage 2).
 * **Stage 4, formal model:** the CSP-M model extended with buffer ids as data. The check that Camera and Inference keep cycling while the uplink is stalled must include `report_chan`, not only the buffer tokens: a stalled Reporter blocks every writer of `report_chan`.
 
-**Status (2026-11-02):** Stages 0, 1 and 2 pass on the board (sections 7, 8 and 9); Stage 3 passes on the board (section 10), and the Stage 4 model holds in ProB (section 6). The first person-detection test run (section 11, 2026-11-03) passed its pipeline and selection checks, but its measurements must be repeated: the scene did not follow the protocol. The PC monitor `uplink_gui.py` is in section 12, image quality in section 13. The default build is the Stage 3 build; `-DUPLINK_STAGE0` builds the Stage 0 test instead. Sections 1-6 describe the network and note what the uplink changes.
+**Status (2026-11-02):** Stages 0, 1 and 2 pass on the board (sections 7, 8 and 9); Stage 3 passes on the board (section 10), and the Stage 4 model holds in ProB (section 6). The first person-detection test run (section 11, 2026-11-03) passed its pipeline and selection checks, but its measurements must be repeated: the scene did not follow the protocol. The PC monitor `uplink_gui.py` is in section 12, image quality in section 13, live sensor tuning from the PC in section 14. The default build is the Stage 3 build; `-DUPLINK_STAGE0` builds the Stage 0 test instead. Sections 1-6 describe the network and note what the uplink changes.
 
 The explanations for this code are in the book; the source files deliberately contain no comments.
 
@@ -24,6 +24,9 @@ flowchart LR
     ISR["frame-ready ISR<br/>os_app_dplib_cb()"] -->|"g_trigger_chan<br/>buffered, 1 slot"| Camera
     Camera -->|"frame_chan<br/>rendezvous, frame_t"| Inference
     Inference -->|"release_chan<br/>rendezvous, next JPEG buffer"| Camera
+    UART["console UART RX interrupt<br/>console_rx_cb()"] -->|"g_rx_chan<br/>buffered, 128 bytes"| Command
+    Command -->|"cmd_chan<br/>buffered, 1 slot, command_t"| Camera
+    Command -->|"rejections"| report_chan
     Reporter -->|"free_chan<br/>buffered, 1 slot, sent JPEG buffer"| Inference
     Camera -->|"start-up only"| report_chan
     Inference --> report_chan
@@ -190,6 +193,21 @@ The images of run 1 are dark, green and blocky. The causes are in the sensor set
 * **For auto-exposure later: frame length and maximum exposure.** Sources: the IMX219PQH5-C datasheet (register table, sections 5-5 "Frame Rate Calculation Formula", Table 21 "Storage Time Setting", 9-2 "Clock Setting Example") and the SDK files named. `IMX219_mipi_2lane_3280x2464.i` does not write `FRM_LENGTH_A` (0x0160/0x0161), so the sensor uses its default `0x0AA8`, 2728 lines (unit 1 line, since `IMX219_BINNING_SETTING` is `IMX219_BINNING_NONE`, `cisdp_cfg.h`). Lines 40-41 write `LINE_LENGTH_A` (0x0162/0x0163) = `0x0D78`, 3448 pixels. The PLL lines 15-23 (`VTPXCK_DIV` 5, `PLL_VT_MPY` 0x39 = 57) with `EXCK_FREQ` 24 MHz (lines 48-49) are the datasheet's 2-lane case: pll1 456 MHz, 182.4 Mpix/s (the Linux `imx219` driver uses the same values and `IMX219_PIXEL_RATE` 182 400 000). Time per line = 3448 / 182.4 MHz = 18.90 us; frame = 2728 lines = 51.57 ms, 19.39 frames/s, exactly the measured rate. The longest exposure without lengthening the frame is `frame_length_lines` - 4 = 2724 lines, 51.5 ms (Table 21; with a longer `coarse_integration_time` the frame becomes `coarse_integration_time` + 4 lines). The current `IMX219_EXPOSURE_SETTING` 0xA40 = 2624 lines (49.6 ms) leaves 100 lines, 4 %: a brighter image at 19.4 frames/s can only come from gain; beyond that, `FRM_LENGTH_A` must grow and the frame rate drops.
 * **White balance on the board: not in hardware.** The IMX219 has only global gains: "Only global analogue gain is supported" (5-8-1, `ANA_GAIN_GLOBAL_A` 0x0157, gain = 256 / (256 - X), X = 0..232) and "The IMX219PQH5-C can set the digital gain for global" (5-8-2, `DIG_GAIN_GLOBAL_A` 0x0158/0x0159, upper byte integer 1-15, lower byte /256). The capability register `digital_gain_capability` (0x1081) reads 1 "per channel digital gain", but its footnote says "Only a setup common to channel". On the WE2, `HW5x5_CFG_T` (`drivers/inc/hx_drv_hw5x5.h`, lines 117-131) has only the path, the demosaic colour format and Bayer pattern, the boundary and rounding modes, the FIR mode and the crop; the HW5x5, INP, HW2x2, CDM, JPEG and data-path headers (`drivers/inc/`, `library/sensordp/inc/sensor_dp_lib.h`) have no colour gain, white balance or gamma. The `again` and `dgain` fields in `sensor_dp_lib.h` (lines 427-428) are values decoded from an HM11B1 sensor's frame header, not a processing gain. Since the JPEG is encoded in hardware from the HW5x5 output, white balance for the sent images can only be done on the PC (as the GUI's display correction does), unless the JPEG were encoded in software from a corrected buffer.
 
+### 14. Live sensor tuning
+The PC can change the sensor settings and the window size while the network runs: `set again|dgain|exposure|framelen|window <value>` (decimal or `0x` hex) and `get`, one per line, over the console UART's receive direction.
+* **Command process:** owns the console's receive direction. The UART's receive interrupt (`UART0_intr_IRQn`, priority 5 so that it may call CSP4CMSIS) calls `console_rx_cb()`, set with `UART_CMD_SET_RXCB` and no receive buffer (`UART_CMD_SET_RXINT_BUF` NULL, so the driver calls it whenever data is available); the callback drains the FIFO with `uart_read_nonblock()` and writes each byte to a 128-byte `BufferedChannel` with `isrWriter().putFromISR()`. Interrupts rather than polling because a poll would have to come every 0.17 ms: at 921 600 Bd 16 bytes arrive in that time. When the buffer is full the byte is dropped and counted, and a marker byte goes into the stream as soon as there is room, so that Command drops exactly the damaged line and reports `Command: <n> received bytes lost (buffer full)`. Command validates each line and writes a `command_t` to `cmd_chan` (`BufferedChannel<command_t, 1>`); a second command waits until Camera has taken the first. Invalid lines are rejected on `report_chan` with the reason: `Command: rejected exposure=3000: out of range 1..2724`, `... bad value`, `unknown setting`, `unknown command (...)`, `line too long` (over 40 characters).
+* **Ranges:** `again` 0..232 (datasheet 5-8-1), `dgain` 0x100..0xFFF (5-8-2), `exposure` 1..`framelen` - 4 (Table 21; a longer exposure would lengthen the frame), `framelen` `exposure` + 4..0xFFFE, at least 2496 = 2464 + 32 lines (the Linux driver's minimum vertical blanking of 32 lines; maximum from `max_frame_length_lines`, 0x1142), `window` 2..20. Command checks against the values it has passed on. The defaults come from `cisdp_cfg.h`; `IMX219_FRAMELEN_SETTING` (0x0AA8, the sensor's own default) is new and is written at start-up like the exposure.
+* **Camera:** after passing a frame on, Camera polls `cmd_chan` once (a PRI ALT with a zero `RelTimeoutGuard`, as Inference polls `free_chan`), so it never waits for a command. It applies a command at once, while Inference rescales and before it re-arms the capture: shortly after frame-ready, when the sensor is in its vertical blanking (264 lines, about 5 ms at the default frame length). **The IMX219 has no grouped parameter hold:** its 0x0104 is the read-only "corrupted frame status" (datasheet register table); frame-bank registers are latched at V-sync and take effect "in next frame (or following next frame)" (3-1-5). Writing within the blanking interval keeps the two bytes of a 16-bit setting in the same frame in practice, but nothing guarantees it. The next frame carries the new settings and a bit per changed setting (`frame_t.settings`, `changed`, `failed`); an I2C error keeps the old value and is reported as `Camera: exposure write FAILED at frame N, still 2624`.
+* **Acknowledgements under the token rule:** Camera does not write to `report_chan` while frames run; Inference collects the changes from the frames and, when it next sends a `Window` line (while it holds the free token), sends after it `Camera: exposure=2000 applied at frame 317` for each setting that changed (the latest value, the first frame captured after the write; per 3-1-5 the sensor may show it one frame later), then, after a `get`, `Camera: again=64 dgain=512 exposure=2624 framelen=2728 window=20`, then the `Image`. While the uplink is busy the acknowledgements wait with the merged window. The window size is Inference's: it switches at the next window boundary and reports `Inference: window=4 applied at frame 620`.
+* **Image statistics:** each `Window` line now ends with the mean Y and the share of clipped pixels (Y >= 250) of the 96x96 model input over the frames it covers: `... merged 0 failed 0 y 63.1 clip 0.00` (`cv_input_stats()`; the input tensor holds Y - 128). The score log, when built, follows it.
+* **PC side:** `uplink_proto.py` parses the new fields and lines (`windows.csv` gains `y_mean` and `clip_pct`; the score log may have 2..20 values); `uplink_rx.py --send-at T COMMAND` and `--send-every MS COMMAND...` send commands and log them as `-> <command>`.
+* **Checks on the board (2026-11-03, default build: 4x table, gain 0x40, no score log):**
+  * **Function:** `get`, valid `set`s of all five settings with their acknowledgements, and 13 invalid lines, each rejected with the right reason (range, bad value, unknown setting or command, line too long); the frame rate followed `framelen` (3000 lines: 17.6 frames/s, as the datasheet's formula gives) and Y followed exposure and gain (63 -> 58 at exposure 2000, 66 at gain 128, 92 at framelen 3000 and exposure 2990).
+  * **A command every 200 ms for 5 minutes at the default frame length, window 20** (exposure, gain, digital gain, `get` in turn): 1491 commands, 291 images, 0 errors, `merged 0`, 19.39 frames/s.
+  * **Window 4 for 2 minutes, a command every 200 ms:** 4.85 images/s (19.39 / 4), `merged 0`, images about 10.6 KB (115 ms per image against 206 ms per window); merges would start with images above about 19 KB.
+  * **Camera never waits on `cmd_chan`:** a command every 10 ms for 60 s (5 times what Camera takes, one per frame): 19.39 frames/s, 0 merges; Command waited on the full slot, its receive buffer overflowed and it reported 90 times that bytes were lost (18 556 bytes in all), without parsing a damaged line.
+  * The Stage 0 and score-log builds compile; they were not run with commands.
+
 ---
 
 ## 🔧 Key Code Snippets
@@ -324,13 +342,15 @@ void MainApp_Task(void* params)
     static Channel<frame_t>  frame_chan;
     static Channel<release_t> release_chan;
     static BufferedChannel<uint8_t, 1> free_chan;
+    static BufferedChannel<command_t, 1> cmd_chan;
     static Channel<report_t> report_chan;
 
-    static Camera    camera(frame_chan.writer(), release_chan.reader(), report_chan.writer());
+    static Camera    camera(frame_chan.writer(), release_chan.reader(), cmd_chan.reader(), report_chan.writer());
     static Inference inference(frame_chan.reader(), release_chan.writer(), free_chan.reader(), report_chan.writer());
     static Reporter  reporter(report_chan.reader(), free_chan.writer());
+    static Command   command(cmd_chan.writer(), report_chan.writer());
 
-    auto network = InParallel(camera, inference, reporter);
+    auto network = InParallel(camera, inference, reporter, command);
     Run(network, ExecutionMode::StaticNetwork, NETWORK_PRIORITY);
 
     Chanout<report_t> report_out = report_chan.writer();
@@ -369,6 +389,8 @@ Window 11: frames 220-239 best 227 score -9 merged 0 failed 0
 | Inference | 1536 bytes | 736 bytes | 800 bytes |
 | Reporter | 1024 bytes | 488 bytes | 536 bytes |
 | CSP_Main (MainApp) | 1024 bytes | 784 bytes | 240 bytes |
+
+With the Command process (section 14), at the end of a 5-minute run with a command every 200 ms: Camera 944/1536 bytes, Inference 904/1536, Reporter 520/1024, Command 528/1024 (576 in the flood test), CSP_Main 880/1024 (144 bytes of headroom: its stack report now walks four processes).
 
 Before the uplink, Camera used 768 bytes (744 before it sent reports), Inference 560, the Reporter 472 and CSP_Main 464; CSP_Main's figure rose with the `CSP_Main: started` print. Before 2.0 Camera had only 1024 bytes (280 bytes of headroom); since CSP4CMSIS 2.0.1 it has 1536 bytes (384 words). Inference has had 1536 bytes (384 words) since Stage 4, after its use rose to 720-760 of 1024 bytes in Stage 3; the Reporter has a comfortable margin. Inference has blocked in the semaphore wait during `Invoke()` since before the uplink (488 bytes when it spun); the Reporter's figure grows during the first seconds and depends on the run.
 
@@ -438,6 +460,7 @@ app/scenario_app/csp4cmsis_neuropathway_image_uplink/
 ├── cis_sensor/cis_imx219/  // IMX219 driver: frame buffers, cisdp_set_jpeg_buf()
 ├── Formal model/           // CSP-M models: the parent network and the uplink (Stage 3), positive controls, ProB results
 ├── uplink.h / uplink.cpp   // CRC32 and the JPEG length rule (shared by Camera's Stage 0 checks and the Reporter)
+├── command_process.h/.cpp  // Command: console UART receive (interrupt), command lines, cmd_chan (section 14)
 ├── tools/uplink_rx.py      // PC receiver: text lines, image frames, frame rate, windows.csv, operator prompts; parks the port (sections 8, 11)
 ├── tools/uplink_proto.py   // Protocol shared by the receiver and the GUI: port, frames, lines, statistics, recording (section 12)
 ├── tools/uplink_gui.py     // PC monitor: images, statistics, plots, console; live and replay (sections 12, 13)

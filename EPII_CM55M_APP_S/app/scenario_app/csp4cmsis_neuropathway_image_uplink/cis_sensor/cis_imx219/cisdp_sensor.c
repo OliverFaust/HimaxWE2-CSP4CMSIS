@@ -81,6 +81,11 @@ static HX_CIS_SensorSetting_t  IMX219_exposure_setting[] = {
 		{HX_CIS_I2C_Action_W, 0x015b, (IMX219_EXPOSURE_SETTING&0xFF)},
 };
 
+static HX_CIS_SensorSetting_t  IMX219_framelen_setting[] = {
+		{HX_CIS_I2C_Action_W, 0x0160, ((IMX219_FRAMELEN_SETTING>>8)&0xFF)},
+		{HX_CIS_I2C_Action_W, 0x0161, (IMX219_FRAMELEN_SETTING&0xFF)},
+};
+
 static HX_CIS_SensorSetting_t  IMX219_again_setting[] = {
 		{HX_CIS_I2C_Action_W, 0x0157, (IMX219_AGAIN_SETTING&0xFF)},
 };
@@ -330,6 +335,17 @@ int cisdp_sensor_init(bool sensor_init)
         else
         {
             dbg_printf(DBG_LESS_INFO, "IMX219 Init by app (IMX219_binning_setting)\n");
+        }
+
+        //imx219_set_framelen
+        if(hx_drv_cis_setRegTable(IMX219_framelen_setting, HX_CIS_SIZE_N(IMX219_framelen_setting, HX_CIS_SensorSetting_t))!= HX_CIS_NO_ERROR)
+        {
+            dbg_printf(DBG_LESS_INFO, "IMX219 Init by app fail (IMX219_framelen_setting)\n");
+            return -1;
+        }
+        else
+        {
+            dbg_printf(DBG_LESS_INFO, "IMX219 Init by app (IMX219_framelen_setting)\n");
         }
 
         //imx219_set_exposure
