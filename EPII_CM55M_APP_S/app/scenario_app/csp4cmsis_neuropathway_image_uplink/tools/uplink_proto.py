@@ -31,7 +31,13 @@ HEADER = struct.Struct("<4sBBHI")
 IMAGE_META = struct.Struct("<IbI")
 MAX_BODY = 1 << 17
 WINDOW_LINE = re.compile(rb"^Window (\d+): frames (\d+)-(\d+) best (\d+|-) score (-?\d+|-) merged (\d+) failed (\d+)")
-SCORES = re.compile(rb" p((?: -?\d+){20}) n((?: -?\d+){20})\s*$")
+SCORES = re.compile(rb" p((?: -?\d+){2,20}) n((?: -?\d+){2,20})\s*$")
+WINDOW_Y = re.compile(rb" y (\d+\.\d) clip (\d+\.\d\d)")
+APPLIED_LINE = re.compile(r"^(Camera|Inference): (\w+)=(\d+) applied at frame (\d+)")
+APPLY_FAILED_LINE = re.compile(r"^(Camera|Inference): (\w+) write FAILED at frame (\d+), still (\d+)")
+SETTINGS_LINE = re.compile(r"^Camera: again=(\d+) dgain=(\d+) exposure=(\d+) framelen=(\d+) window=(\d+)")
+COMMAND_LINE = re.compile(r"^Command: (.*)")
+SETTING_NAMES = ("again", "dgain", "exposure", "framelen", "window")
 STACK_LINE = re.compile(rb"^(\w+): (\d+)/(\d+) bytes used")
 IMAGE_LOG = re.compile(r"^\[image seq (\d+) window (\d+) frame (\d+) score (-?\d+) (\d+) bytes -> (\S+)\]$")
 RESYNC_S = 2.0
@@ -43,7 +49,7 @@ RX_PREFIX = "# "
 SCORE_SCALE = 1 / 256
 SCORE_ZERO_POINT = -128
 
-Window = namedtuple("Window", "window first last best score merged failed p n")
+Window = namedtuple("Window", "window first last best score merged failed p n y clip", defaults=(None, None))
 
 
 def probability(score):
@@ -108,14 +114,33 @@ def parse_window(line):
     sc = SCORES.search(line)
     p = [int(v) for v in sc.group(1).split()] if sc else None
     n = [int(v) for v in sc.group(2).split()] if sc else None
+    yc = WINDOW_Y.search(line)
     return Window(int(m.group(1)), int(m.group(2)), int(m.group(3)), best, score,
-                  int(m.group(6)), int(m.group(7)), p, n)
+                  int(m.group(6)), int(m.group(7)), p, n,
+                  float(yc.group(1)) if yc else None, float(yc.group(2)) if yc else None)
+
+
+def parse_applied(text):
+    m = APPLIED_LINE.match(text)
+    if m:
+        return m.group(2), int(m.group(3)), int(m.group(4)), True
+    m = APPLY_FAILED_LINE.match(text)
+    if m:
+        return m.group(2), int(m.group(4)), int(m.group(3)), False
+    return None
+
+
+def parse_settings(text):
+    m = SETTINGS_LINE.match(text)
+    return dict(zip(SETTING_NAMES, map(int, m.groups()))) if m else None
 
 
 def window_text(w):
     s = f"Window {w.window}: frames {w.first}-{w.last} "
     s += "best - score -" if w.best is None else f"best {w.best} score {w.score}"
     s += f" merged {w.merged} failed {w.failed}"
+    if w.y is not None:
+        s += f" y {w.y:.1f} clip {w.clip:.2f}"
     if w.p is not None:
         s += " p " + " ".join(map(str, w.p)) + " n " + " ".join(map(str, w.n))
     return s
@@ -287,6 +312,10 @@ class Stats:
                 and self.first_frame is not None and self.first_frame[0] >= UPLINK_WINDOW)
 
 
+def pad(values):
+    return [str(v) for v in values] + [""] * (UPLINK_WINDOW - len(values))
+
+
 class Recorder:
     """Writes a run to a folder: the JPEGs, windows.csv, images.csv and
     console.log (one line per text line, image and receiver message, each
@@ -301,7 +330,7 @@ class Recorder:
         self.windows_csv = csv.writer(self.windows_file)
         self.windows_csv.writerow(["window", "first", "last", "best", "best_score", "merged", "failed", "t_pc"]
                                   + [f"p{k}" for k in range(UPLINK_WINDOW)]
-                                  + [f"n{k}" for k in range(UPLINK_WINDOW)])
+                                  + [f"n{k}" for k in range(UPLINK_WINDOW)] + ["y_mean", "clip_pct"])
         self.images_file = open(self.out / "images.csv", "w", newline="")
         self.images_csv = csv.writer(self.images_file)
         self.images_csv.writerow(["window", "frame", "score", "seq", "file", "bytes", "decoded"])
@@ -310,8 +339,8 @@ class Recorder:
     def window(self, w, now):
         self.windows_csv.writerow([w.window, w.first, w.last, "" if w.best is None else w.best,
                                    "" if w.score is None else w.score, w.merged, w.failed, f"{now - self.t0:.2f}"]
-                                  + ([str(v) for v in w.p] + [str(v) for v in w.n] if w.p is not None
-                                     else [""] * (2 * UPLINK_WINDOW)))
+                                  + (pad(w.p) + pad(w.n) if w.p is not None else [""] * (2 * UPLINK_WINDOW))
+                                  + ["" if w.y is None else f"{w.y:.1f}", "" if w.clip is None else f"{w.clip:.2f}"])
 
     def image_path(self, window, index, seq):
         return self.out / f"w{window:06d}_f{index:07d}_s{seq:05d}.jpg"

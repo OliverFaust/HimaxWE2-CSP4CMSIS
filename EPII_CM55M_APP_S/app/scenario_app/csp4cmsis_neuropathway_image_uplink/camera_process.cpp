@@ -3,6 +3,7 @@
 #include "WE2_debug.h"
 #include "WE2_device.h"
 #include "uplink.h"
+#include "hx_drv_CIS_common.h"
 #include <string.h>
 
 using namespace csp;
@@ -71,6 +72,23 @@ static int32_t check_jpeg_buf(uint8_t id, uint32_t jpeg_addr, uint32_t hw_addr, 
 
 static BufferedChannel<trigger_t, 1> g_trigger_chan;
 
+static bool write_reg16(uint16_t addr, uint16_t v)
+{
+  return hx_drv_cis_set_reg(addr, (uint8_t)(v >> 8), 0) == HX_CIS_NO_ERROR
+      && hx_drv_cis_set_reg((uint16_t)(addr + 1), (uint8_t)(v & 0xFF), 0) == HX_CIS_NO_ERROR;
+}
+
+static bool apply_setting(uint8_t setting, uint16_t v)
+{
+  switch (setting) {
+  case SETTING_AGAIN: return hx_drv_cis_set_reg(0x0157, (uint8_t)v, 0) == HX_CIS_NO_ERROR;
+  case SETTING_DGAIN: return write_reg16(0x0158, v);
+  case SETTING_EXPOSURE: return write_reg16(0x015A, v);
+  case SETTING_FRAMELEN: return write_reg16(0x0160, v);
+  default: return true;
+  }
+}
+
 extern "C"
 void os_app_dplib_cb(SENSORDPLIB_STATUS_E event) {
   if (event == SENSORDPLIB_STATUS_XDMA_FRAME_READY) {
@@ -82,8 +100,8 @@ void os_app_dplib_cb(SENSORDPLIB_STATUS_E event) {
   }
 }
 
-Camera::Camera(Chanout<frame_t> out, Chanin<release_t> release, Chanout<report_t> report)
-    : m_frame_out(out), m_release_in(release), m_report_out(report), m_frame_counter(0) {}
+Camera::Camera(Chanout<frame_t> out, Chanin<release_t> release, Chanin<command_t> cmd, Chanout<report_t> report)
+    : m_frame_out(out), m_release_in(release), m_cmd_in(cmd), m_report_out(report), m_frame_counter(0) {}
 
 void Camera::run() {
   trigger_t t;
@@ -123,6 +141,13 @@ void Camera::run() {
   cisdp_set_jpeg_buf(cur);
 #endif
 
+  settings_t settings = default_settings();
+  uint8_t changed = 0;
+  uint8_t failed = 0;
+  command_t cmd = {};
+  RelTimeoutGuard skip(Milliseconds(0));
+  Alternative poll_cmd(m_cmd_in | cmd, skip);
+
   cisdp_sensor_start();
   r.kind = ReportKind::Started;
   m_report_out.write(r);
@@ -138,6 +163,11 @@ void Camera::run() {
     f.jpeg_addr = jpeg_addr;
     f.jpeg_sz = jpeg_sz;
     f.buf = cur;
+    f.changed = changed;
+    f.failed = failed;
+    f.settings = settings;
+    changed = 0;
+    failed = 0;
 
 #ifdef UPLINK_STAGE0
     uint32_t hw_addr = cisdp_get_wdma2_hw_addr();
@@ -164,6 +194,15 @@ void Camera::run() {
 #endif
 
     m_frame_out.write(f);
+    if (poll_cmd.priSelect() == 0) {
+      if (cmd.op == CommandOp::Get) {
+        changed |= SETTINGS_GET;
+      } else if (cmd.setting < SETTING_COUNT) {
+        if (apply_setting(cmd.setting, cmd.value)) settings.value[cmd.setting] = cmd.value;
+        else failed |= (uint8_t)(1u << cmd.setting);
+        changed |= (uint8_t)(1u << cmd.setting);
+      }
+    }
     m_release_in.read(token);
 
 #ifdef UPLINK_STAGE0

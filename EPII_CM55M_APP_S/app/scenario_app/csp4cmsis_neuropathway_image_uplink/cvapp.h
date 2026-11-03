@@ -23,6 +23,8 @@ void cv_prepare(void);
 
 int cv_invoke(int8_t* person_score, int8_t* no_person_score);
 
+uint32_t cv_input_stats(uint32_t* sum, uint32_t* clipped);
+
 int cv_deinit();
 #ifdef __cplusplus
 }

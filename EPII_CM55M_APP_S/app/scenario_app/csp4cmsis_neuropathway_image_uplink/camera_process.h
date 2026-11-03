@@ -7,13 +7,15 @@
 
 class Camera : public csp::CSProcessStatic<384> {
 public:
-    Camera(csp::Chanout<frame_t> out, csp::Chanin<release_t> release, csp::Chanout<report_t> report);
+    Camera(csp::Chanout<frame_t> out, csp::Chanin<release_t> release, csp::Chanin<command_t> cmd,
+           csp::Chanout<report_t> report);
     void run() override;
     const char* name() const override { return "Camera"; }
 
 private:
     csp::Chanout<frame_t> m_frame_out;
     csp::Chanin<release_t> m_release_in;
+    csp::Chanin<command_t> m_cmd_in;
     csp::Chanout<report_t> m_report_out;
     uint32_t m_frame_counter;
 };

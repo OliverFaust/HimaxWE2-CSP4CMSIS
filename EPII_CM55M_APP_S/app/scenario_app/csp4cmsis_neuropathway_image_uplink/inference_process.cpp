@@ -41,6 +41,18 @@ void Inference::run()
     Alternative poll_free(m_free_in | returned, skip);
     bool uplink_free = true;
 
+    settings_t settings = f.settings;
+    uint32_t window_size = settings.value[SETTING_WINDOW];
+    uint32_t window_id = f.index / window_size;
+    uint32_t pos = 0;
+    bool window_requested = false;
+    uint8_t pending = 0;
+    uint8_t pending_failed = 0;
+    uint32_t applied_at[SETTING_COUNT] = {};
+    uint64_t y_sum = 0;
+    uint32_t y_pixels = 0;
+    uint32_t y_clipped = 0;
+
     uint32_t first = f.index;
     int16_t merged = 0;
     int32_t failed = 0;
@@ -60,11 +72,31 @@ void Inference::run()
         cv_prepare();
         m_release_out.write(release_t { spare[--spares] });
 
+        uint32_t sum, clipped;
+        y_pixels += cv_input_stats(&sum, &clipped);
+        y_sum += sum;
+        y_clipped += clipped;
+
+        for (uint8_t k = 0; k < SETTING_COUNT; k++) {
+            uint8_t bit = (uint8_t)(1u << k);
+            if (!(f.changed & bit)) continue;
+            if (k == SETTING_WINDOW) {
+                window_requested = true;
+                continue;
+            }
+            pending |= bit;
+            applied_at[k] = f.index;
+            if (f.failed & bit) pending_failed |= bit;
+            else pending_failed &= (uint8_t)~bit;
+        }
+        if (f.changed & SETTINGS_GET) pending |= SETTINGS_GET;
+        settings = f.settings;
+
         int8_t person_score = 0, no_person_score = 0;
         int status = cv_invoke(&person_score, &no_person_score);
 #ifdef UPLINK_SCORE_LOG
-        g_scores[log_block][f.index % UPLINK_WINDOW] = person_score;
-        g_scores[log_block][UPLINK_WINDOW + f.index % UPLINK_WINDOW] = no_person_score;
+        g_scores[log_block][pos] = person_score;
+        g_scores[log_block][UPLINK_WINDOW + pos] = no_person_score;
 #endif
 
         if (status != 0) {
@@ -79,23 +111,48 @@ void Inference::run()
             spare[spares++] = f.buf;
         }
 
-        if (f.index % UPLINK_WINDOW == UPLINK_WINDOW - 1) {
+        if (++pos == window_size) {
             if (uplink_free) {
                 r = {};
                 r.kind = ReportKind::Window;
                 r.name = name();
                 r.code = merged;
-                r.index = f.index / UPLINK_WINDOW;
+                r.index = window_id;
                 r.value[0] = (int32_t)first;
                 r.value[1] = (int32_t)f.index;
                 r.value[2] = have_best ? (int32_t)best.index : -1;
                 r.value[3] = best_score;
                 r.value[4] = failed;
+                r.value[5] = (int32_t)(y_sum * 10 / y_pixels);
+                r.value[6] = (int32_t)((uint64_t)y_clipped * 10000 / y_pixels);
 #ifdef UPLINK_SCORE_LOG
                 r.scores = g_scores[log_block];
+                r.score_count = (uint8_t)window_size;
                 log_block ^= 1;
 #endif
                 m_report_out.write(r);
+                for (uint8_t k = 0; k < SETTING_COUNT; k++) {
+                    uint8_t bit = (uint8_t)(1u << k);
+                    if (!(pending & bit)) continue;
+                    r = {};
+                    r.kind = ReportKind::Applied;
+                    r.name = (k == SETTING_WINDOW) ? name() : "Camera";
+                    r.code = (pending_failed & bit) ? 1 : 0;
+                    r.index = applied_at[k];
+                    r.value[0] = k;
+                    r.value[1] = (k == SETTING_WINDOW) ? (int32_t)window_size : settings.value[k];
+                    m_report_out.write(r);
+                }
+                if (pending & SETTINGS_GET) {
+                    r = {};
+                    r.kind = ReportKind::Settings;
+                    r.name = "Camera";
+                    for (uint8_t k = 0; k < SETTING_COUNT; k++) r.value[k] = settings.value[k];
+                    r.value[SETTING_WINDOW] = (int32_t)window_size;
+                    m_report_out.write(r);
+                }
+                pending = 0;
+                pending_failed = 0;
                 if (have_best) {
 #ifndef UPLINK_STAGE0
                     r = {};
@@ -105,7 +162,7 @@ void Inference::run()
                     r.index = best.index;
                     r.value[0] = (int32_t)best.jpeg_addr;
                     r.value[1] = (int32_t)best.jpeg_sz;
-                    r.value[2] = (int32_t)(f.index / UPLINK_WINDOW);
+                    r.value[2] = (int32_t)window_id;
                     r.value[3] = best_score;
                     m_report_out.write(r);
                     uplink_free = false;
@@ -117,8 +174,19 @@ void Inference::run()
                 first = f.index + 1;
                 merged = 0;
                 failed = 0;
+                y_sum = 0;
+                y_pixels = 0;
+                y_clipped = 0;
             } else {
                 if (merged < INT16_MAX) merged++;
+            }
+            pos = 0;
+            window_id++;
+            if (window_requested) {
+                window_size = settings.value[SETTING_WINDOW];
+                window_requested = false;
+                pending |= (uint8_t)(1u << SETTING_WINDOW);
+                applied_at[SETTING_WINDOW] = f.index + 1;
             }
         }
 

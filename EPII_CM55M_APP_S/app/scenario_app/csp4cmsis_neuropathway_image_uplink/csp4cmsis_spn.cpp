@@ -2,6 +2,7 @@
 #include "camera_process.h"
 #include "inference_process.h"
 #include "reporter_process.h"
+#include "command_process.h"
 #include "xprintf.h"
 #include "cmsis_os2.h"
 #include "FreeRTOS.h"
@@ -43,13 +44,15 @@ void MainApp_Task(void* params)
     static Channel<frame_t>  frame_chan;
     static Channel<release_t> release_chan;
     static BufferedChannel<uint8_t, 1> free_chan;
+    static BufferedChannel<command_t, 1> cmd_chan;
     static Channel<report_t> report_chan;
 
-    static Camera    camera(frame_chan.writer(), release_chan.reader(), report_chan.writer());
+    static Camera    camera(frame_chan.writer(), release_chan.reader(), cmd_chan.reader(), report_chan.writer());
     static Inference inference(frame_chan.reader(), release_chan.writer(), free_chan.reader(), report_chan.writer());
     static Reporter  reporter(report_chan.reader(), free_chan.writer());
+    static Command   command(cmd_chan.writer(), report_chan.writer());
 
-    auto network = InParallel(camera, inference, reporter);
+    auto network = InParallel(camera, inference, reporter, command);
     Run(network, ExecutionMode::StaticNetwork, NETWORK_PRIORITY);
 
     Chanout<report_t> report_out = report_chan.writer();

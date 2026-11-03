@@ -61,8 +61,8 @@ def load(run, phases_path):
         w["best"] = int(w["best"]) if w["best"] else None
         w["best_score"] = int(w["best_score"]) if w["best_score"] else None
         w["t_pc"] = float(w["t_pc"])
-        w["p"] = [int(w[f"p{k}"]) for k in range(WINDOW)] if w["p0"] else None
-        w["n"] = [int(w[f"n{k}"]) for k in range(WINDOW)] if w["n0"] else None
+        w["p"] = [int(w[f"p{k}"]) for k in range(WINDOW) if w[f"p{k}"]] if w["p0"] else None
+        w["n"] = [int(w[f"n{k}"]) for k in range(WINDOW) if w[f"n{k}"]] if w["n0"] else None
     return windows, images, steps
 
 

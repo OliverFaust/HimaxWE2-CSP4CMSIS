@@ -1,4 +1,5 @@
 #include "uplink.h"
+#include "cisdp_cfg.h"
 
 namespace {
 
@@ -31,4 +32,57 @@ uint32_t jpeg_length(const uint8_t* p, uint32_t jpeg_sz, uint32_t buf_size)
         if (p[end - 2] == 0xFF && p[end - 1] == 0xD9) return end;
     }
     return 0;
+}
+
+static constexpr uint16_t AGAIN_MAX = 232;
+static constexpr uint16_t DGAIN_MIN = 0x0100;
+static constexpr uint16_t DGAIN_MAX = 0x0FFF;
+static constexpr uint16_t EXPOSURE_MIN = 1;
+static constexpr uint16_t EXPOSURE_MARGIN = 4;
+static constexpr uint16_t FRAMELEN_MIN = 2464 + 32;
+static constexpr uint16_t FRAMELEN_MAX = 0xFFFE;
+
+static const char* const SETTING_NAMES[SETTING_COUNT] = {"again", "dgain", "exposure", "framelen", "window"};
+
+const char* setting_name(uint8_t setting)
+{
+    return setting < SETTING_COUNT ? SETTING_NAMES[setting] : "?";
+}
+
+settings_t default_settings(void)
+{
+    settings_t s;
+    s.value[SETTING_AGAIN] = IMX219_AGAIN_SETTING;
+    s.value[SETTING_DGAIN] = IMX219_DGAIN_SETTING;
+    s.value[SETTING_EXPOSURE] = IMX219_EXPOSURE_SETTING;
+    s.value[SETTING_FRAMELEN] = IMX219_FRAMELEN_SETTING;
+    s.value[SETTING_WINDOW] = UPLINK_WINDOW;
+    return s;
+}
+
+uint16_t setting_min(uint8_t setting, const settings_t& s)
+{
+    switch (setting) {
+    case SETTING_AGAIN: return 0;
+    case SETTING_DGAIN: return DGAIN_MIN;
+    case SETTING_EXPOSURE: return EXPOSURE_MIN;
+    case SETTING_FRAMELEN: {
+        uint32_t m = (uint32_t)s.value[SETTING_EXPOSURE] + EXPOSURE_MARGIN;
+        return (uint16_t)(m > FRAMELEN_MIN ? m : FRAMELEN_MIN);
+    }
+    case SETTING_WINDOW: return UPLINK_WINDOW_MIN;
+    default: return 0;
+    }
+}
+
+uint16_t setting_max(uint8_t setting, const settings_t& s)
+{
+    switch (setting) {
+    case SETTING_AGAIN: return AGAIN_MAX;
+    case SETTING_DGAIN: return DGAIN_MAX;
+    case SETTING_EXPOSURE: return (uint16_t)(s.value[SETTING_FRAMELEN] - EXPOSURE_MARGIN);
+    case SETTING_FRAMELEN: return FRAMELEN_MAX;
+    case SETTING_WINDOW: return UPLINK_WINDOW;
+    default: return 0;
+    }
 }

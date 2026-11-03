@@ -218,6 +218,21 @@ int cv_invoke(int8_t* person_score_out, int8_t* no_person_score_out) {
 	return 0;
 }
 
+uint32_t cv_input_stats(uint32_t* sum, uint32_t* clipped) {
+	static constexpr int32_t CLIP_LEVEL = 250;
+	const uint32_t n = INPUT_SIZE_X * INPUT_SIZE_Y;
+	const int8_t* p = input->data.int8;
+	uint32_t s = 0, c = 0;
+	for (uint32_t i = 0; i < n; i++) {
+		int32_t y = p[i] + 128;
+		s += (uint32_t)y;
+		if (y >= CLIP_LEVEL) c++;
+	}
+	*sum = s;
+	*clipped = c;
+	return n;
+}
+
 int cv_deinit()
 {
 	//TODO: add more deinit items here if need.

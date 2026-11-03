@@ -28,6 +28,12 @@ for uplink_gui.py --replay. The protocol code is in uplink_proto.py.
 prompt when its start time is reached, with the elapsed time, and a warning
 10 s before; the file is copied into the output folder for analyse_run.py.
 
+`--send-at T COMMAND` sends a command line to the board's Command process
+T seconds after the start (repeatable); `--send-every MS COMMAND...` sends
+the commands in turn, one every MS milliseconds, from 2 s on. Each command
+sent is logged as "-> <command>"; the board answers with "Camera: ... applied
+at frame N" lines or "Command: rejected ..." lines.
+
 `--pause START SECONDS` stops reading for SECONDS after START seconds, with the
 port open, to check that the board carries on when the host stalls: data sent
 meanwhile is lost in the USB bridge, so after the pause the receiver flushes
@@ -92,6 +98,35 @@ class Prompter:
             self.warned = self.next
 
 
+class Sender:
+    def __init__(self, s, session, args, t0):
+        self.s = s
+        self.session = session
+        self.at = sorted((t0 + float(t), cmd) for t, cmd in (args.send_at or []))
+        self.every = None
+        if args.send_every:
+            self.every = (float(args.send_every[0]) / 1000.0, args.send_every[1:])
+            self.next_every = t0 + 2.0
+            self.k = 0
+        self.sent = 0
+
+    def send(self, cmd, now):
+        self.s.write((cmd + "\n").encode("ascii"))
+        self.sent += 1
+        self.session.message(f"-> {cmd}", now)
+
+    def poll(self, now):
+        while self.at and self.at[0][0] <= now:
+            self.send(self.at.pop(0)[1], now)
+        if self.every and now >= self.next_every:
+            period, cmds = self.every
+            self.send(cmds[self.k % len(cmds)], now)
+            self.k += 1
+            self.next_every += period
+            if self.next_every < now:
+                self.next_every = now + period
+
+
 def receive(s, session, buf, deadline, next_summary, args):
     st = session.st
     pause = None
@@ -101,6 +136,7 @@ def receive(s, session, buf, deadline, next_summary, args):
         now = time.monotonic()
         if args.prompter:
             args.prompter.poll(now)
+        args.sender.poll(now)
         if pause and pause[0] <= now < pause[1]:
             f0 = st.last_frame[0] if st.last_frame else None
             print(f"-- pausing reads for {pause[1] - now:.0f} s (port stays open)", flush=True)
@@ -115,6 +151,7 @@ def receive(s, session, buf, deadline, next_summary, args):
         buf += s.read(8192)
         now = time.monotonic()
         session.feed(buf, now)
+        args.sender.poll(now)
         if now >= next_summary:
             print("--", st.summary().replace("\n", "\n-- "), flush=True)
             next_summary = now + 30
@@ -128,6 +165,10 @@ def main():
     ap.add_argument("--out", default="uplink_images")
     ap.add_argument("--quiet", action="store_true", help="do not echo text lines")
     ap.add_argument("--prompts", metavar="PHASES_CSV", help="print the operator prompts of this phase table")
+    ap.add_argument("--send-at", nargs=2, action="append", metavar=("T", "COMMAND"),
+                    help="send COMMAND (quoted) to the board T seconds after the start")
+    ap.add_argument("--send-every", nargs="+", metavar="MS_THEN_COMMANDS",
+                    help="MS followed by commands (quoted), sent in turn every MS milliseconds")
     ap.add_argument("--pause", nargs=2, type=float, metavar=("START", "SECONDS"),
                     help="stop reading for SECONDS after START seconds, port open")
     mode = ap.add_mutually_exclusive_group()
@@ -171,6 +212,8 @@ def main():
                       on_window=on_window, on_image=on_image)
     buf = bytearray()
     s = open_port(args.port, args.baud)
+    s.timeout = 0.02
+    args.sender = Sender(s, session, args, st.t0)
     deadline = time.monotonic() + args.duration
     next_summary = time.monotonic() + 30
 
@@ -184,6 +227,8 @@ def main():
 
     print()
     print(st.summary())
+    if args.sender.sent:
+        print(f"commands sent {args.sender.sent}")
     ok = st.passed()
     if st.first_frame is not None and st.first_frame[0] < UPLINK_WINDOW:
         print("!! the first window seen was window 0: the board started (or restarted) while the receiver was open")
