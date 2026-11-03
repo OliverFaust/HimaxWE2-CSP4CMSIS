@@ -29,7 +29,7 @@ from collections import namedtuple
 MAGIC = b"\xa5\x5aIM"
 HEADER = struct.Struct("<4sBBHI")
 IMAGE_META = struct.Struct("<IbI")
-MAX_BODY = 1 << 16
+MAX_BODY = 1 << 17
 WINDOW_LINE = re.compile(rb"^Window (\d+): frames (\d+)-(\d+) best (\d+|-) score (-?\d+|-) merged (\d+) failed (\d+)")
 SCORES = re.compile(rb" p((?: -?\d+){20}) n((?: -?\d+){20})\s*$")
 STACK_LINE = re.compile(rb"^(\w+): (\d+)/(\d+) bytes used")
