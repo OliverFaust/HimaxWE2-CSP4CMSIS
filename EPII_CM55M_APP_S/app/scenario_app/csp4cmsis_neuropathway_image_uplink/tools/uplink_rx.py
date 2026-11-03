@@ -15,6 +15,17 @@ these lines (frame B against the PC's clock). A line must start one frame
 after the previous one ended, and the image that follows must be frame F with
 score S and window id W; otherwise the run fails, and so does K > 0.
 
+The score-log build (-DUPLINK_SCORE_LOG) appends the window's 20 person and
+20 no-person scores to the line, "... p P0 .. P19 n N0 .. N19". Every Window
+line goes to windows.csv in the output folder (window, first, last, best,
+best_score, merged, failed, t_pc, p0..p19, n0..n19; t_pc is seconds since the
+receiver started, the score columns are empty without the log), and every
+image to images.csv (window, frame, score, seq, file, bytes, decoded).
+
+`--prompts phases.csv` (columns start_s, phase, prompt) prints each operator
+prompt when its start time is reached, with the elapsed time, and a warning
+10 s before; the file is copied into the output folder for analyse_run.py.
+
 `--pause START SECONDS` stops reading for SECONDS after START seconds, with the
 port open, to check that the board carries on when the host stalls: data sent
 meanwhile is lost in the USB bridge, so after the pause the receiver flushes
@@ -35,8 +46,10 @@ restarted and fails the run.
     python3 uplink_rx.py --port /dev/ttyACM0 --park
     python3 uplink_rx.py --port /dev/ttyACM0 --duration 600 --out images
     python3 uplink_rx.py --port /dev/ttyACM0 --unpark
+    python3 uplink_rx.py --port /dev/ttyACM0 --duration 600 --out run_person1 --prompts phases.csv
 """
 import argparse
+import csv
 import io
 import pathlib
 import re
@@ -51,8 +64,10 @@ HEADER = struct.Struct("<4sBBHI")
 IMAGE_META = struct.Struct("<IbI")
 MAX_BODY = 1 << 16
 WINDOW_LINE = re.compile(rb"^Window (\d+): frames (\d+)-(\d+) best (\d+|-) score (-?\d+|-) merged (\d+) failed (\d+)")
+SCORES = re.compile(rb" p((?: -?\d+){20}) n((?: -?\d+){20})\s*$")
 STACK_LINE = re.compile(rb"^(\w+): (\d+)/(\d+) bytes used")
 RESYNC_S = 2.0
+PROMPT_WARN_S = 10.0
 UPLINK_WINDOW = 20
 BOOT_BANNER = b"1st BL Modem"
 EOI_ERROR = b"Uplink: frame"
@@ -75,6 +90,36 @@ def park(s):
     attrs[4] = attrs[5] = termios.B0
     termios.tcsetattr(s.fd, termios.TCSANOW, attrs)
     s.close()
+
+
+def read_prompts(path):
+    with open(path, newline="") as f:
+        rows = [(float(r["start_s"]), r["phase"], r["prompt"]) for r in csv.DictReader(f)]
+    return sorted(rows)
+
+
+def mmss(t):
+    return f"{int(t) // 60}:{int(t) % 60:02d}"
+
+
+class Prompter:
+    def __init__(self, rows, t0):
+        self.rows = rows
+        self.t0 = t0
+        self.next = 0
+        self.warned = -1
+
+    def poll(self, now):
+        t = now - self.t0
+        while self.next < len(self.rows) and t >= self.rows[self.next][0]:
+            start, phase, prompt = self.rows[self.next]
+            print(f"\n==== {mmss(t)} elapsed | phase {phase} | {prompt}\n", flush=True)
+            self.next += 1
+        if (self.next < len(self.rows) and self.warned < self.next
+                and t >= self.rows[self.next][0] - PROMPT_WARN_S):
+            start, phase, prompt = self.rows[self.next]
+            print(f"\n==== {mmss(t)} elapsed | in {start - t:.0f} s: {prompt}\n", flush=True)
+            self.warned = self.next
 
 
 def decode_ok(data):
@@ -193,6 +238,8 @@ def receive(s, st, buf, deadline, next_summary, text, out, args):
         pause = (st.t0 + args.pause[0], st.t0 + args.pause[0] + args.pause[1])
     while time.monotonic() < deadline:
         now = time.monotonic()
+        if args.prompter:
+            args.prompter.poll(now)
         if pause and pause[0] <= now < pause[1]:
             f0 = st.last_frame[0] if st.last_frame else None
             print(f"-- pausing reads for {pause[1] - now:.0f} s (port stays open)", flush=True)
@@ -256,6 +303,8 @@ def receive(s, st, buf, deadline, next_summary, text, out, args):
             path.write_bytes(jpeg)
             ok = jpeg[:2] == b"\xff\xd8" and jpeg[-2:] == b"\xff\xd9"
             dec = decode_ok(jpeg)
+            args.images_csv.writerow([window, index, score, seq, path.name, len(jpeg),
+                                      "" if dec is None else int(bool(ok and dec))])
             if not ok or dec is False:
                 st.decode_failures += 1
                 print(f"!! {path.name}: {'markers wrong' if not ok else 'does not decode'}")
@@ -273,6 +322,7 @@ def main():
     ap.add_argument("--duration", type=float, default=60.0)
     ap.add_argument("--out", default="uplink_images")
     ap.add_argument("--quiet", action="store_true", help="do not echo text lines")
+    ap.add_argument("--prompts", metavar="PHASES_CSV", help="print the operator prompts of this phase table")
     ap.add_argument("--pause", nargs=2, type=float, metavar=("START", "SECONDS"),
                     help="stop reading for SECONDS after START seconds, port open")
     mode = ap.add_mutually_exclusive_group()
@@ -292,6 +342,17 @@ def main():
     out = pathlib.Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     st = Stats()
+    args.prompter = None
+    if args.prompts:
+        args.prompter = Prompter(read_prompts(args.prompts), st.t0)
+        (out / "phases.csv").write_bytes(pathlib.Path(args.prompts).read_bytes())
+    windows_file = open(out / "windows.csv", "w", newline="")
+    windows_csv = csv.writer(windows_file)
+    windows_csv.writerow(["window", "first", "last", "best", "best_score", "merged", "failed", "t_pc"]
+                         + [f"p{k}" for k in range(UPLINK_WINDOW)] + [f"n{k}" for k in range(UPLINK_WINDOW)])
+    images_file = open(out / "images.csv", "w", newline="")
+    args.images_csv = csv.writer(images_file)
+    args.images_csv.writerow(["window", "frame", "score", "seq", "file", "bytes", "decoded"])
     buf = bytearray()
     s = open_port(args.port, args.baud)
     deadline = time.monotonic() + args.duration
@@ -313,6 +374,12 @@ def main():
                 score = None if m.group(5) == b"-" else int(m.group(5))
                 st.window_line(int(m.group(1)), int(m.group(2)), int(m.group(3)), best, score,
                                int(m.group(6)), int(m.group(7)), now)
+                sc = SCORES.search(line)
+                scores = sc.group(1).split() + sc.group(2).split() if sc else [b""] * (2 * UPLINK_WINDOW)
+                windows_csv.writerow([int(m.group(1)), int(m.group(2)), int(m.group(3)),
+                                      "" if best is None else best, "" if score is None else score,
+                                      int(m.group(6)), int(m.group(7)), f"{now - st.t0:.2f}"]
+                                     + [v.decode() for v in scores])
                 for pz in st.pauses:
                     if pz[1] is None:
                         pz[1] = now
@@ -329,6 +396,8 @@ def main():
         pass
     finally:
         park(s)
+        windows_file.close()
+        images_file.close()
 
     print()
     print(st.summary())

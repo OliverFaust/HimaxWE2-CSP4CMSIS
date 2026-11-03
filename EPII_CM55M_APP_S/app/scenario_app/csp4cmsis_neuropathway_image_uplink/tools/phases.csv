@@ -1,0 +1,17 @@
+start_s,phase,prompt
+0,empty_1,Nobody in view. Keep the scene clear.
+120,walk,Walk across the view now (about 3 m from the camera)
+135,walk,Walk across the view now
+150,walk,Walk across the view now
+165,walk,Walk across the view now
+180,walk,Walk across the view now
+195,walk,Walk across the view now
+210,walk,Walk across the view now
+225,walk,Walk across the view now
+240,stand,"Stand in view about 2 m away, facing the camera"
+300,stand,"Stay at about 2 m, turn side-on"
+360,distance,Stand facing the camera at about 1 m
+400,distance,Move to about 3 m
+440,distance,Move to about 5 m
+480,empty_2,Leave the view. Nobody in view until the end.
+600,end,Run complete

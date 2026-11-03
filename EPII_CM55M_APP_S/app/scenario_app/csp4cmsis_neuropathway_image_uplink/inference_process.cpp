@@ -4,6 +4,10 @@
 
 using namespace csp;
 
+#ifdef UPLINK_SCORE_LOG
+static int8_t g_scores[2][2 * UPLINK_WINDOW];
+#endif
+
 Inference::Inference(Chanin<frame_t> in, Chanout<release_t> release, Chanin<uint8_t> free_in,
                      Chanout<report_t> report)
     : m_frame_in(in), m_release_out(release), m_free_in(free_in), m_report_out(report) {}
@@ -43,6 +47,9 @@ void Inference::run()
     bool have_best = false;
     frame_t best = {};
     int8_t best_score = 0;
+#ifdef UPLINK_SCORE_LOG
+    uint8_t log_block = 0;
+#endif
 
     while (true) {
         if (poll_free.priSelect() == 0) {
@@ -55,6 +62,10 @@ void Inference::run()
 
         int8_t person_score = 0, no_person_score = 0;
         int status = cv_invoke(&person_score, &no_person_score);
+#ifdef UPLINK_SCORE_LOG
+        g_scores[log_block][f.index % UPLINK_WINDOW] = person_score;
+        g_scores[log_block][UPLINK_WINDOW + f.index % UPLINK_WINDOW] = no_person_score;
+#endif
 
         if (status != 0) {
             failed++;
@@ -80,6 +91,10 @@ void Inference::run()
                 r.value[2] = have_best ? (int32_t)best.index : -1;
                 r.value[3] = best_score;
                 r.value[4] = failed;
+#ifdef UPLINK_SCORE_LOG
+                r.scores = g_scores[log_block];
+                log_block ^= 1;
+#endif
                 m_report_out.write(r);
                 if (have_best) {
 #ifndef UPLINK_STAGE0
