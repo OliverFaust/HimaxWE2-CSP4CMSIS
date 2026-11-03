@@ -65,31 +65,54 @@ static void print_tail(const report_t& r)
 }
 #endif
 
-Reporter::Reporter(Chanin<report_t> in, Chanout<uint8_t> free_out)
-    : m_in(in), m_free_out(free_out), m_seq(0), m_eoi_errors(0)
+Reporter::Reporter(Chanin<report_t> in, Chanout<uint8_t> free_out, Chanout<uint8_t> ready_out)
+    : m_in(in), m_free_out(free_out), m_ready_out(ready_out), m_seq(0), m_eoi_errors(0)
 {
 }
 
-void Reporter::send_image(const report_t& r)
+void Reporter::print_scores(const score_batch_t* b)
 {
-    const uint8_t* p = (const uint8_t*)(uintptr_t)(uint32_t)r.value[0];
-    uint32_t jpeg_sz = (uint32_t)r.value[1];
+    if (b == nullptr || b->count == 0) return;
+    xprintf("Scores %lu %lu:", (unsigned long)b->first, (unsigned long)b->count);
+    for (uint32_t k = 0; k < b->count; k++) xprintf(" %d/%d", (int)b->person[k], (int)b->no_person[k]);
+    xprintf("\r\n");
+}
+
+void Reporter::print_window(const report_t& r)
+{
+    xprintf("Window %lu: frames %lu-%lu", (unsigned long)r.index,
+            (unsigned long)(uint32_t)r.value[WV_FIRST], (unsigned long)(uint32_t)r.value[WV_LAST]);
+    if (r.value[WV_BEST] < 0) {
+        xprintf(" best - score -");
+    } else {
+        xprintf(" best %lu score %d", (unsigned long)(uint32_t)r.value[WV_BEST], (int)r.value[WV_SCORE]);
+    }
+    xprintf(" merged %d failed %ld y %ld.%ld clip %ld.%02ld", (int)r.code, (long)r.value[WV_FAILED],
+            (long)(r.value[WV_Y] / 10), (long)(r.value[WV_Y] % 10),
+            (long)(r.value[WV_CLIP] / 100), (long)(r.value[WV_CLIP] % 100));
+    xprintf(" above %ld sent %ld suppressed %ld lost %ld\r\n", (long)r.value[WV_ABOVE], (long)r.value[WV_SENT],
+            (long)r.value[WV_SUPPRESSED], (long)r.value[WV_LOST]);
+}
+
+void Reporter::send_image(uint32_t frame, int8_t score, uint32_t window, uint32_t jpeg_addr, uint32_t jpeg_sz)
+{
+    const uint8_t* p = (const uint8_t*)(uintptr_t)jpeg_addr;
     uint32_t buf_size = cisdp_get_jpeg_buf_size();
     SCB_InvalidateDCache_by_Addr((void*)p, (int32_t)((jpeg_sz <= buf_size) ? jpeg_sz : buf_size));
     uint32_t len = jpeg_length(p, jpeg_sz, buf_size);
     if (len == 0) {
         m_eoi_errors++;
         xprintf("Uplink: frame %lu not sent: no EOI 32-35 bytes before size %lu (%lu EOI errors)\r\n",
-                (unsigned long)r.index, (unsigned long)jpeg_sz, (unsigned long)m_eoi_errors);
+                (unsigned long)frame, (unsigned long)jpeg_sz, (unsigned long)m_eoi_errors);
         return;
     }
     uint8_t header[12] = {0xA5, 0x5A, 'I', 'M', FRAME_TYPE_IMAGE, 0};
     put_le(&header[6], m_seq++, 2);
     put_le(&header[8], IMAGE_META_SIZE + len, 4);
     uint8_t meta[IMAGE_META_SIZE];
-    put_le(&meta[0], r.index, 4);
-    meta[4] = (uint8_t)(int8_t)r.value[3];
-    put_le(&meta[5], (uint32_t)r.value[2], 4);
+    put_le(&meta[0], frame, 4);
+    meta[4] = (uint8_t)score;
+    put_le(&meta[5], window, 4);
     uint32_t crc = crc32_update(0, meta, IMAGE_META_SIZE);
     crc = crc32_update(crc, p, len);
     uint8_t trailer[4];
@@ -114,24 +137,28 @@ void Reporter::run()
             xprintf("%s: initialisation FAILED (step %d)\r\n", r.name, (int)r.code);
             break;
         case ReportKind::Window:
-            xprintf("Window %lu: frames %lu-%lu", (unsigned long)r.index,
-                    (unsigned long)(uint32_t)r.value[0], (unsigned long)(uint32_t)r.value[1]);
-            if (r.value[2] < 0) {
-                xprintf(" best - score -");
-            } else {
-                xprintf(" best %lu score %d", (unsigned long)(uint32_t)r.value[2], (int)r.value[3]);
-            }
-            xprintf(" merged %d failed %ld y %ld.%ld clip %ld.%02ld", (int)r.code, (long)r.value[4],
-                    (long)(r.value[5] / 10), (long)(r.value[5] % 10), (long)(r.value[6] / 100), (long)(r.value[6] % 100));
-#ifdef UPLINK_SCORE_LOG
-            xprintf(" p");
-            for (uint32_t k = 0; k < r.score_count; k++) xprintf(" %d", (int)r.scores[k]);
-            xprintf(" n");
-            for (uint32_t k = 0; k < r.score_count; k++) xprintf(" %d", (int)r.scores[UPLINK_WINDOW + k]);
+            print_scores(r.batch);
+            print_window(r);
+            if (r.value[WV_SENT]) {
+                send_image((uint32_t)r.value[WV_BEST], (int8_t)r.value[WV_SCORE], r.index,
+                           (uint32_t)r.value[WV_JPEG_ADDR], (uint32_t)r.value[WV_JPEG_SZ]);
+#ifdef UPLINK_STALL_MS
+                SleepFor(Milliseconds(UPLINK_STALL_MS));
 #endif
-            xprintf("\r\n");
+                m_free_out.write((uint8_t)r.value[WV_BUF]);
+            }
+            m_ready_out.write(0);
+            break;
+        case ReportKind::Scores:
+            print_scores(r.batch);
+            m_ready_out.write(0);
+            break;
+        case ReportKind::Model:
+            xprintf("%s: output tensor type %ld scale 0.%09ld zero point %ld\r\n", r.name, (long)r.value[2],
+                    (long)r.value[0], (long)r.value[1]);
             break;
         case ReportKind::Applied:
+            print_scores(r.batch);
             if (r.code == 0) {
                 xprintf("%s: %s=%ld applied at frame %lu\r\n", r.name, setting_name((uint8_t)r.value[0]),
                         (long)r.value[1], (unsigned long)r.index);
@@ -139,11 +166,15 @@ void Reporter::run()
                 xprintf("%s: %s write FAILED at frame %lu, still %ld\r\n", r.name, setting_name((uint8_t)r.value[0]),
                         (unsigned long)r.index, (long)r.value[1]);
             }
+            m_ready_out.write(0);
             break;
         case ReportKind::Settings:
-            xprintf("%s: again=%ld dgain=%ld exposure=%ld framelen=%ld window=%ld\r\n", r.name,
+            print_scores(r.batch);
+            xprintf("%s: again=%ld dgain=%ld exposure=%ld framelen=%ld window=%ld threshold=%ld k=%ld\r\n", r.name,
                     (long)r.value[SETTING_AGAIN], (long)r.value[SETTING_DGAIN], (long)r.value[SETTING_EXPOSURE],
-                    (long)r.value[SETTING_FRAMELEN], (long)r.value[SETTING_WINDOW]);
+                    (long)r.value[SETTING_FRAMELEN], (long)r.value[SETTING_WINDOW],
+                    (long)r.value[SETTING_THRESHOLD], (long)r.value[SETTING_K]);
+            m_ready_out.write(0);
             break;
         case ReportKind::Rejected:
             switch (r.code) {
@@ -164,7 +195,7 @@ void Reporter::run()
                 xprintf("%s: %ld received bytes lost (buffer full)\r\n", r.name, (long)r.value[1]);
                 break;
             default:
-                xprintf("%s: rejected: unknown command (set again|dgain|exposure|framelen|window <value>, get)\r\n", r.name);
+                xprintf("%s: rejected: unknown command (set again|dgain|exposure|framelen|window|threshold|k <value>, get)\r\n", r.name);
                 break;
             }
             break;
@@ -176,13 +207,6 @@ void Reporter::run()
                         r.name, (unsigned)r.value[0], (unsigned)r.value[1],
                         (unsigned)(r.value[1] - r.value[0]), (unsigned)r.value[2]);
             }
-            break;
-        case ReportKind::Image:
-            send_image(r);
-#ifdef UPLINK_STALL_MS
-            SleepFor(Milliseconds(UPLINK_STALL_MS));
-#endif
-            m_free_out.write((uint8_t)r.code);
             break;
 #ifdef UPLINK_STAGE0
         case ReportKind::BufferCheck:

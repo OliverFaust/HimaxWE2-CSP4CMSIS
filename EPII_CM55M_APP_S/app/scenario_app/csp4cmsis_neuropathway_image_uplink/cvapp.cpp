@@ -233,6 +233,12 @@ uint32_t cv_input_stats(uint32_t* sum, uint32_t* clipped) {
 	return n;
 }
 
+void cv_output_quant(int32_t* scale_e9, int32_t* zero_point, int32_t* type) {
+	*scale_e9 = (int32_t)(output->params.scale * 1e9f + 0.5f);
+	*zero_point = output->params.zero_point;
+	*type = (int32_t)output->type;
+}
+
 int cv_deinit()
 {
 	//TODO: add more deinit items here if need.

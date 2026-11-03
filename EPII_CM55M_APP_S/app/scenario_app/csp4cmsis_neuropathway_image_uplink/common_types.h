@@ -16,6 +16,8 @@ enum Setting : uint8_t {
     SETTING_EXPOSURE,
     SETTING_FRAMELEN,
     SETTING_WINDOW,
+    SETTING_THRESHOLD,
+    SETTING_K,
     SETTING_COUNT,
 };
 
@@ -36,6 +38,15 @@ struct command_t {
     uint16_t  value;
 };
 
+static constexpr uint32_t SCORE_BATCH = 64;
+
+struct score_batch_t {
+    uint32_t first;
+    uint32_t count;
+    int8_t   person[SCORE_BATCH];
+    int8_t   no_person[SCORE_BATCH];
+};
+
 struct frame_t {
     uint32_t   index;
     uint32_t   jpeg_addr;
@@ -50,8 +61,9 @@ enum class ReportKind : uint8_t {
     Started,
     Failed,
     Stack,
-    Image,
     Window,
+    Scores,
+    Model,
     Applied,
     Settings,
     Rejected,
@@ -72,18 +84,33 @@ enum RejectReason : int16_t {
     REJECT_BYTES_LOST,
 };
 
+enum WindowValue : uint8_t {
+    WV_FIRST,
+    WV_LAST,
+    WV_BEST,
+    WV_SCORE,
+    WV_FAILED,
+    WV_Y,
+    WV_CLIP,
+    WV_ABOVE,
+    WV_SENT,
+    WV_SUPPRESSED,
+    WV_LOST,
+    WV_JPEG_ADDR,
+    WV_JPEG_SZ,
+    WV_BUF,
+    WV_COUNT,
+};
+
 struct report_t {
     ReportKind  kind;
     int16_t     code;
     const char* name;
     uint32_t    index;
-    int32_t     value[7];
+    int32_t     value[WV_COUNT];
+    const score_batch_t* batch;
 #ifdef UPLINK_STAGE0
     uint8_t     bytes[16];
-#endif
-#ifdef UPLINK_SCORE_LOG
-    const int8_t* scores;
-    uint8_t     score_count;
 #endif
 };
 static_assert(std::is_trivially_copyable<report_t>::value, "channel element types must be trivially copyable");
