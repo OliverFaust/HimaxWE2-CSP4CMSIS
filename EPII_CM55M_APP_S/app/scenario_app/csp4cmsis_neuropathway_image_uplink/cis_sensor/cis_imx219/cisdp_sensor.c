@@ -44,7 +44,7 @@
 #endif
 #endif
 
-#define JPEG_BUFSIZE  (((623+ (IMX219_HW5x5_CROP_WIDTH/16)*(IMX219_HW5x5_CROP_HEIGHT/16)* 38 + 35) >>2 ) <<2)	//YUV420 x10 Compress = ((623+ (W/16)*(H/16)* 38 + 35) >>2 ) <<2  byte
+#define JPEG_BUFSIZE  (((623+ (IMX219_HW5x5_CROP_WIDTH/16)*(IMX219_HW5x5_CROP_HEIGHT/16)* 96 + 35) >>2 ) <<2)	//YUV420 x4 Compress = ((623+ (W/16)*(H/16)* 96 + 35) >>2 ) <<2  byte
 #define JPEG_BUF_STRIDE  ((JPEG_BUFSIZE + 31) & ~31)
 __attribute__(( section(".bss.NoInit"))) uint8_t jpegbuf[CISDP_JPEG_BUF_CNT][JPEG_BUF_STRIDE] __ALIGNED(32);
 
