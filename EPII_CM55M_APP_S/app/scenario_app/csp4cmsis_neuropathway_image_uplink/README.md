@@ -173,6 +173,10 @@ The first run with real content: what the person score does with a person in vie
   * **`uplink_rx.py` after the refactor:** 60 s each with the old and the new version: both PASS, same summaries (58 and 57 windows, 0 errors, 19.38 and 19.39 frames/s) and the same line formats. Both print the tail of the image in progress when the port opens as text lines, as before.
   * Not tested automatically: clicking thumbnails, the threshold slider, the "only at or above" filter, Pause, Clear and hiding `Window` lines (the threshold logic itself was checked through `--threshold`).
 
+### 13. Image quality
+The images of run 1 are dark, green and blocky. The causes are in the sensor set-up (`cis_sensor/cis_imx219/cisdp_cfg.h`): a fixed exposure (`0xA40` lines), analogue gain `0x40` (about 1.33x), digital gain `0x200` (2x) and no auto-exposure; the raw Bayer data gets no white balance or gamma; and the JPEG encoder ran with `JPEG_ENC_QTABLE_10X` (about 5.6 KB per 640x480 frame, 0.15 bit per pixel). The GUI made it worse by scaling the image about 2.1x.
+* **GUI display (PC only):** the image is shown at 1:1, or at the largest integer scale that fits next to the right-hand column (2x from about 1840x1100 on; below 1:1, 1/2), never stretched; the thumbnails are a tenth of its width. The statistics, the two plots and the console are in one column to the right, so everything is visible at 1920x1080 and at 1366x768 (checked in replay of run 1 at both sizes). "Display correction" (on by default, `--no-correction` to start without) applies a gray-world white balance (each channel scaled to the mean of the three channel means) and gamma 2.2 to the displayed image and thumbnails only; the saved JPEGs stay exactly as received.
+
 ---
 
 ## 🔧 Key Code Snippets
@@ -423,7 +427,7 @@ app/scenario_app/csp4cmsis_neuropathway_image_uplink/
 ├── uplink.h / uplink.cpp   // CRC32 and the JPEG length rule (shared by Camera's Stage 0 checks and the Reporter)
 ├── tools/uplink_rx.py      // PC receiver: text lines, image frames, frame rate, windows.csv, operator prompts; parks the port (sections 8, 11)
 ├── tools/uplink_proto.py   // Protocol shared by the receiver and the GUI: port, frames, lines, statistics, recording (section 12)
-├── tools/uplink_gui.py     // PC monitor: images, statistics, plots, console; live and replay (section 12)
+├── tools/uplink_gui.py     // PC monitor: images, statistics, plots, console; live and replay (sections 12, 13)
 ├── tools/analyse_run.py    // Score-log run analysis: per-phase scores, best-frame check, threshold table, contact sheets (section 11)
 ├── tools/phases.csv        // Protocol of the person detection test (section 11)
 ├── tools/stage0_capture.py // PC side of the Stage 0 test

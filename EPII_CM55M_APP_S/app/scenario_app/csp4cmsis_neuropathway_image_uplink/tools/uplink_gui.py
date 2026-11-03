@@ -19,6 +19,10 @@ The person threshold is a display and statistics setting only. The model's
 output is int8 with scale 1/256 and zero point -128, so a score s is the
 probability p = (s + 128) / 256 and 50 % is s = 0.
 
+The image is shown at 1:1 or the largest integer scale that fits, never
+stretched. "Display correction" applies a gray-world white balance and gamma
+2.2 to what is shown; the saved JPEGs stay as received.
+
 A reader thread does the serial I/O (or the replay) and the parsing and puts
 events on a queue; the Tk main loop drains it every 50 ms and never touches
 the port.
@@ -41,6 +45,7 @@ import time
 import tkinter as tk
 from tkinter import filedialog, ttk
 
+import numpy as np
 from PIL import Image, ImageTk
 
 import matplotlib
@@ -63,7 +68,18 @@ SPEEDS = ("1", "2", "5", "10", "20", "50")
 GREEN = "#2e9e44"
 GREY = "#9a9a9a"
 CONNECTED = "-- connected to"
+IMAGE_W, IMAGE_H = 640, 480
+RIGHT_MIN_W = 560
+GAMMA = 2.2
 ERROR_MARKS = ("!!", "FAIL", "FATAL", "not sent")
+
+
+def display_correction(im):
+    a = np.asarray(im, dtype=np.float32)
+    means = a.reshape(-1, 3).mean(axis=0)
+    a = a * (means.mean() / np.maximum(means, 1.0))
+    a = np.power(np.clip(a, 0, 255) / 255.0, 1.0 / GAMMA) * 255.0
+    return Image.fromarray((a + 0.5).astype(np.uint8), "RGB")
 
 
 def snapshot(st):
@@ -243,6 +259,10 @@ class App:
         self.follow = tk.BooleanVar(value=True)
         self.paused = tk.BooleanVar(value=False)
         self.hide_windows = tk.BooleanVar(value=False)
+        self.correct = tk.BooleanVar(value=not args.no_correction)
+        self.layout_pending = False
+        self.scale = None
+        self.strip_recs = []
         self.lines = []
         self.windows = {}
         self.images = collections.deque(maxlen=KEEP_IMAGES)
@@ -262,6 +282,7 @@ class App:
         self.photo = None
         self.thumb_photos = {}
         self.build()
+        self.root.after(200, self.relayout)
         self.threshold.trace_add("write", lambda *a: self.threshold_changed())
         self.root.protocol("WM_DELETE_WINDOW", self.quit)
         self.root.after(DRAIN_MS, self.drain)
@@ -278,83 +299,85 @@ class App:
         root = self.root
         root.title("Uplink monitor" + (f" - replay {self.args.replay}" if self.args.replay else ""))
         root.geometry(self.args.geometry)
-        bar = ttk.Frame(root, padding=4)
+        root.minsize(1000, 640)
+        bar = ttk.Frame(root, padding=(4, 3))
         bar.pack(side=tk.TOP, fill=tk.X)
+        self.bar = bar
         live = not self.args.replay
         ttk.Label(bar, text="Port").pack(side=tk.LEFT)
-        self.port_box = ttk.Combobox(bar, textvariable=self.port, width=14, postcommand=self.refresh_ports,
+        self.port_box = ttk.Combobox(bar, textvariable=self.port, width=12, postcommand=self.refresh_ports,
                                      state="normal" if live else "disabled")
         self.port_box.pack(side=tk.LEFT, padx=(2, 4))
         self.connect_button = ttk.Button(bar, text="Connect", command=self.toggle_connect,
                                          state="normal" if live else "disabled")
-        self.connect_button.pack(side=tk.LEFT, padx=(0, 12))
+        self.connect_button.pack(side=tk.LEFT, padx=(0, 10))
         ttk.Label(bar, text="Output").pack(side=tk.LEFT)
-        ttk.Entry(bar, textvariable=self.out, width=24).pack(side=tk.LEFT, padx=2)
+        ttk.Entry(bar, textvariable=self.out, width=18).pack(side=tk.LEFT, padx=2)
         ttk.Button(bar, text="...", width=3, command=self.choose_out).pack(side=tk.LEFT)
         ttk.Checkbutton(bar, text="Record", variable=self.record,
-                        state="normal" if live else "disabled").pack(side=tk.LEFT, padx=(4, 12))
+                        state="normal" if live else "disabled").pack(side=tk.LEFT, padx=(4, 10))
         ttk.Label(bar, text="Threshold").pack(side=tk.LEFT)
-        ttk.Scale(bar, from_=0, to=100, variable=self.threshold, length=200,
+        ttk.Scale(bar, from_=0, to=100, variable=self.threshold, length=150,
                   command=lambda v: self.threshold.set(round(float(v) * 2) / 2)).pack(side=tk.LEFT, padx=2)
-        self.threshold_label = ttk.Label(bar, width=22)
-        self.threshold_label.pack(side=tk.LEFT, padx=(2, 12))
-        ttk.Label(bar, text="Replay speed").pack(side=tk.LEFT)
+        self.threshold_label = ttk.Label(bar, width=16)
+        self.threshold_label.pack(side=tk.LEFT, padx=(2, 10))
+        ttk.Label(bar, text="Speed").pack(side=tk.LEFT)
         ttk.Combobox(bar, textvariable=self.speed, values=SPEEDS, width=4,
                      state="readonly" if self.args.replay else "disabled").pack(side=tk.LEFT, padx=2)
-        self.status = ttk.Label(bar, text="", foreground="#555")
-        self.status.pack(side=tk.LEFT, padx=12)
+        ttk.Checkbutton(bar, text="Display correction", variable=self.correct,
+                        command=self.correction_changed).pack(side=tk.LEFT, padx=(10, 0))
 
-        main = ttk.PanedWindow(root, orient=tk.VERTICAL)
-        main.pack(fill=tk.BOTH, expand=True)
-        upper = ttk.PanedWindow(main, orient=tk.HORIZONTAL)
-        main.add(upper, weight=4)
-
-        left = ttk.Frame(upper, padding=4)
-        upper.add(left, weight=3)
-        strip = ttk.Frame(left)
-        strip.pack(side=tk.BOTTOM, fill=tk.X, pady=(4, 0))
-        opts = ttk.Frame(left)
-        opts.pack(side=tk.BOTTOM, fill=tk.X)
+        body = ttk.Frame(root)
+        body.pack(fill=tk.BOTH, expand=True)
+        left = ttk.Frame(body, padding=4)
+        left.pack(side=tk.LEFT, fill=tk.Y)
+        self.left = left
+        self.image_box = tk.Frame(left, bg=GREY, padx=4, pady=4)
+        self.image_box.pack(side=tk.TOP, anchor="nw")
+        self.blank = None
+        self.image_label = tk.Label(self.image_box, bg="black", bd=0, highlightthickness=0)
+        self.image_label.pack()
         self.caption = ttk.Label(left, text="no image yet", font="TkFixedFont")
-        self.caption.pack(side=tk.BOTTOM, fill=tk.X, pady=(4, 2))
-        self.image_box = tk.Frame(left, bg=GREY, padx=6, pady=6)
-        self.image_box.pack(fill=tk.BOTH, expand=True)
-        self.image_label = tk.Label(self.image_box, bg="black")
-        self.image_label.pack(fill=tk.BOTH, expand=True)
-        self.image_label.bind("<Configure>", lambda e: self.render_image(force=True))
+        self.caption.pack(side=tk.TOP, fill=tk.X, pady=(4, 0))
+        opts = ttk.Frame(left)
+        opts.pack(side=tk.TOP, fill=tk.X)
         ttk.Checkbutton(opts, text="Only at or above the threshold", variable=self.only_above,
                         command=self.images_changed).pack(side=tk.LEFT)
         ttk.Checkbutton(opts, text="Follow latest", variable=self.follow,
                         command=self.images_changed).pack(side=tk.LEFT, padx=12)
+        self.strip = ttk.Frame(left)
+        self.strip.pack(side=tk.TOP, anchor="nw", pady=(2, 0))
         self.thumbs = []
         for k in range(STRIP):
-            box = tk.Frame(strip, bg=GREY, padx=3, pady=3)
-            box.grid(row=0, column=k, padx=2)
-            lab = tk.Label(box, bg="black", width=11, height=4)
+            box = tk.Frame(self.strip, bg=GREY, padx=2, pady=2)
+            box.grid(row=0, column=k, padx=1)
+            lab = tk.Label(box, bg="black", bd=0, highlightthickness=0)
             lab.pack()
-            text = tk.Label(strip, font=("TkFixedFont", 8))
+            text = tk.Label(self.strip, font=("TkFixedFont", 7))
             text.grid(row=1, column=k)
             lab.bind("<Button-1>", lambda e, k=k: self.thumb_clicked(k))
             self.thumbs.append((box, lab, text, None))
 
-        right = ttk.PanedWindow(upper, orient=tk.VERTICAL)
-        upper.add(right, weight=2)
-        stats_frame = ttk.Frame(right, padding=4)
-        right.add(stats_frame, weight=1)
+        right = ttk.PanedWindow(body, orient=tk.VERTICAL)
+        right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        stats_frame = ttk.Frame(right, padding=(4, 2))
+        right.add(stats_frame, weight=0)
         self.stats_label = tk.Label(stats_frame, font="TkFixedFont", justify=tk.LEFT, anchor="nw")
-        self.stats_label.pack(fill=tk.BOTH, expand=True)
+        self.stats_label.pack(fill=tk.X)
+        self.status = ttk.Label(stats_frame, text="", foreground="#555")
+        self.status.pack(fill=tk.X)
         plot_frame = ttk.Frame(right)
-        right.add(plot_frame, weight=2)
-        self.fig = Figure(figsize=(5, 4), dpi=90)
-        gs = self.fig.add_gridspec(2, 1, height_ratios=(2, 1), hspace=0.55)
+        right.add(plot_frame, weight=3)
+        self.fig = Figure(figsize=(5, 3), dpi=80, layout="constrained")
+        gs = self.fig.add_gridspec(2, 1, height_ratios=(3, 2))
         self.ax_t = self.fig.add_subplot(gs[0])
         self.ax_f = self.fig.add_subplot(gs[1])
-        self.fig.subplots_adjust(left=0.12, right=0.97, top=0.93, bottom=0.12)
         self.canvas = FigureCanvasTkAgg(self.fig, master=plot_frame)
+        self.canvas.get_tk_widget().configure(height=200)
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
-        bottom = ttk.Frame(main, padding=4)
-        main.add(bottom, weight=2)
+        bottom = ttk.Frame(right, padding=(4, 2))
+        right.add(bottom, weight=2)
         cbar = ttk.Frame(bottom)
         cbar.pack(fill=tk.X)
         ttk.Label(cbar, text="Console").pack(side=tk.LEFT)
@@ -362,19 +385,81 @@ class App:
         ttk.Button(cbar, text="Clear", command=self.console_clear).pack(side=tk.LEFT)
         ttk.Checkbutton(cbar, text="Hide Window lines", variable=self.hide_windows,
                         command=self.console_rebuild).pack(side=tk.LEFT, padx=8)
-        body = ttk.Frame(bottom)
-        body.pack(fill=tk.BOTH, expand=True)
-        self.text = tk.Text(body, font="TkFixedFont", wrap=tk.NONE, height=12, state=tk.DISABLED)
-        ys = ttk.Scrollbar(body, orient=tk.VERTICAL, command=self.text.yview)
-        xs = ttk.Scrollbar(body, orient=tk.HORIZONTAL, command=self.text.xview)
+        cbody = ttk.Frame(bottom)
+        cbody.pack(fill=tk.BOTH, expand=True)
+        self.text = tk.Text(cbody, font="TkFixedFont", wrap=tk.NONE, height=6, width=40, state=tk.DISABLED)
+        ys = ttk.Scrollbar(cbody, orient=tk.VERTICAL, command=self.text.yview)
+        xs = ttk.Scrollbar(cbody, orient=tk.HORIZONTAL, command=self.text.xview)
         self.text.configure(yscrollcommand=ys.set, xscrollcommand=xs.set)
         self.text.tag_configure("err", foreground="#c62828")
         ys.pack(side=tk.RIGHT, fill=tk.Y)
         xs.pack(side=tk.BOTTOM, fill=tk.X)
         self.text.pack(fill=tk.BOTH, expand=True)
+        root.bind("<Configure>", self.root_configured)
+        self.set_display_size(IMAGE_W, IMAGE_H, 1.0)
         self.update_threshold_label()
         self.render_stats()
         self.render_plot()
+
+    def root_configured(self, event):
+        if event.widget is self.root and not self.layout_pending:
+            self.layout_pending = True
+            self.root.after_idle(self.relayout)
+
+    def fits(self, scale, avail_w, avail_h, base_h):
+        w, h = int(IMAGE_W * scale), int(IMAGE_H * scale)
+        thumb_h = (w // STRIP - 6) * 3 // 4
+        return w + 16 <= avail_w and base_h + h + thumb_h + 24 <= avail_h
+
+    def display_scale(self):
+        self.root.update_idletasks()
+        avail_w = self.root.winfo_width() - RIGHT_MIN_W
+        avail_h = self.root.winfo_height() - self.bar.winfo_height()
+        base_h = 8 + 8 + self.caption.winfo_reqheight() * 2 + 8
+        k = 1
+        while self.fits(k + 1, avail_w, avail_h, base_h):
+            k += 1
+        if self.fits(k, avail_w, avail_h, base_h):
+            return float(k)
+        d = 2
+        while not self.fits(1.0 / d, avail_w, avail_h, base_h) and d < 8:
+            d += 1
+        return 1.0 / d
+
+    def relayout(self):
+        self.layout_pending = False
+        scale = self.display_scale()
+        if scale != self.scale:
+            self.set_display_size(IMAGE_W, IMAGE_H, scale)
+            self.render_image(force=True)
+            self.render_strip(self.strip_recs)
+
+    def set_display_size(self, w, h, scale):
+        self.scale = scale
+        self.disp = (int(w * scale), int(h * scale))
+        tw = self.disp[0] // STRIP - 6
+        self.thumb_size = (tw, tw * 3 // 4)
+        self.blank = ImageTk.PhotoImage(Image.new("RGB", self.disp, "black"))
+        if self.selected is None:
+            self.image_label.configure(image=self.blank)
+        self.blank_thumb = ImageTk.PhotoImage(Image.new("RGB", self.thumb_size, "black"))
+        for box, lab, text, rec in self.thumbs:
+            if rec is None:
+                lab.configure(image=self.blank_thumb)
+        self.thumb_photos.clear()
+
+    def correction_changed(self):
+        self.thumb_photos.clear()
+        self.render_image(force=True)
+        self.render_strip(self.strip_recs)
+
+    def display_image(self, jpeg, size):
+        im = Image.open(io.BytesIO(jpeg)).convert("RGB")
+        if self.correct.get():
+            im = display_correction(im)
+        if im.size != size:
+            im = im.resize(size, Image.NEAREST if size[0] > im.width else Image.BOX)
+        return im
 
     def refresh_ports(self):
         self.port_box["values"] = list_ports()
@@ -515,28 +600,22 @@ class App:
     def render_image(self, force=False):
         rec = self.selected
         if rec is None:
-            self.image_label.configure(image="", text="")
+            self.image_label.configure(image=self.blank)
             self.image_box.configure(bg=GREY)
             self.caption.configure(text="no image yet" if not self.images else "no image at or above the threshold")
             return
-        aw = max(64, self.image_label.winfo_width())
-        ah = max(48, self.image_label.winfo_height())
-        if rec is self.shown and not force and getattr(self, "shown_size", None) == (aw, ah):
+        if rec is self.shown and not force:
             self.update_caption(rec)
             return
         try:
-            im = Image.open(io.BytesIO(rec["jpeg"]))
-            im.load()
+            im = self.display_image(rec["jpeg"], self.disp)
         except Exception:
-            self.image_label.configure(image="", text="image does not decode", fg="white")
-            self.update_caption(rec)
+            self.image_label.configure(image=self.blank)
+            self.caption.configure(text="image does not decode")
             return
-        scale = min(aw / im.width, ah / im.height)
-        im = im.resize((max(1, int(im.width * scale)), max(1, int(im.height * scale))), Image.BILINEAR)
         self.photo = ImageTk.PhotoImage(im)
-        self.image_label.configure(image=self.photo, text="")
+        self.image_label.configure(image=self.photo)
         self.shown = rec
-        self.shown_size = (aw, ah)
         self.update_caption(rec)
 
     def update_caption(self, rec):
@@ -551,9 +630,7 @@ class App:
         ph = self.thumb_photos.get(key)
         if ph is None:
             try:
-                im = Image.open(io.BytesIO(rec["jpeg"]))
-                im.thumbnail((84, 63))
-                ph = ImageTk.PhotoImage(im)
+                ph = ImageTk.PhotoImage(self.display_image(rec["jpeg"], self.thumb_size))
             except Exception:
                 ph = None
             self.thumb_photos[key] = ph
@@ -564,16 +641,17 @@ class App:
         return ph
 
     def render_strip(self, recs):
+        self.strip_recs = recs
         recs = [None] * (STRIP - len(recs)) + recs
         for k, rec in enumerate(recs):
             box, lab, text, _ = self.thumbs[k]
             if rec is None:
-                lab.configure(image="", width=11, height=4)
+                lab.configure(image=self.blank_thumb)
                 box.configure(bg=GREY)
                 text.configure(text="")
             else:
                 ph = self.thumb_photo(rec)
-                lab.configure(image=ph if ph else "", width=84 if ph else 11, height=63 if ph else 4)
+                lab.configure(image=ph if ph else self.blank_thumb)
                 lab.image = ph
                 box.configure(bg=GREEN if self.above(rec["score"]) else GREY)
                 text.configure(text=f"w{rec['window']} {probability(rec['score']) * 100:.0f}%")
@@ -594,7 +672,7 @@ class App:
 
     def update_threshold_label(self):
         thr = self.threshold.get()
-        self.threshold_label.configure(text=f"{thr:.1f} % (score >= {self.score_min()})")
+        self.threshold_label.configure(text=f"{thr:.1f} % (s >= {self.score_min()})")
 
     def threshold_changed(self):
         self.update_threshold_label()
@@ -620,19 +698,12 @@ class App:
         n, hits, run, longest = self.detection()
         pct = f"{100 * hits / n:.1f} %" if n else "-"
         out += [
-            "",
             f"Detection   threshold {self.threshold.get():.1f} % (score >= {self.score_min()})",
-            f"  windows at or above   {hits} of {n} lines ({pct})",
-            f"  current run {run}   longest run {longest}",
-            "",
-            "Stacks (used/allocated bytes)",
+            f"  at or above  {hits} of {n} windows ({pct})   current run {run}   longest run {longest}",
+            "Stacks      " + ("  ".join(f"{name} {used}/{alloc}" for name, (used, alloc) in s["stacks"].items())
+                              if s and s["stacks"] else "-"),
+            f"GUI lag     last {1000 * self.lag_last:.0f} ms   max {1000 * self.lag_max:.0f} ms",
         ]
-        if s and s["stacks"]:
-            for name, (used, alloc) in s["stacks"].items():
-                out.append(f"  {name:10s} {used:5d}/{alloc}")
-        else:
-            out.append("  -")
-        out += ["", f"GUI lag     last {1000 * self.lag_last:.0f} ms   max {1000 * self.lag_max:.0f} ms"]
         self.stats_label.configure(text="\n".join(out))
 
     def render_plot(self):
@@ -756,6 +827,7 @@ def main():
     ap.add_argument("--exit-after", type=float, metavar="S", help="close the window after S seconds")
     ap.add_argument("--toggle-at", type=float, nargs="*", default=[], metavar="S",
                     help="press Connect/Disconnect after S seconds (tests)")
+    ap.add_argument("--no-correction", action="store_true", help="start with Display correction off")
     ap.add_argument("--geometry", default="1500x980", help="window size (and position), as for Tk")
     ap.add_argument("--report", action="store_true", help="print the statistics when the window closes")
     args = ap.parse_args()
