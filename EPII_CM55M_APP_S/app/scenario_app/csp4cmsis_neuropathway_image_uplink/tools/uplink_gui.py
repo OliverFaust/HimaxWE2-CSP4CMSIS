@@ -20,7 +20,9 @@ output is int8 with scale 1/256 and zero point -128, so a score s is the
 probability p = (s + 128) / 256 and 50 % is s = 0.
 
 The image is shown at 1:1 or the largest integer scale that fits, never
-stretched. "Display correction" applies a gray-world white balance and gamma
+stretched. Fonts, plots and widget sizes follow the desktop's scaling: Tk
+assumes 96 dpi, so the GUI reads Xft.dpi (192 at 200 %) and scales by
+Xft.dpi / 96, or by --scale. "Display correction" applies a gray-world white balance and gamma
 2.2 to what is shown; the saved JPEGs stay as received.
 
 A reader thread does the serial I/O (or the replay) and the parsing and puts
@@ -39,11 +41,13 @@ import io
 import math
 import pathlib
 import queue
+import re
+import subprocess
 import sys
 import threading
 import time
 import tkinter as tk
-from tkinter import filedialog, ttk
+from tkinter import filedialog, font as tkfont, ttk
 
 import numpy as np
 from PIL import Image, ImageTk
@@ -79,6 +83,33 @@ PREVIEW_WINDOW = 4
 CFG_DEFINES = (("exposure", "IMX219_EXPOSURE_SETTING"), ("again", "IMX219_AGAIN_SETTING"),
                ("dgain", "IMX219_DGAIN_SETTING"), ("framelen", "IMX219_FRAMELEN_SETTING"))
 RIGHT_MIN_W = 560
+UI = 1.0
+
+
+def px(n):
+    return int(round(n * UI))
+
+
+def detect_scale():
+    try:
+        out = subprocess.run(["xrdb", "-query"], capture_output=True, text=True, timeout=2).stdout
+        m = re.search(r"^Xft\.dpi:\s*([\d.]+)", out, re.M)
+        if m:
+            return max(1.0, float(m.group(1)) / 96.0)
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return 1.0
+
+
+def apply_scale(root):
+    root.tk.call("tk", "scaling", UI * 96.0 / 72.0)
+    for name in tkfont.names(root):
+        f = tkfont.nametofont(name, root)
+        size = int(f.cget("size"))
+        if size < 0:
+            f.configure(size=int(round(size * UI)))
+    style = ttk.Style(root)
+    style.configure(".", arrowsize=px(14), indicatorsize=px(12), indicatordiameter=px(12))
 GAMMA = 2.2
 ERROR_MARKS = ("!!", "FAIL", "FATAL", "not sent")
 
@@ -349,59 +380,59 @@ class App:
     def build(self):
         root = self.root
         root.title("Uplink monitor" + (f" - replay {self.args.replay}" if self.args.replay else ""))
-        root.geometry(self.args.geometry)
-        root.minsize(1000, 640)
-        bar = ttk.Frame(root, padding=(4, 3))
+        root.geometry(self.args.geometry or self.default_geometry())
+        root.minsize(px(1000), px(640))
+        bar = ttk.Frame(root, padding=(px(4), px(3)))
         bar.pack(side=tk.TOP, fill=tk.X)
         self.bar = bar
         live = not self.args.replay
         ttk.Label(bar, text="Port").pack(side=tk.LEFT)
         self.port_box = ttk.Combobox(bar, textvariable=self.port, width=12, postcommand=self.refresh_ports,
                                      state="normal" if live else "disabled")
-        self.port_box.pack(side=tk.LEFT, padx=(2, 4))
+        self.port_box.pack(side=tk.LEFT, padx=(px(2), px(4)))
         self.connect_button = ttk.Button(bar, text="Connect", command=self.toggle_connect,
                                          state="normal" if live else "disabled")
-        self.connect_button.pack(side=tk.LEFT, padx=(0, 10))
+        self.connect_button.pack(side=tk.LEFT, padx=(px(0), px(10)))
         ttk.Label(bar, text="Output").pack(side=tk.LEFT)
-        ttk.Entry(bar, textvariable=self.out, width=18).pack(side=tk.LEFT, padx=2)
+        ttk.Entry(bar, textvariable=self.out, width=18).pack(side=tk.LEFT, padx=px(2))
         ttk.Button(bar, text="...", width=3, command=self.choose_out).pack(side=tk.LEFT)
         ttk.Checkbutton(bar, text="Record", variable=self.record,
-                        state="normal" if live else "disabled").pack(side=tk.LEFT, padx=(4, 10))
+                        state="normal" if live else "disabled").pack(side=tk.LEFT, padx=(px(4), px(10)))
         ttk.Label(bar, text="Threshold").pack(side=tk.LEFT)
-        ttk.Scale(bar, from_=0, to=100, variable=self.threshold, length=150,
-                  command=lambda v: self.threshold.set(round(float(v) * 2) / 2)).pack(side=tk.LEFT, padx=2)
+        ttk.Scale(bar, from_=0, to=100, variable=self.threshold, length=px(150),
+                  command=lambda v: self.threshold.set(round(float(v) * 2) / 2)).pack(side=tk.LEFT, padx=px(2))
         self.threshold_label = ttk.Label(bar, width=16)
-        self.threshold_label.pack(side=tk.LEFT, padx=(2, 10))
+        self.threshold_label.pack(side=tk.LEFT, padx=(px(2), px(10)))
         ttk.Label(bar, text="Speed").pack(side=tk.LEFT)
         ttk.Combobox(bar, textvariable=self.speed, values=SPEEDS, width=4,
-                     state="readonly" if self.args.replay else "disabled").pack(side=tk.LEFT, padx=2)
+                     state="readonly" if self.args.replay else "disabled").pack(side=tk.LEFT, padx=px(2))
         ttk.Checkbutton(bar, text="Display correction", variable=self.correct,
-                        command=self.correction_changed).pack(side=tk.LEFT, padx=(10, 0))
+                        command=self.correction_changed).pack(side=tk.LEFT, padx=(px(10), px(0)))
 
         body = ttk.Frame(root)
         body.pack(fill=tk.BOTH, expand=True)
-        left = ttk.Frame(body, padding=4)
+        left = ttk.Frame(body, padding=px(4))
         left.pack(side=tk.LEFT, fill=tk.Y)
         self.left = left
-        self.image_box = tk.Frame(left, bg=GREY, padx=4, pady=4)
+        self.image_box = tk.Frame(left, bg=GREY, padx=px(4), pady=px(4))
         self.image_box.pack(side=tk.TOP, anchor="nw")
         self.blank = None
         self.image_label = tk.Label(self.image_box, bg="black", bd=0, highlightthickness=0)
         self.image_label.pack()
         self.caption = ttk.Label(left, text="no image yet", font="TkFixedFont")
-        self.caption.pack(side=tk.TOP, fill=tk.X, pady=(4, 0))
+        self.caption.pack(side=tk.TOP, fill=tk.X, pady=(px(4), px(0)))
         opts = ttk.Frame(left)
         opts.pack(side=tk.TOP, fill=tk.X)
         ttk.Checkbutton(opts, text="Only at or above the threshold", variable=self.only_above,
                         command=self.images_changed).pack(side=tk.LEFT)
         ttk.Checkbutton(opts, text="Follow latest", variable=self.follow,
-                        command=self.images_changed).pack(side=tk.LEFT, padx=12)
+                        command=self.images_changed).pack(side=tk.LEFT, padx=px(12))
         self.strip = ttk.Frame(left)
-        self.strip.pack(side=tk.TOP, anchor="nw", pady=(2, 0))
+        self.strip.pack(side=tk.TOP, anchor="nw", pady=(px(2), px(0)))
         self.thumbs = []
         for k in range(STRIP):
-            box = tk.Frame(self.strip, bg=GREY, padx=2, pady=2)
-            box.grid(row=0, column=k, padx=1)
+            box = tk.Frame(self.strip, bg=GREY, padx=px(2), pady=px(2))
+            box.grid(row=0, column=k, padx=px(1))
             lab = tk.Label(box, bg="black", bd=0, highlightthickness=0)
             lab.pack()
             text = tk.Label(self.strip, font=("TkFixedFont", 7))
@@ -411,7 +442,7 @@ class App:
 
         right = ttk.PanedWindow(body, orient=tk.VERTICAL)
         right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        stats_frame = ttk.Frame(right, padding=(4, 2))
+        stats_frame = ttk.Frame(right, padding=(px(4), px(2)))
         right.add(stats_frame, weight=0)
         self.stats_label = tk.Label(stats_frame, font="TkFixedFont", justify=tk.LEFT, anchor="nw")
         self.stats_label.pack(fill=tk.X)
@@ -419,21 +450,21 @@ class App:
         self.status.pack(fill=tk.X)
         plot_frame = ttk.Frame(right)
         right.add(plot_frame, weight=3)
-        self.fig = Figure(figsize=(5, 3), dpi=80, layout="constrained")
+        self.fig = Figure(figsize=(5, 3), dpi=80 * UI, layout="constrained")
         gs = self.fig.add_gridspec(3, 1, height_ratios=(3, 2, 2))
         self.ax_t = self.fig.add_subplot(gs[0])
         self.ax_f = self.fig.add_subplot(gs[1])
         self.ax_y = self.fig.add_subplot(gs[2])
         self.ax_c = self.ax_y.twinx()
         self.canvas = FigureCanvasTkAgg(self.fig, master=plot_frame)
-        self.canvas.get_tk_widget().configure(height=200)
+        self.canvas.get_tk_widget().configure(height=px(200))
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
         notebook = ttk.Notebook(right)
         right.add(notebook, weight=2)
-        bottom = ttk.Frame(notebook, padding=(4, 2))
+        bottom = ttk.Frame(notebook, padding=(px(4), px(2)))
         notebook.add(bottom, text="Console")
-        tune = ttk.Frame(notebook, padding=(4, 2))
+        tune = ttk.Frame(notebook, padding=(px(4), px(2)))
         notebook.add(tune, text="Tuning")
         self.build_tuning(tune)
         if self.args.tab == "tuning":
@@ -441,10 +472,10 @@ class App:
         cbar = ttk.Frame(bottom)
         cbar.pack(fill=tk.X)
         ttk.Label(cbar, text="Console").pack(side=tk.LEFT)
-        ttk.Checkbutton(cbar, text="Pause", variable=self.paused, command=self.console_rebuild).pack(side=tk.LEFT, padx=8)
+        ttk.Checkbutton(cbar, text="Pause", variable=self.paused, command=self.console_rebuild).pack(side=tk.LEFT, padx=px(8))
         ttk.Button(cbar, text="Clear", command=self.console_clear).pack(side=tk.LEFT)
         ttk.Checkbutton(cbar, text="Hide Window lines", variable=self.hide_windows,
-                        command=self.console_rebuild).pack(side=tk.LEFT, padx=8)
+                        command=self.console_rebuild).pack(side=tk.LEFT, padx=px(8))
         cbody = ttk.Frame(bottom)
         cbody.pack(fill=tk.BOTH, expand=True)
         self.text = tk.Text(cbody, font="TkFixedFont", wrap=tk.NONE, height=6, width=40, state=tk.DISABLED)
@@ -461,18 +492,24 @@ class App:
         self.render_stats()
         self.render_plot()
 
+    def default_geometry(self):
+        w = min(px(1500), self.root.winfo_screenwidth())
+        h = min(px(980), self.root.winfo_screenheight())
+        return f"{w}x{h}"
+
     def build_tuning(self, tune):
         live = not self.args.replay
         for row, (name, lo, hi) in enumerate(SLIDERS):
             ttk.Label(tune, text=name, width=9).grid(row=row, column=0, sticky="w")
             var = tk.IntVar(value=DEFAULTS[name])
             sc = tk.Scale(tune, from_=lo, to=hi, orient=tk.HORIZONTAL, variable=var, showvalue=False,
-                          resolution=1, length=240, state="normal" if live else "disabled")
+                          resolution=1, length=px(240), width=px(15), sliderlength=px(30),
+                          state="normal" if live else "disabled")
             sc.grid(row=row, column=1, sticky="we")
             sc.bind("<ButtonPress-1>", lambda e, n=name: self.dragging.add(n))
             sc.bind("<ButtonRelease-1>", lambda e, n=name: self.slider_released(n))
             ent = ttk.Entry(tune, textvariable=var, width=7, state="normal" if live else "disabled")
-            ent.grid(row=row, column=2, padx=4)
+            ent.grid(row=row, column=2, padx=px(4))
             ent.bind("<Return>", lambda e, n=name: self.send_setting(n))
             note = ttk.Label(tune, text=setting_note(name, None), width=34)
             note.grid(row=row, column=3, sticky="w")
@@ -481,12 +518,12 @@ class App:
             self.slider_notes[name] = note
         tune.columnconfigure(1, weight=1)
         buttons = ttk.Frame(tune)
-        buttons.grid(row=len(SLIDERS), column=0, columnspan=4, sticky="w", pady=(4, 0))
+        buttons.grid(row=len(SLIDERS), column=0, columnspan=4, sticky="w", pady=(px(4), px(0)))
         state = "normal" if live else "disabled"
         ttk.Button(buttons, text="Get", command=lambda: self.send_command("get"), state=state).pack(side=tk.LEFT)
         self.preview_button = ttk.Button(buttons, text=f"Preview (window {PREVIEW_WINDOW})",
                                          command=self.toggle_preview, state=state)
-        self.preview_button.pack(side=tk.LEFT, padx=6)
+        self.preview_button.pack(side=tk.LEFT, padx=px(6))
         ttk.Button(buttons, text="Copy settings", command=self.copy_settings).pack(side=tk.LEFT)
         self.tune_status = ttk.Label(tune, text="", foreground="#555")
         self.tune_status.grid(row=len(SLIDERS) + 1, column=0, columnspan=4, sticky="w")
@@ -565,14 +602,14 @@ class App:
 
     def fits(self, scale, avail_w, avail_h, base_h):
         w, h = int(IMAGE_W * scale), int(IMAGE_H * scale)
-        thumb_h = (w // STRIP - 6) * 3 // 4
-        return w + 16 <= avail_w and base_h + h + thumb_h + 24 <= avail_h
+        thumb_h = (w // STRIP - px(6)) * 3 // 4
+        return w + px(16) <= avail_w and base_h + h + thumb_h + px(24) <= avail_h
 
     def display_scale(self):
         self.root.update_idletasks()
-        avail_w = self.root.winfo_width() - RIGHT_MIN_W
+        avail_w = self.root.winfo_width() - px(RIGHT_MIN_W)
         avail_h = self.root.winfo_height() - self.bar.winfo_height()
-        base_h = 8 + 8 + self.caption.winfo_reqheight() * 2 + 8
+        base_h = px(24) + self.caption.winfo_reqheight() * 2
         k = 1
         while self.fits(k + 1, avail_w, avail_h, base_h):
             k += 1
@@ -594,7 +631,7 @@ class App:
     def set_display_size(self, w, h, scale):
         self.scale = scale
         self.disp = (int(w * scale), int(h * scale))
-        tw = self.disp[0] // STRIP - 6
+        tw = self.disp[0] // STRIP - px(6)
         self.thumb_size = (tw, tw * 3 // 4)
         self.blank = ImageTk.PhotoImage(Image.new("RGB", self.disp, "black"))
         if self.selected is None:
@@ -1012,10 +1049,15 @@ def main():
                     help="send COMMAND through the tuning path after S seconds (tests)")
     ap.add_argument("--tab", choices=("console", "tuning"), default="console", help="tab shown at start")
     ap.add_argument("--no-correction", action="store_true", help="start with Display correction off")
-    ap.add_argument("--geometry", default="1500x980", help="window size (and position), as for Tk")
+    ap.add_argument("--geometry", help="window size (and position), as for Tk (default: 1500x980 times the scale)")
+    ap.add_argument("--scale", default="auto",
+                    help="UI scale: a factor, or auto (Xft.dpi / 96, e.g. 2 with 200 %% display scaling)")
     ap.add_argument("--report", action="store_true", help="print the statistics when the window closes")
     args = ap.parse_args()
+    global UI
+    UI = detect_scale() if args.scale == "auto" else max(0.5, float(args.scale))
     root = tk.Tk()
+    apply_scale(root)
     App(root, args)
     root.mainloop()
     return 0
