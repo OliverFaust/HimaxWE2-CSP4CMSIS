@@ -40,6 +40,9 @@ struct report_t {
 #ifdef UPLINK_STAGE0
     uint8_t     bytes[16];
 #endif
+#ifdef UPLINK_SCORE_LOG
+    const int8_t* scores;
+#endif
 };
 static_assert(std::is_trivially_copyable<report_t>::value, "channel element types must be trivially copyable");
 

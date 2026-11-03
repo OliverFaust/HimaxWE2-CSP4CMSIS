@@ -121,7 +121,14 @@ void Reporter::run()
             } else {
                 xprintf(" best %lu score %d", (unsigned long)(uint32_t)r.value[2], (int)r.value[3]);
             }
-            xprintf(" merged %d failed %ld\r\n", (int)r.code, (long)r.value[4]);
+            xprintf(" merged %d failed %ld", (int)r.code, (long)r.value[4]);
+#ifdef UPLINK_SCORE_LOG
+            xprintf(" p");
+            for (uint32_t k = 0; k < UPLINK_WINDOW; k++) xprintf(" %d", (int)r.scores[k]);
+            xprintf(" n");
+            for (uint32_t k = 0; k < UPLINK_WINDOW; k++) xprintf(" %d", (int)r.scores[UPLINK_WINDOW + k]);
+#endif
+            xprintf("\r\n");
             break;
         case ReportKind::Stack:
             if (r.value[2] < 0) {
