@@ -201,22 +201,23 @@ void Reporter::run()
             if (r.code != 0) {
                 xprintf("%s: mount FAILED: %s (%d)\r\n", r.name, sd_card_result_name(r.code), (int)r.code);
             } else {
-                xprintf("%s: mounted, FAT type %ld, %ld sectors per cluster, SPI %ld Hz, mount %ld us, core %ld Hz\r\n",
-                        r.name, (long)r.value[0], (long)r.value[1], (long)r.value[2], (long)r.value[3],
+                xprintf("%s: mount %lu: FAT type %ld, %ld sectors per cluster, SPI %ld Hz, mount %ld us, core %ld Hz\r\n",
+                        r.name, (unsigned long)r.index, (long)r.value[0], (long)r.value[1], (long)r.value[2], (long)r.value[3],
                         (long)r.value[4]);
             }
             break;
         case ReportKind::SdBench:
             if (r.code != 0) {
-                xprintf("SdBench: %s FAILED after %ld reads: %s (%d)\r\n", r.name, (long)r.value[1],
+                xprintf("SdBench: mount %lu %s FAILED after %ld reads: %s (%d)\r\n", (unsigned long)r.index, r.name,
+                        (long)r.value[1],
                         sd_card_result_name(r.code), (int)r.code);
             } else {
                 uint64_t bytes = (uint64_t)(uint32_t)r.value[0] * (uint32_t)r.value[1];
                 uint32_t read_us = (uint32_t)r.value[2];
                 uint32_t all_us = read_us + (uint32_t)r.value[5];
-                xprintf("SdBench: %s %ld bytes x %ld: read %lu KB/s (min %ld us, max %ld us, mean %lu us), "
+                xprintf("SdBench: mount %lu %s %ld bytes x %ld: read %lu KB/s (min %ld us, max %ld us, mean %lu us), "
                         "with open %lu KB/s (open mean %lu us), crc %08lx %s\r\n",
-                        r.name, (long)r.value[0], (long)r.value[1],
+                        (unsigned long)r.index, r.name, (long)r.value[0], (long)r.value[1],
                         (unsigned long)(read_us ? bytes * 1000u / read_us : 0), (long)r.value[3], (long)r.value[4],
                         (unsigned long)(read_us / (uint32_t)r.value[1]),
                         (unsigned long)(all_us ? bytes * 1000u / all_us : 0),
