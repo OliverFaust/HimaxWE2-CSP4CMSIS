@@ -1,5 +1,7 @@
 # CSP Neuropathway Image Uplink on Himax WE2
 
+**Two frame sources, chosen at build time:** the frames come from the IMX219 camera (`FRAME_SOURCE=camera`, the default) or from an SD card (`FRAME_SOURCE=sdcard`: `FileSource` reads luma and JPEG files listed in a manifest, for repeatable runs, bit-exact comparison with the model on the PC and labelled evaluation sets). Both sources are processes with the same four channels; everything downstream is unchanged (sections 16-19).
+
 This app extends the person-detection pipeline of [`csp4cmsis_allon_sensor_tflm`](../csp4cmsis_allon_sensor_tflm) (Camera → Inference → Reporter, built from **Communicating Sequential Processes (CSP)** on the Himax WE2, Grove Vision AI V2, with an IMX219 camera). Its goal is to send the best JPEG out of every window of 20 frames to the PC over the existing console UART (921 600 Bd over USB-C), without the camera ever waiting for the link. It uses CSP4CMSIS 3.0.1 on FreeRTOS 10.5.1, through the SDK's CMSIS-RTOS2 adapter (`OS_HAL := y`; the kernel is started with `osKernelInitialize()`/`osKernelStart()`), and the Ethos-U55 NPU.
 
 The work follows a staged plan; each stage must pass on the board before the next starts:
@@ -11,6 +13,8 @@ The work follows a staged plan; each stage must pass on the board before the nex
 
 **Status (2026-11-02):** Stages 0, 1 and 2 pass on the board (sections 7, 8 and 9); Stage 3 passes on the board (section 10), and the Stage 4 model holds in ProB (section 6). The first person-detection test run (section 11, 2026-11-03) passed its pipeline and selection checks, but its measurements must be repeated: the scene did not follow the protocol. The PC monitor `uplink_gui.py` is in section 12, image quality in section 13, live sensor tuning from the PC in section 14, on-board person detection with event filtering (the current default: images are sent only on detections) in section 15. The default build is the Stage 3 build extended by sections 14 and 15; `-DUPLINK_STAGE0` builds the Stage 0 test instead. Sections 1-6 describe the network and note what the uplink changes.
 
+**Frame source (2026-11-08):** Stage A (the camera driver kept apart, section 16), the SD read check and an app-local card driver (section 17), FileSource and its frames (section 18), evaluation sets (section 19), the GUI's reader process (section 20) and the frame-source model (section 6) pass on the board and in ProB.
+
 The explanations for this code are in the book; the source files deliberately contain no comments.
 
 
@@ -21,15 +25,16 @@ The system is designed as a **Static Network** of independent processes communic
 
 ```mermaid
 flowchart LR
-    ISR["frame-ready ISR<br/>os_app_dplib_cb()"] -->|"g_trigger_chan<br/>buffered, 1 slot"| Camera
-    Camera -->|"frame_chan<br/>rendezvous, frame_t"| Inference
+    ISR["frame-ready ISR<br/>os_app_dplib_cb()"] -->|"g_trigger_chan<br/>buffered, 1 slot<br/>(camera build)"| Camera
+    SD[("SD card<br/>/frames/manifest.csv<br/>.y + .jpg")] -->|"FatFs, SPI 24 MHz<br/>(sdcard build)"| Camera
+    Camera["Camera or FileSource<br/>(FRAME_SOURCE)"] -->|"frame_chan<br/>rendezvous, frame_t"| Inference
     Inference -->|"release_chan<br/>rendezvous, next JPEG buffer"| Camera
     UART["console UART RX interrupt<br/>console_rx_cb()"] -->|"g_rx_chan<br/>buffered, 128 bytes"| Command
     Command -->|"cmd_chan<br/>buffered, 1 slot, command_t"| Camera
     Command -->|"rejections"| report_chan
     Reporter -->|"free_chan<br/>buffered, 1 slot, sent JPEG buffer"| Inference
     Reporter -->|"ready_chan<br/>buffered, 1 slot, report finished"| Inference
-    Camera -->|"start-up only"| report_chan
+    Camera -->|"Camera: start-up only<br/>FileSource: errors, acks, status, end"| report_chan
     Inference --> report_chan
     MainApp["MainApp_Task<br/>stack report every 3 s"] --> report_chan
     report_chan(("report_chan<br/>one rendezvous channel<br/>report_t")) --> Reporter
@@ -61,7 +66,7 @@ The inference process utilizes the `cvapp` module from the Himax SDK:
 * **NPU:** Initialises the Ethos‑U55.
 * **Inference blocks during `Invoke()`:** the Ethos-U driver waits for the NPU with a semaphore. Its own bare-metal version spins in `__WFE()` (and `malloc()`s each semaphore); `ethosu_rtos_semaphore.c` replaces it with CMSIS-RTOS2 semaphores whose control blocks are static. While the NPU runs, Inference is blocked and the CPU is free; the NPU's end-of-job interrupt, at priority 5 like the frame-ready interrupt, releases the semaphore and Inference continues. Measured over 60 s (1164 frames): one take per frame; `Invoke()` takes 1.61 ms (642 k cycles at 400 MHz), of which about 1.1 ms was spent spinning before; the CPU's idle share rose from 95.3 % to 97.4 %. The frame rate is unchanged: the camera sets it, not the NPU.
 * **Model:** Loads a specialized person‑detection TFLM model.
-* **Data Path:** Runs inference on raw YUV frames (accessed via `app_get_raw_addr()`). `cv_prepare()` rescales the frame to 96x96 and `cv_invoke()` runs the model; Inference releases the raw buffer between the two (section 2).
+* **Data Path:** Runs inference on the luma plane of the raw frame, given by the frame source (`frame_t.raw_addr`, `raw_w`, `raw_h`; section 16). `cv_prepare(raw, w, h)` rescales the frame to 96x96 and `cv_invoke()` runs the model; Inference releases the raw buffer between the two (section 2).
 * **Windows (Stage 2):** Inference keeps the window's best person score and its frame index. On the window's last frame it sends a `Window` report (window id, first and last frame, best frame index and score, windows merged; always 0 in Stage 2) and then the `Image` report for the window's last frame (frame index, JPEG address and size, window id, the frame's score). A failed `Invoke()` is reported at once (`Frame <n>: inference failed (<code>)`) and does not count for the best score. Under `-DUPLINK_STAGE0` Inference sends the `Window` report but no `Image`.
 * **Best-of-20 (Stage 3):** Inference keeps the best frame's descriptor (`frame_t`, with its buffer). Before every frame it polls `free_chan` without blocking: a PRI ALT over the channel and a zero timeout (`Alternative(m_free_in | returned, skip)` with `RelTimeoutGuard skip(Milliseconds(0))`, CSP's SKIP; CSP4CMSIS 3.0.1 has no `tryRead`). A buffer that comes back joins the spares, and Inference holds the free token again. On a window's last frame, if it holds the token, it sends the `Window` line (window id, the first and last frame of the merged range, best frame and score or `-` if every frame failed, windows merged, failed inferences) and then the `Image` report of the best frame, with its buffer id; it then no longer holds the token. If it does not hold the token, it sends nothing: the window is merged, the best and the counts carry over, and the next line it sends covers both windows. A failed `Invoke()` is counted (`failed <k>`); its buffer is free at once. Under `-DUPLINK_STAGE0` the best buffer is put back with the spares instead of being sent.
 * **Start-up order:** Inference initialises the model only when its first frame has arrived, i.e. after Camera has started.
@@ -73,7 +78,7 @@ The console is a shared resource, and `xprintf()` has no locking, so two process
 
 ### 5. Memory & Performance
 * **Zero Heap:** All CSP channels and processes, every thread's stack, and the Ethos-U driver's semaphores are statically allocated at compile time; the FreeRTOS heap is not used (`configTOTAL_HEAP_SIZE` 1 KB, 0 allocations measured). The C library heap (16 KB, `__HEAP_SIZE` in the linker script) sees two allocations, both at start-up and never freed: 1088 bytes for the C++ runtime's emergency exception buffer (libstdc++, before `main()`) and 12 bytes for the Ethos-U driver's device structure (`ethosu_dev_init()`, when Inference initialises the model); 1112 bytes in use including `malloc()`'s bookkeeping (`mallinfo()`), and no allocation while frames run.
-* **Frame buffers:** all in `.bss.NoInit`, set up in `cis_sensor/cis_imx219/cisdp_sensor.c`: `demosbuf` (raw YUV420 at 640x480, 460 800 bytes, read by Inference), `jpegfilesizebuf` (100 bytes; the encoder writes the JPEG size here) and the `jpegbuf` array of `CISDP_JPEG_BUF_CNT` JPEG buffers. Each JPEG buffer is `JPEG_BUFSIZE` rounded up to a multiple of 32, so that cache maintenance on one buffer never touches its neighbour: 115 856 bytes at 640x480 with the encoder's 4x table (section 13; 46 256 with the 10x table before), i.e. 115 872 bytes per buffer. The driver's default for `CISDP_JPEG_BUF_CNT` is 2; the `.mk` sets 4 (463 488 bytes; 185 088 with the 10x table) for Stage 3 (section 2). The Stage 0 build alternates buffers 0 and 1 only.
+* **Frame buffers:** all in `.bss.NoInit`. Since Stage A (section 16) the raw buffer (YUV420 at 640x480, 460 800 bytes, read by Inference; `demosbuf` before) and the `jpegbuf` array of `CISDP_JPEG_BUF_CNT` JPEG buffers are in `frame_buffers.c`; the driver keeps only `jpegfilesizebuf` (100 bytes; the encoder writes the JPEG size here). Each JPEG buffer is `JPEG_BUFSIZE` rounded up to a multiple of 32, so that cache maintenance on one buffer never touches its neighbour: 115 856 bytes at 640x480 with the encoder's 4x table (section 13; 46 256 with the 10x table before), i.e. 115 872 bytes per buffer. The driver's default for `CISDP_JPEG_BUF_CNT` is 2; the `.mk` sets 4 (463 488 bytes; 185 088 with the 10x table) for Stage 3 (section 2). The Stage 0 build alternates buffers 0 and 1 only.
 * **SRAM:** 1349 KB of 1924 KB used (70.1 %, from the linker), with 4 JPEG buffers sized for the 4x table (section 13); 1077 KB (56.0 %) with the 10x table, about 136 KB more than with the single `jpegbuf` (987 KB with 2). The largest items are `demosbuf`, the model (251 568 bytes) and the tensor arena (128 000 bytes).
 * **Overflow and heap checks:** `configCHECK_FOR_STACK_OVERFLOW` is 2, so FreeRTOS checks each task's stack at every context switch. `vApplicationStackOverflowHook()` prints `FATAL: stack overflow in task <name>`, `vApplicationMallocFailedHook()` prints `FATAL: pvPortMalloc() failed in task <name>` (or `(scheduler not started)`), and `vAssertCalled()` prints the file and line. All three use `xprintf()`, not the C library's `printf()`, and then halt.
 * **Concurrency:** Each process runs in its own thread (`osPriorityLow2`), created by `Run(..., ExecutionMode::StaticNetwork)` from `MainApp_Task` (`osPriorityLow3`).
@@ -87,6 +92,17 @@ That model, `Neuropathway.csp`, covers the network as it was before the uplink.
 **Stage 4: the uplink model.** `Uplink.csp` models the Stage 3 network with the four JPEG buffer ids as data: `frame_chan` carries the frame's buffer, `release_chan` the next DMA target, the `Image` report the buffer to send, and `free_chan` (one slot; Inference's PRI ALT with a zero timeout modelled exactly) brings it back. To keep the state space small it uses windows of 2 frames instead of 20, frame indices 0..3 and a merged count that saturates at 2. Checked with ProB 1.16.1, 7 of 7 assertions hold: deadlock and divergence freedom; the four ids always form a permutation across the roles next, pending, best, sending and spare (an observer follows every id through the events), Camera is only handed a spare, only the best is sent, and `free_chan`'s slot never overflows; every `Window` line carries the number of windows merged since the last; with the Reporter stalled for ever after any image, Camera and Inference keep cycling, with `report_chan` and MainApp in the model; and after a stall only the merges go on, one per window. Two positive controls fail as they should: Camera retargeted to the best buffer (the observer finds the best handed out as a DMA target), and Inference writing to `report_chan` without the free token (with the Reporter stalled, Camera stops). Details in [`Formal model/readme.md`](Formal%20model/readme.md). Not modelled: timing, the JPEG contents and the D-cache, and the Stage 0 build.
 
 **Since sections 14 and 15: two models.** The model now covers the ready token and the per-frame `Scores` reports (`Uplink.csp`, definitions in `Uplink_defs.csp`) and, apart, the command path (`Uplink_command.csp`): one model of both ran out of memory. 9 of 9 and 11 of 11 assertions hold: deadlock and divergence freedom; the buffer permutation (now with suppressed windows and both one-slot channels); the merged count; Inference's reports and the ready token alternate; and Camera and Inference keep cycling with the Reporter running or stalled and, in the command model, whether or not commands arrive. The cycling checks now use failures-divergences refinement with MainApp limited to two reports: with failures refinement and an unbounded MainApp, the stack reports form a loop of hidden events that hides a blocked Camera (control 3 passed that way at first). Four positive controls fail as they should, among them Inference writing `Scores` without the ready token (Camera stops when the Reporter stalls). Details in [`Formal model/readme.md`](Formal%20model/readme.md).
+
+**Since section 18: the frame source.** `Uplink_source.csp` (definitions in `Uplink_source_defs.csp`) models the network with either source. `frame_chan` carries a kind, a frame or the end-of-stream terminator, and Inference flushes a partial window at end of stream. The argument that one model covers both sources is a refinement. `SOURCE(b)` is the source protocol: send a frame or a terminator in the buffer last given, then accept any buffer as the next. Camera and FileSource both refine it in failures-divergences, with everything but `frame_chan` and `release_chan` hidden. The card reads, CRC checks and pace are internal to FileSource, and `cmd_chan` is the same for both. So Inference and the rest of the network cannot tell the sources apart on those channels, except through `report_chan`, which the model includes.
+
+With FileSource, 11 of 12 assertions hold, and the remaining one fails by design:
+* deadlock and divergence freedom;
+* the buffer permutation, with the terminator's buffer going back to the spares;
+* the merged count;
+* the alternation of reports and ready tokens;
+* frames and terminators keep flowing while the Reporter runs.
+
+The Camera network with the new Inference keeps cycling with the Reporter stalled. The check that fails by design is FileSource cycling with the Reporter stalled. FileSource reports between frames (errors, acknowledgements, status, end of stream), and the end-of-stream flush waits for the ready token. On an SD card that costs no frames; a camera would miss sensor frames, which is why Camera reports only at start. Two positive controls fail as they should: a flush that sends its image without the free token breaks the buffer roles, and a FileSource that does not wait for a release after the terminator breaks the protocol. Not modelled: the card driver's timing and the ALT guard-slot issue (section 18), which is a property of the library's implementation, not of the channel protocol. Details in [`Formal model/readme.md`](Formal%20model/readme.md).
 
 ### 7. Image Uplink, Stage 0: retargeting the JPEG buffer (gate test)
 The uplink design keeps several JPEG buffers and points WDMA2 at a different one before each capture. Stage 0 checks that the hardware follows before anything is built on it.
@@ -234,6 +250,77 @@ The board now decides which images to send: at the end of each window it sends t
 * **GUI (`uplink_gui.py`, same layout):** images arrive only on detections. The image area shows the latest detection with its window, frame, probability and age (`detection: window 92 frame 742 p 71.9 % (score 56) 12 s ago`), the strip the last 10 detections. The top plot shows every frame's person probability over the last 60 s with the threshold line, the area above it shaded and the sent frames starred; the middle plot the frames of the latest window (sent or suppressed); the bottom plot Y and clipping. The statistics show frames/s, windows, sent, suppressed, merged, frames >= T, the score count, gaps, the largest batch and scores lost on the board, with the link and error counters. The threshold slider sends `set threshold <score>` when released (the score for the slider's probability, rounded up), a K slider in the Tuning tab sends `set k`, and both follow the board's acknowledgements; `Scores` lines are hidden in the console by default ("Hide Scores lines"). Recording writes the detections' JPEGs, `windows.csv`, `scores.csv` and `console.log`. Checked in replay of the walking run (screenshot at 3000x1900, scale 2) and of a run with `set threshold` and `set k`, whose acknowledgements moved the sliders.
   How late the scores arrive: in the walking run a score line came at most 252 ms after its frame (taking the earliest as 0; p99 156 ms), against 214 ms for the longest image send plus one frame period (121 ms), so never more than one image send late; in the stall build at most 1.72 s, the stall plus one send (1.5 s + 0.22 s), as the batch size of 15 frames shows.
 
+### 16. Frame source: camera or SD card (Stage A, the camera driver kept apart)
+The frames can come from the camera or from an SD card, chosen at build time with `FRAME_SOURCE = camera | sdcard` (default `camera`, section "Build Instructions"). Both sources are CSP processes with the same four channels: `frame_chan` out, `release_chan` in, `cmd_chan` in, `report_chan` out. Inference, the Reporter, Command, the uplink, the PC tools and the formal model do not depend on which one runs. Stage A separated the camera driver from the rest, without changing behaviour:
+* **`frame_buffers.c/.h`** own the raw buffer (640x480 YUV420, 460 800 bytes, before `demosbuf` in the driver) and the `CISDP_JPEG_BUF_CNT` JPEG buffers (115 856 bytes by the SDK's size rule for the 4x table, rounded up to 115 872), with their addresses and sizes by id. `cisdp_sensor.c` takes its DMA addresses from them and checks at compile time that its HW5x5 output size matches.
+* **`frame_t`** carries `raw_addr`, `raw_w`, `raw_h` and `jpeg_len`, the true JPEG length (SOI to EOI inclusive), instead of the encoder's size field; also `buf`, `changed`, `failed`, `settings`, the end-of-stream flag `end` (section 18) and `read_us` (section 18).
+* **The padding rule moves into Camera:** the encoder's size field is 32-35 bytes past the EOI (section 8); Camera applies `jpeg_length()` and fills `jpeg_len`. A frame without the EOI where the rule puts it gets `jpeg_len = 0`, is never chosen as a window's best, and is counted in the `Window` line (`eoi <count>`). The Reporter sends exactly `jpeg_len` bytes after checking SOI at 0 and EOI at `jpeg_len - 2`; it knows nothing about padding or buffer sizes. Its cache invalidation now covers `jpeg_len`.
+* **`cv_prepare(raw, w, h)`** takes the raw buffer and its size; `cvapp.cpp` includes no sensor header.
+* **`sensor_defaults.h`** holds the four sensor defaults (exposure 0x11CC, analogue gain 0xB4, digital gain 0xDDF, frame length 0x1908), their limits and the compile-time checks; `cisdp_cfg.h` takes its `IMX219_*_SETTING` values from it, and Command's range checks and FileSource's default settings use it without the driver. The GUI's `Copy settings` writes these names.
+* **Check:** `grep -n "cisdp_\|app_get_raw" *.c *.cpp *.h` in the app directory finds only `camera_process.*` and `frame_buffers.*` (and the driver in `cis_sensor/`). On the board (camera build, 5 minutes, a person walking in and out): 8.255 frames/s, all 2477 scores without a gap, 152 images, each its window's best and at or above the threshold, 0 CRC, sequence or EOI errors; SRAM unchanged (12 bytes moved from `.data` to `.bss`); stacks within 8-32 bytes of before.
+
+### 17. SD card: read speed and the card driver (Stage B1)
+* **Card format:** the SDK's FatFs (`ffconf.h`: `FF_LBA64 0`, `FF_FS_EXFAT 0`) reads FAT on an MBR partition table only. A GPT card mounts with `FR_NO_FILESYSTEM`; the mount failure report then shows sector 0 (partition type `ee`) and sector 1 (`EFI PART`). Partition the card with an MBR table and format it FAT32 (Linux: `parted /dev/sdX mklabel msdos mkpart primary fat32 1MiB 100%`, then `mkfs.vfat -F 32 /dev/sdX1`).
+* **Mount:** `sd_card.cpp` sets the SPI master pins (PB2-PB5) and mounts the card read-only from FatFs's point of view (nothing is written), returning the FatFs result; it never halts and creates no directory (`spi_fatfs.c`'s `fatfs_init()`, which does both, is not used). `sd_card_unmount()` also powers the SPI off and closes it, so that the next mount initialises the card again.
+* **Bench:** `make SD_BENCH=y` builds `SdBench` with the Reporter only: it mounts the card three times and reads `/bench/raw640.y` (307 200 bytes), `/bench/raw320.y` (76 800) and `/bench/small.jpg` (10 240) 20 times each per mount into the raw and JPEG buffers, timing opens and reads with the DWT cycle counter and checking each read's CRC-32. `make_sd_frames.py --crc` prints the PC's CRC-32 of the same files.
+* **No DMA:** the CMSIS SPI driver reads by interrupt into the CPU (`spi_read`, not `spi_read_dma`), and the card driver busy-waits until the transfer is complete. The data are written by the CPU, so no cache invalidation is needed after a read; FileSource cleans the JPEG buffer from the cache instead, since the Reporter invalidates it before sending.
+* **The SDK's card driver waited 1 ms per sector.** `mmc_we2_spi.c` (FatFs `mmc_spi` port) polled for the card's data token and its ready state with a fixed 1 ms wait after each poll, even when the card was already ready: about 1.1 ms per 512-byte sector, so 354 KB/s at 12 MHz instead of the bus's 1.5 MB/s. The app now has its own copy, **`mmc_we2_spi.c` and `mmc_we2.h` in the app directory**; the SDK copy is unchanged and no longer built: the `.mk` sets `FATFS_PORT_LIST = app_local` (no such port directory, so `fatfs.mk` compiles no port) and defines `FATFS_PORT_mmc_spi` itself, so that FatFs's `diskio.c` still maps drive 0 to the card (`libfatfs.a` then holds `ff.o`, `ffsystem.o`, `ffunicode.o`, `diskio.o`). In the copy, both waits poll continuously, bounded by the cycle counter: 200 ms for the data token (twice the SD specification's 100 ms read access time, as before) and the caller's 500 ms for ready. A wait gives up only after its time limit *and* at least 4096 polls: a preempted FileSource gives the card no clocks, and part of a card's access time (NSAC, up to 25 500 clocks, about 3200 bytes) is counted in clocks; with the time limit alone, a 230 ms image send by the Reporter made every following read fail. The copy also reports the failing step of a read error (`mmc_disk_last_error()`), counts waits over the limit and timeouts (`mmc_disk_wait_stats()`), and has `mmc_disk_deinit()`.
+* **SPI clock:** `SD_SPI_HZ` in the `.mk` (default 24 000 000; `make clean` after changing it). Results, 3 mounts x 20 CRC-checked reads per file, one card:
+
+  | SPI (requested → actual) | raw640.y | raw320.y | small.jpg | open |
+  |---|---|---|---|---|
+  | 12 MHz, SDK driver | 354 KB/s, 867 ms | 349 KB/s, 220 ms | 346 KB/s, 29.5 ms | 7.0 ms |
+  | 12 → 12 MHz | 1396 KB/s, 220.0 ms | 1383 KB/s, 55.5 ms | 1379 KB/s, 7.4 ms | 1.16 ms |
+  | 18 → 16 MHz | 1816 KB/s, 169.1 ms | 1797 KB/s, 42.7 ms | 1785 KB/s, 5.7 ms | 1.0 ms |
+  | 24 → 24 MHz | 2642 KB/s, 116.3 ms | 2592 KB/s, 29.6 ms | 2573 KB/s, 4.0 ms | 0.8 ms |
+
+  All 540 reads per clock had the same CRC as at 12 MHz; mount about 19 ms. 24 MHz is just under SD's 25 MHz limit in SPI mode, so 16 MHz (`SD_SPI_HZ=16000000`) is the fallback for cards that show CRC or read errors.
+
+### 18. FileSource: frames from the SD card (Stages B2, B3)
+* **Card layout:** a directory (`SD_FRAME_DIR`, default `/frames`) with `manifest.csv` and per frame `fNNNNNN.y` (the luma plane, width x height bytes: the Y plane at the start of the YUV420 raw buffer, which is all that `img_rescale()` reads) and `fNNNNNN.jpg` (sent to the PC when the frame is a window's best). Evaluation sets keep 100 frames per subdirectory (`000/f000000.y`), since FatFs opens a file by scanning its directory.
+* **`tools/make_sd_frames.py`** makes them from videos (ffmpeg) and images: centre crop (or padding, `--fit pad`) to 4:3, scaled to 640x480 (default) or 320x240 (`--size`), luma as Pillow's "L" (0.299 R + 0.587 G + 0.114 B, full range), JPEG at quality 60, whose luminance table is the board's 4x table (13, 9, 8, 13, ...; the chrominance table differs in one entry), 4:2:0. It refuses an output directory inside this repository and checks the board's 160-character manifest line limit. Evaluation sets: section 19.
+* **`manifest.csv`:** `index, y_file, jpg_file, width, height, crc32_y, crc32_jpg, label, source, source_frame, fps`; CRC-32 as 8 hex digits (zlib's, the board's `crc32_update()`), label 1 (person), 0 or empty, fps the source frame rate (the default pace).
+* **FileSource** (`file_source_process.cpp`, `CSProcessStatic<512>`) is the only user of FatFs. It mounts the card, reads the manifest line by line into a fixed buffer, and checks it before the stream starts: the header, every line's fields, one frame size for all frames (a mixed manifest is refused with the first mismatching line), 96x96 to 640x480. Per frame it reads the `.y` file into the raw buffer and the `.jpg` into the JPEG buffer that Inference released (as Camera points the DMA there), checks both files' **CRC-32 against the manifest** (table-driven, the static table of `uplink.cpp`; 5.7 ms per frame at 640x480, 1.4 ms at 320x240) and the JPEG's SOI and EOI, and passes `frame_t` on with `raw_w`/`raw_h` from the manifest and `settings` = the defaults. A frame with a CRC mismatch or a read error is reported with the file name and not passed on; a bad JPEG marker gives `jpeg_len = 0` (counted, never selected). After a read error FileSource remounts the card and goes on with the next frame. The raw buffer is free once Inference has released after `cv_prepare()`, as with Camera, so FileSource reads the next frame while Inference runs the model.
+* **Priority:** FileSource runs at `osPriorityLow1`, below the other processes (`taskPriority()`), because the card driver busy-waits. The Reporter, which also busy-waits on the UART for each line and image, therefore takes the CPU from it: at 640x480 with a person in every window (an image every 8 frames, about 230 ms each) a frame's reads take 180 ms instead of 122 ms, and the frame rate is 5.05-5.36 frames/s instead of the 8.2 the bench predicts; at 320x240, 14.8 frames/s (reads 65 ms). Inference needs 2.2 ms per frame (`infer` in the `Window` line), so reads and inference overlap, but the CPU time the Reporter takes sets the rate.
+* **Commands:** `set pace <ms>` (0 = as fast as possible; default 1000 / fps of the manifest's first frame), `loop on|off`, `restart` (unmount, mount, check the manifest, start again); `set window|threshold|k` as with Camera; sensor settings are answered with `FileSource: exposure not applicable (no sensor)`. In the camera build Command rejects pace, loop and restart. FileSource polls `cmd_chan` after each frame like Camera and also while it waits for the pace deadline.
+* **One ALT guard slot per channel end (CSP4CMSIS):** a channel end has a single guard slot, and binding it again for a second `Alternative` overwrites the guard the first one still uses: its input then goes into the second `Alternative`'s variable. In FileSource, a pace-wait `Alternative` bound `cmd_chan` to a loop-local variable, and a `restart` taken by the per-frame poll arrived as `set again 0`. Both now bind the same variable. See the [CSP4CMSIS known-issues note](https://github.com/OliverFaust/CSP4CMSIS/blob/main/docs/known-issues.md) (branch `docs/alt-guard-slot` until merged).
+* **End of stream:** at the end of the manifest (without `loop`) or on `restart`, FileSource sends a terminator, `frame_t` with `end = 1`, which carries a JPEG buffer but no image, and then `FileSource: end <pass>: <frames> frames <errors> errors ...`. Inference returns the buffer at once, waits for the ready token (and, for a partial window, the free token) and flushes the partial window as a `Window` report, or the remaining scores; the next stream starts a new window. Frame indices go on counting across restarts.
+* **Reports:** `FileSource: started 200 frames 640x480, pace 125 ms, loop off, SPI 24000000 Hz`; per error `FileSource: frame 8 /frames/f000008.y: read FAILED: FR_DISK_ERR (1), card step 300ff` or `... CRC mismatch: <crc>, manifest <crc>`; per pass and at the end the frame and error counts and the read, CRC and wait times per frame; every 10 s `FileSource: status: <frames> frames, slowest read <ms>, longest card wait <ms>, card waits over the limit <n>, timeouts <n>, remounts <n>`. The `Window` line ends with `infer <us>` (mean `cv_prepare()` + `cv_invoke()` time) and `read <ms>` (the window's slowest read, 0 with the camera).
+* **Checks on the board (2026-11-08, 24 MHz, pace 0, frames from a clip of the person walking):**
+
+  | Check | 640x480 | 320x240 |
+  |---|---|---|
+  | Frame rate | 5.05-5.36 frames/s | 14.8 frames/s |
+  | Frames, errors | 2 passes x 200, 0 read/CRC/JPEG errors | 200, 0 errors |
+  | Determinism | both passes identical, 200 of 200 frames | |
+  | Bit-exactness against the PC | 400 of 400 scores identical | 200 of 200 |
+  | Images | each its window's best and >= T | same |
+
+  **Bit-exactness:** `tools/ref_infer.py` runs the int8 model the board's Vela model was compiled from (`library/inference/tflmtag2209_u55tag2205/tensorflow/lite/micro/models/person_detect_model_data.cc`; the same bytes as `allon_sensor_tflm_cmsis_nn`; same input and output quantisation as the Vela model) with TF Lite on the PC, on the same `.y` files and with `img_rescale()`'s fixed-point bilinear rescale (checked byte for byte against the C function). With TF Lite's **reference kernels** every score matches the NPU's; with its default XNNPACK kernels only 122 of 400 do (differences up to 12). TF Lite rejects 14 of the model's bias tensors (per-channel scales with `quantized_dimension` 3 on a 1-D tensor, which TFLM ignores); the script sets that field to 0 in memory, all weights unchanged.
+  **Pauses:** in a 10-minute run (640x480, pace 0, loop: 3249 frames, 406 images, 0 errors), the data from the board stopped for more than 0.5 s six times, all within 213-236 s and in three windows whose slowest read was 1.56-1.81 s, with no read error, timeout or remount: the card itself was slow for a while. Otherwise a window's slowest read was 401 ms (median) and 448 ms (95th percentile), mostly an image send by the Reporter preempting FileSource; card waits over their 200 ms limit came about 0.7 times per second, the longest 313 ms, all of them successful.
+* **Memory:** camera build text 454 348, data 2 984, bss 1 082 308 bytes, SRAM 1 381 632 B (70.1 %); SD-card build 430 428, 2 212, 1 084 900, SRAM 1 359 264 B (69.0 %). The camera build compiles no FatFs or SPI driver, the SD-card build no sensor driver (source files guarded with `FRAME_SOURCE_SDCARD`, `SD_CARD` and `SD_BENCH`). Stacks (10-minute runs): FileSource 1224/2048 bytes, Inference 1208/1536, Reporter 672/1024, Command 304/1024, CSP_Main 1016/1536.
+* **Data:** do not commit frames. Sources: your own recordings and clips (make them with `make_sd_frames.py`), Visual Wake Words (section 19), and DF26, which is licence-restricted: obtain it from its owners under their terms, keep it off the repository and out of shared recordings.
+
+### 19. Evaluation sets (Stage B4)
+* **`make_sd_frames.py`** builds a labelled 640x480 evaluation set from several sources, each a "set" (the manifest's `source` column): `--vww instances_val.json:val2014` (Visual Wake Words: an image is a person when its `image_id` has an annotation), `--labelled NAME=CSV` (columns `path,label`, e.g. DF26 keyframes), `--images NAME=LABEL:GLOB` and `--videos NAME=LABEL:GLOB` (one label for all, e.g. your own empty scene). A set with both labels gives as many positives as negatives (at most `--per-set`, default 400), a one-label set up to `--per-set`, and then frames of the larger class are dropped at random from the one-label sets until the totals are equal, so the two-label sets stay balanced. The frames are shuffled (`--seed`), padded to 4:3 by default (nothing that decided the label is cropped away), and `sources.csv` records each frame's original file and, for COCO, its licence.
+* **Visual Wake Words** (scripts from [Mxbonn/visualwakewords](https://github.com/Mxbonn/visualwakewords), needs pycocotools):
+  ```
+  bash scripts/download_mscoco.sh COCO 2014
+  python scripts/create_coco_train_minival_split.py --train_annotations_file=COCO/annotations/instances_train2014.json \
+      --val_annotations_file=COCO/annotations/instances_val2014.json --output_dir=COCO/annotations/
+  python scripts/create_visualwakewords_annotations.py --train_annotations_file=COCO/annotations/instances_maxitrain.json \
+      --val_annotations_file=COCO/annotations/instances_minival.json --output_dir=VWW/annotations/ \
+      --threshold=0.005 --foreground_class='person'
+  python3 tools/make_sd_frames.py --out <outside the repository> --vww VWW/annotations/instances_val.json:COCO/val2014 \
+      --images own=0:"empty_run/*.jpg" --per-set 400
+  ```
+  **Licences:** the COCO annotations belong to the COCO Consortium and are licensed CC BY 4.0; the consortium does not own the images, whose use must follow the Flickr Terms of Use and each image's own licence (the `licence` column of `sources.csv`, from the annotation file); users are responsible for their use of the images. Check the terms on cocodataset.org. Nothing from these sets is committed.
+* **Own empty-scene recordings:** the board sends an image only when its window passes the filter, so record the empty scene with every window sent: `uplink_rx.py --send-at 1 "set threshold -128" --out empty_run` (the luma then comes from the board's JPEG, not its raw buffer).
+* **`analyse_run.py <run> --manifest <set>/manifest.csv`** joins the board's per-frame scores with the labels: FileSource numbers the frames it passes on consecutively, so frame f is manifest row (f - first) mod N, first being the first frame of the stream (the last `FileSource: started` line, or `--stream`, `--first`). A stream in which FileSource skipped a frame is refused. It prints per set and overall the hit rate (positives with score >= T) and the false-detection rate (negatives with score >= T) at T = 50 %, a threshold table from 10 % to 90 %, and whether repeated passes agree, and writes `evaluation.txt` and `evaluation_frames.csv`. Checked on the 640x480 runs of section 18 (all frames labelled person: hit rate 92.5 % at 50 %, both passes identical) and on a simulated run over a mock set with all four kinds of source; no VWW or DF26 results yet.
+
+### 20. GUI: serial reading in its own process
+With the GUI in the background or covered, about one image every 15 s arrived damaged (CRC error) together with the `Scores` line after it, 1.2-1.6 s late; in the foreground, and with `uplink_rx.py`, nothing was lost. Logging the reader's gaps showed that the GUI's reader thread never paused more than 151 ms between reads: the reads simply returned no data for 1.25-1.6 s, then everything arrived at once with bytes missing. The board had sent on time (the Reporter returned its ready token every frame, the largest score batch was 1), and `uplink_rx.py` with the same covering window lost nothing. The stall was therefore below the reader thread but specific to the GUI process; its mechanism is not known. Moving the serial port out of the GUI process fixed it: `port_reader()` (`uplink_proto.py`) runs in a separate process (multiprocessing, spawn), only reads the port, writes command lines and parks the port on exit, and forwards each read's bytes with its time and the interval since the previous read through a `multiprocessing.Queue`, whose feeder thread does the pipe writes so that the read loop never waits for the GUI. Parsing, recording and statistics stay in the GUI. The statistics panel and the summaries (GUI and `uplink_rx.py`) show the longest interval between reads; intervals over 200 ms are logged as `-- reader gap <ms>`. Plot redraws were already limited to two per second by a dirty flag. Check: three 10-minute runs on the SD-card firmware, each 2 minutes in the foreground, in the background, covered, minimised and restored: 1199 images and 9569 `Scores` lines, 0 damaged, 0 lost, longest gap between reads 51 ms, every image within 0.35 s of its `Window` line. `--iconify-at` and `--deiconify-at` minimise and restore the window in tests.
+
 ---
 
 ## 🔧 Key Code Snippets
@@ -317,7 +404,7 @@ void Inference::run()
             uplink_free = true;
         }
 
-        cv_prepare();
+        cv_prepare((const uint8_t*)(uintptr_t)f.raw_addr, f.raw_w, f.raw_h);
         m_release_out.write(release_t { spare[--spares] });
 
         int8_t person_score = 0, no_person_score = 0;
@@ -371,12 +458,16 @@ void MainApp_Task(void* params)
     static BufferedChannel<command_t, 1> cmd_chan;
     static Channel<report_t> report_chan;
 
-    static Camera    camera(frame_chan.writer(), release_chan.reader(), cmd_chan.reader(), report_chan.writer());
+#ifdef FRAME_SOURCE_SDCARD
+    static FileSource source(frame_chan.writer(), release_chan.reader(), cmd_chan.reader(), report_chan.writer());
+#else
+    static Camera    source(frame_chan.writer(), release_chan.reader(), cmd_chan.reader(), report_chan.writer());
+#endif
     static Inference inference(frame_chan.reader(), release_chan.writer(), free_chan.reader(), report_chan.writer());
     static Reporter  reporter(report_chan.reader(), free_chan.writer());
     static Command   command(cmd_chan.writer(), report_chan.writer());
 
-    auto network = InParallel(camera, inference, reporter, command);
+    auto network = InParallel(source, inference, reporter, command);
     Run(network, ExecutionMode::StaticNetwork, NETWORK_PRIORITY);
 
     Chanout<report_t> report_out = report_chan.writer();
@@ -424,7 +515,7 @@ Before the uplink, Camera used 768 bytes (744 before it sent reports), Inference
 ### Prerequisites
 
 * **Hardware:** Himax WE2‑based board (Grove Vision AI Module V2).
-* **Sensor:** IMX219 Camera Module.
+* **Sensor:** IMX219 Camera Module (camera build), or a microSD card, FAT32 on an MBR partition table (SD-card build, section 17).
 * **Toolchain:** ARM GNU Toolchain (13.2.Rel1 or later).
 * **Build system:** Himax WE2 SDK.
 
@@ -443,7 +534,16 @@ make clean
 make GNU_TOOLPATH=$HOME/arm-gnu-toolchain-13.2.Rel1-x86_64-arm-none-eabi/bin
 ```
 With GCC 14.2 a clean build fails in `device/clib/gnu/os/freertos/retarget_newlib.c` (newlib's lock API changed). An incremental build can still succeed if that object is left over from a 13.2 build, and then links objects for two newlib versions into one image: avoid that.
-4. Generate the image and flash it over the USB serial port with xmodem, as described in the top-level README.
+4. Choose the frame source and its options on the `make` command line (they are `?=` settings in the `.mk`; run `make clean` after changing any of them, since the build does not track them):
+```
+make GNU_TOOLPATH=... FRAME_SOURCE=camera                     # default: IMX219 camera
+make GNU_TOOLPATH=... FRAME_SOURCE=sdcard                     # FileSource, frames in /frames on the card
+make GNU_TOOLPATH=... FRAME_SOURCE=sdcard SD_FRAME_DIR=/frames320
+make GNU_TOOLPATH=... FRAME_SOURCE=sdcard SD_SPI_HZ=16000000  # fallback clock (default 24000000)
+make GNU_TOOLPATH=... SD_BENCH=y                              # SD read benchmark instead of the pipeline
+```
+   `camera` compiles the sensor driver and no FatFs or SPI driver; `sdcard` compiles FatFs (with the app-local card driver, section 17) and the SPI driver and no sensor driver.
+5. Generate the image and flash it over the USB serial port with xmodem, as described in the top-level README.
 
 ### Expected UART Output
 The console carries binary image frames between the text lines (section 8), so read it with `tools/uplink_rx.py` rather than a terminal program; the receiver prints the text lines.
@@ -483,17 +583,27 @@ app/scenario_app/csp4cmsis_neuropathway_image_uplink/
 ├── reporter_process.cpp    // Reporter: the only process that prints (one line per report)
 ├── common_types.h          // Shared structs (frame_t, release_t, report_t)
 ├── csp4cmsis_spn.cpp       // Network construction & Main task
-├── cis_sensor/cis_imx219/  // IMX219 driver: frame buffers, cisdp_set_jpeg_buf()
+├── cis_sensor/cis_imx219/  // IMX219 driver: DMA set-up, cisdp_set_jpeg_buf() (camera build only)
+├── frame_buffers.c/.h      // The raw buffer and the JPEG buffers (section 16)
+├── sensor_defaults.h       // Sensor default settings, limits and compile-time checks (section 16)
+├── file_source_process.h/.cpp // FileSource: frames from the SD card (sdcard build, section 18)
+├── sd_card.cpp/.h          // Read-only mount and unmount of the SD card (section 17)
+├── sd_result.cpp/.h        // FatFs result names for the Reporter
+├── sd_bench_process.h/.cpp // SD read benchmark (SD_BENCH=y, section 17)
+├── mmc_we2_spi.c, mmc_we2.h // App-local copy of the SDK's FatFs mmc_spi port: waits by polling (section 17)
+├── spi_fatfs.c             // SPI chip-select GPIO functions used by the card driver (fatfs_init() unused)
 ├── Formal model/           // CSP-M models: the parent network and the uplink (Stage 3), positive controls, ProB results
-├── uplink.h / uplink.cpp   // CRC32 and the JPEG length rule (shared by Camera's Stage 0 checks and the Reporter)
+├── uplink.h / uplink.cpp   // CRC32 (table), settings: names, defaults, ranges
 ├── command_process.h/.cpp  // Command: console UART receive (interrupt), command lines, cmd_chan (section 14)
 ├── tools/uplink_rx.py      // PC receiver: text lines, image frames, frame rate, windows.csv, operator prompts; parks the port (sections 8, 11)
 ├── tools/uplink_proto.py   // Protocol shared by the receiver and the GUI: port, frames, lines, statistics, recording (section 12)
-├── tools/uplink_gui.py     // PC monitor: images, statistics, plots, console, sensor tuning; live and replay (sections 12-14)
-├── tools/analyse_run.py    // Score-log run analysis: per-phase scores, best-frame check, threshold table, contact sheets (section 11)
+├── tools/uplink_gui.py     // PC monitor: images, statistics, plots, console, sensor tuning; live (port read in its own process, section 20) and replay
+├── tools/analyse_run.py    // Run analysis: per-phase scores (section 11); with --manifest, hit and false-detection rates per set (section 19)
 ├── tools/phases.csv        // Protocol of the person detection test (section 11)
 ├── tools/stage0_capture.py // PC side of the Stage 0 test
-└── csp4cmsis_neuropathway_image_uplink.mk  // App makefile (UPLINK_STAGE0, CISDP_JPEG_BUF_CNT=4, UPLINK_STALL_MS, UPLINK_SCORE_LOG, sensor selection)
+├── tools/make_sd_frames.py // Frames for FileSource from videos and images; evaluation sets; CRC-32 of files (sections 18, 19)
+├── tools/ref_infer.py      // The int8 model on the PC on the same frames, compared with the board (section 18)
+└── csp4cmsis_neuropathway_image_uplink.mk  // App makefile (FRAME_SOURCE, SD_BENCH, SD_SPI_HZ, SD_FRAME_DIR, UPLINK_STAGE0, CISDP_JPEG_BUF_CNT=4, UPLINK_STALL_MS, sensor selection)
 ```
 
 ## 🐛 Troubleshooting
@@ -506,6 +616,9 @@ app/scenario_app/csp4cmsis_neuropathway_image_uplink/
   * The parent app `csp4cmsis_allon_sensor_tflm` (clean build with GCC 13.2) started on 10 of 10 boots.
   * Every image that hung had been built incrementally with GCC 14.2 on top of objects from an earlier 13.2 build, including `retarget_newlib.o`, which implements newlib's locks for FreeRTOS: one image, two newlib versions (see Build Instructions). That would explain an intermittent fault in start-up code; it is not proven, since the same image also started nine times in a row.
   * Stack overflows and heap failures now print before they halt (section 5), and MainApp prints `CSP_Main: started` first. If the hang comes back, the last line shows whether it is before MainApp runs or after. With these checks, the clean 13.2 Stage 1 build then started on 12 of 12 boots (reset by an RTS pulse, bootloader banner seen each time).
+* **SD card, `FileSource: mount FAILED: FR_NO_FILESYSTEM (13)`:** no FAT volume FatFs can read; usually a GPT partition table (the SD bench build prints partition type `ee`) or exFAT. Repartition with an MBR table and format FAT32 (section 17). `FR_NOT_READY` or `FR_DISK_ERR` at mount: no card, or the card is not seated. FileSource then waits for `restart`.
+* **SD card, `FileSource: manifest /frames/manifest.csv line 0: cannot open: FR_NO_PATH`:** no `/frames` directory (or the one set with `SD_FRAME_DIR`). `bad header`, `bad line <n>` (fewer than 11 fields, a file name over 39 characters, a non-hex CRC, a line over 160 characters), `mixed frame sizes: <w>x<h>, first frame <w>x<h>`, `unsupported frame size` (outside 96x96..640x480), `no frames`: make the manifest with `make_sd_frames.py`. FileSource waits for `restart` after each.
+* **SD card, bad files:** `CRC mismatch` (the file differs from the manifest: copied incompletely or changed; or reads failing at too high a clock, try `SD_SPI_HZ=16000000`), `wrong size` (a `.y` file not width x height bytes, or a `.jpg` larger than a JPEG buffer), `no SOI/EOI` (the frame is passed on but never sent), `read FAILED: <result>, card step <x>` (the card driver's failing step: `1nnrr` a command answered `rr`, `300ff` no data token; FileSource remounts and goes on). The frame is not passed on and the error counts appear in the `end`/`pass` lines; `analyse_run.py --manifest` refuses such a stream, since frame indices no longer match manifest rows.
 * **Stack overflow or corruption:** watch the stack report (see [Stack Occupancy Reporting](#-stack-occupancy-reporting)); if a process's unused headroom approaches 0, increase its `CSProcessStatic<N>` size.
 
 ## 📝 License

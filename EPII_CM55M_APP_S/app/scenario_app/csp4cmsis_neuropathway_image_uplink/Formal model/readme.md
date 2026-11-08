@@ -1,6 +1,6 @@
 # Neuropathway: Formal Model (CSP-M)
 
-This directory holds two models. `Neuropathway.csp` (with `Neuropathway_controls.csp`) models the network of the parent app, before the uplink; the sections below up to *Uplink model* describe it. `Uplink.csp` (with `Uplink_defs.csp` and `Uplink_controls.csp`) models this app's network with the four JPEG buffers and the Reporter's ready token as tokens, and `Uplink_command.csp` (with `Uplink_command_defs.csp` and `Uplink_command_controls.csp`) its command path; see [Uplink model](#uplink-model-uplinkcsp).
+This directory holds two models. `Neuropathway.csp` (with `Neuropathway_controls.csp`) models the network of the parent app, before the uplink; the sections below up to *Uplink model* describe it. `Uplink.csp` (with `Uplink_defs.csp` and `Uplink_controls.csp`) models this app's network with the four JPEG buffers and the Reporter's ready token as tokens, and `Uplink_command.csp` (with `Uplink_command_defs.csp` and `Uplink_command_controls.csp`) its command path; see [Uplink model](#uplink-model-uplinkcsp). `Uplink_source.csp` (with `Uplink_source_defs.csp` and `Uplink_source_controls.csp`) models the frame source, Camera or FileSource, with end of stream; see [Frame-source model](#frame-source-model-uplink_sourcecsp).
 
 This directory contains the CSPm formal specification for the neuropathway vision pipeline described in the *Neuropathways* chapter of the book: the three-stage `Camera` → `Inference` → `Reporter` network that processes camera frames through NPU-based person detection, and `MainApp`, which sends the stack report. It provides a mathematical abstraction of the pipeline's communication structure, isolating the CSP-level synchronisation guarantees from the low-level FreeRTOS task scheduling, hardware interrupt handling, and TensorFlow Lite Micro / Ethos-U55 driver details covered in the book. The model is checked with [ProB](https://prob.hhu.de/) 1.16.1 (`probcli Neuropathway.csp -assertions`); FDR can check it as well.
 
@@ -119,3 +119,41 @@ What the models do not cover: timing (how long a send or a stall takes, how many
 | 4 | `Uplink_controls.csp` | Inference writes its `Scores` report on every frame, with or without the ready token | `CYCLE [FD= SYS(Inference4, ReporterStall, MainAppN(2)) \ ...` | **fails** (as it should): with the Reporter stalled, Inference blocks on `report_chan` and Camera stops |
 
 ProB's output is in `prob_results.txt` (9 of 9 and 11 of 11 assertions hold; 4 of 4 controls fail). The variants of controls 1, 2 and 4 are copies of `Inference` from `Uplink_defs.csp` with a suffix and one part changed.
+
+
+## Frame-source model (`Uplink_source.csp`)
+
+The app takes its frames from the camera or, with `FRAME_SOURCE=sdcard`, from FileSource (app README, sections 16-18). `Uplink_source.csp` (definitions in `Uplink_source_defs.csp`, controls in `Uplink_source_controls.csp`) checks that the network is correct with either source. The Camera model of `Uplink.csp` and its checks are unchanged.
+
+**Why one source process in the model covers both.** Everything the rest of the network sees of a source is what happens on its four channels: it writes a `frame_t` on `frame_chan`, reads a `release_t` on `release_chan`, polls `cmd_chan` and writes `report_chan`. On `frame_chan` and `release_chan` both sources follow the same protocol. The source sends a frame in the JPEG buffer it was last given (buffer 0 at start), then waits for Inference to release the buffer for the next one, and accepts whichever buffer it is given. It refills the raw buffer only after that release, which Inference gives after `cv_prepare()`. Camera points the DMA at the released buffer; FileSource reads the next `.jpg` into it. Whatever happens in between (a trigger from the frame-ready interrupt; or two file reads, CRC checks and a pace wait) is internal to the source. `SOURCE(b)` states this protocol, with an internal choice between a frame and an end-of-stream terminator. Both `Camera` and `FileSource` refine it in failures-divergences, with everything but `frame_chan` and `release_chan` hidden. So whatever Inference and the downstream processes can observe of either source on those channels is a behaviour of `SOURCE`, and the buffer and token properties carry over. `cmd_chan` is the same for both (a one-slot channel polled with a zero-timeout ALT after each frame; the command path is checked in `Uplink_command.csp`).
+
+The two sources differ on `report_chan`, which is visible to the Reporter, and the model includes that. Camera writes it once, at start. FileSource writes it between frames: errors with a file name, command acknowledgements, a status line every 10 s, and the end of a stream. This is the one property that does not carry over (see below).
+
+**End of stream.** `frame_chan` carries a kind, `img` or `eos`. The terminator (`frame_t.end`) carries a JPEG buffer but no image. Inference releases that buffer straight back as the next target. If the window has frames or scores are waiting, it then waits for the ready token with a blocking read, not a poll. For a partial window it also waits for the free token, and it sends the partial window's `Window` report (with the image if it passes the filter), or a `Scores` report. The next stream starts a new window. To model this, Inference counts its position in the window (`pos`) instead of taking it from the frame index, as the firmware does since the flush (`pos` restarts at 0). FileSource ends a stream at the end of the manifest without `loop`, or on `restart`. It writes the terminator and the end report, waits for `restart` (modelled as `fs_restart`), and starts again. Before each frame it may write one report; then it either sends a frame (`fs_read`, its two files read) or ends the stream.
+
+| Assertion | Meaning | Result |
+|---|---|---|
+| `SOURCE(0) [FD= Camera \ ...`, `SOURCE(0) [FD= FileSource \ ...` | both sources follow the source protocol on `frame_chan` and `release_chan` | holds (3 s each) |
+| `SYSTEM_FS :[deadlock free [F]]`, `SYSTEM_FS :[divergence free]` | the FileSource network never stops; no internal loop | holds (366 s, 363 s) |
+| `RUN(diff(Events, {error, overflow})) [T= OBSERVED(SYSTEM_FS)` | the buffer roles of `Uplink.csp`, with the terminator's buffer going back to the spares; neither slot overflows | holds (778 s) |
+| `MCOUNT(0) [T= SYSTEM_FS \ ...` | every `Window` line carries the number of windows merged since the last, partial windows included | holds (434 s) |
+| `TOKEN [T= SYSTEM_FS \ ...` | Inference's reports, the flush reports included, and the Reporter's token returns alternate | holds (442 s) |
+| `CYCLE_F [FD= SYS(FileSource, Inference, Reporter, MainAppN(1)) \ ...` | with the Reporter running, frames and terminators keep flowing (`frame_chan` is never refused for ever, no hidden loop) | holds (482 s, 9.0 GB) |
+| `CYCLE_F [FD= SYS(FileSource, Inference, ReporterStall, MainAppN(1)) \ ...` | the same with the Reporter stalled | **fails, as expected** (15 s): see below |
+| `SYSTEM_CAM :[deadlock free [F]]`, `RUN(...) [T= OBSERVED(SYSTEM_CAM)` | the Camera network with this Inference: no deadlock, buffer roles kept | holds (143 s, 297 s) |
+| `CYCLE [FD= SYS(Camera, Inference, ReporterStall, MainAppN(2)) \ ...` | with Camera, Inference keeps cycling with the Reporter stalled | holds (413 s) |
+
+Bounds as in `Uplink.csp` (4 buffer ids, `W = 2`, `MAXM = 2`). Each assertion ran in a probcli run of its own, at most 14 GB (2 s to 778 s). In the two FileSource cycling checks MainApp sends one stack report, not two as in `Uplink.csp`: with two, the check with the Reporter running ran out of memory at 14 GB after 12 minutes. The bound only has to be finite, so that the stack reports cannot form a loop of hidden events that would hide a blocked source.
+
+**The difference between the sources.** With the Reporter stalled for ever after any report, Camera and Inference keep cycling (as in `Uplink.csp`), but FileSource does not. FileSource blocks on `report_chan` the next time it reports, and Inference's end-of-stream flush waits for the ready token. That is acceptable for the SD card: no frame is lost by waiting, since FileSource only reads the next file later. With a camera, a blocked Camera would miss sensor frames, which is why Camera never reports while frames run. The assertion is kept in `Uplink_source.csp` and documented as expected to fail.
+
+**Positive controls** (`Uplink_source_controls.csp`), both of which must fail:
+
+| Control | Design | Check | Result |
+|---|---|---|---|
+| 5 | at end of stream, Inference flushes the partial window with its image without waiting for the free token | `RUN(...) [T= OBSERVED(SYS(FileSource, Inference5, Reporter, MainApp))` | **fails** (as it should, 136 s): after a terminator the partial window's image is reported while the previous image's buffer is still in `free_chan`'s slot |
+| 6 | after the terminator, FileSource goes on with the same buffer instead of waiting for a release | `SOURCE(0) [FD= FileSource6 \ ...` | **fails** (as it should, 2 s): after `frame_chan.3.eos` the next frame comes without a `release_chan` event |
+
+Not modelled: the card driver's waits, pace, CRC checks and timing (internal to FileSource), and the ALT guard-slot issue of CSP4CMSIS. The latter is a property of the library's implementation, not of the channel protocol: two `Alternative`s on one channel end redirect each other's input. FileSource avoids it by binding both to one variable (app README, section 18).
+
+ProB's output is in `prob_results.txt`: of the 12 assertions of `Uplink_source.csp`, 11 hold and the one expected to fail fails; both controls fail.
