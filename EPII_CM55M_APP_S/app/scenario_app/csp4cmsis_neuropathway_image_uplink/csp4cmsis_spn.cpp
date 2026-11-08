@@ -1,5 +1,9 @@
 #include "csp/csp4cmsis.h"
+#ifdef FRAME_SOURCE_SDCARD
+#include "file_source_process.h"
+#else
 #include "camera_process.h"
+#endif
 #include "inference_process.h"
 #include "reporter_process.h"
 #include "command_process.h"
@@ -61,13 +65,17 @@ void MainApp_Task(void* params)
     static BufferedChannel<command_t, 1> cmd_chan;
     static Channel<report_t> report_chan;
 
-    static Camera    camera(frame_chan.writer(), release_chan.reader(), cmd_chan.reader(), report_chan.writer());
+#ifdef FRAME_SOURCE_SDCARD
+    static FileSource source(frame_chan.writer(), release_chan.reader(), cmd_chan.reader(), report_chan.writer());
+#else
+    static Camera    source(frame_chan.writer(), release_chan.reader(), cmd_chan.reader(), report_chan.writer());
+#endif
     static Inference inference(frame_chan.reader(), release_chan.writer(), free_chan.reader(), ready_chan.reader(),
                                report_chan.writer());
     static Reporter  reporter(report_chan.reader(), free_chan.writer(), ready_chan.writer());
     static Command   command(cmd_chan.writer(), report_chan.writer());
 
-    auto network = InParallel(camera, inference, reporter, command);
+    auto network = InParallel(source, inference, reporter, command);
 #endif
     Run(network, ExecutionMode::StaticNetwork, NETWORK_PRIORITY);
 

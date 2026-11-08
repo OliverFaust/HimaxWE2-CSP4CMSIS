@@ -1,3 +1,4 @@
+#ifdef SD_BENCH
 #include "sd_bench_process.h"
 #include "sd_card.h"
 #include "frame_buffers.h"
@@ -158,3 +159,4 @@ void SdBench::run()
     r.value[0] = (int32_t)(osKernelGetTickCount() - tick0);
     m_report_out.write(r);
 }
+#endif

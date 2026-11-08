@@ -93,6 +93,22 @@ void Command::handle(char* line)
         m_cmd_out.write(command_t { CommandOp::Get, 0, 0 });
         return;
     }
+    if (strcmp(verb, "loop") == 0 || strcmp(verb, "restart") == 0) {
+        char* arg = next_word(&p);
+        bool restart = verb[0] == 'r';
+        bool on = arg != nullptr && strcmp(arg, "on") == 0;
+        bool off = arg != nullptr && strcmp(arg, "off") == 0;
+        if (next_word(&p) != nullptr || (restart ? arg != nullptr : !(on || off))) {
+            reject(REJECT_UNKNOWN_COMMAND);
+            return;
+        }
+#ifdef FRAME_SOURCE_SDCARD
+        m_cmd_out.write(command_t { restart ? CommandOp::Restart : CommandOp::Loop, 0, (uint16_t)(on ? 1 : 0) });
+#else
+        reject(REJECT_NOT_APPLICABLE);
+#endif
+        return;
+    }
     if (strcmp(verb, "set") != 0) {
         reject(REJECT_UNKNOWN_COMMAND);
         return;
@@ -107,6 +123,7 @@ void Command::handle(char* line)
     for (uint8_t k = 0; k < SETTING_COUNT; k++) {
         if (strcmp(key, setting_name(k)) == 0) setting = k;
     }
+    if (strcmp(key, setting_name(SETTING_PACE)) == 0) setting = SETTING_PACE;
     if (setting == SETTING_COUNT) {
         reject(REJECT_UNKNOWN_SETTING);
         return;
@@ -114,6 +131,18 @@ void Command::handle(char* line)
     int32_t v;
     if (!parse_number(arg, &v)) {
         reject(REJECT_BAD_VALUE, setting);
+        return;
+    }
+    if (setting == SETTING_PACE) {
+#ifdef FRAME_SOURCE_SDCARD
+        if (v < 0 || v > (int32_t)SOURCE_PACE_MAX_MS) {
+            reject(REJECT_OUT_OF_RANGE, setting, v, 0, (int32_t)SOURCE_PACE_MAX_MS);
+            return;
+        }
+        m_cmd_out.write(command_t { CommandOp::Pace, setting, (uint16_t)v });
+#else
+        reject(REJECT_NOT_APPLICABLE, setting);
+#endif
         return;
     }
     int32_t lo = setting_min(setting, m_settings);

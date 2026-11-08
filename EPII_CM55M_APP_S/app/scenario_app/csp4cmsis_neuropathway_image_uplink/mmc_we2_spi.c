@@ -1,3 +1,4 @@
+#ifdef SD_CARD
 /*-----------------------------------------------------------------------*/
 /* Low level disk I/O module SKELETON for FatFs     (C)ChaN, 2019        */
 /*-----------------------------------------------------------------------*/
@@ -50,6 +51,7 @@ FnPtr_GPIO_Pinmux getFnPtr_CMSIS_Driver_SPI0_SSPI_CS_GPIO_Pinmux(void) {
 #endif
 #define SPI_CLOCK_FAST   (SD_SPI_CLOCK_HZ)
 #define TOKEN_TIMEOUT_MS (200)
+#define MIN_POLLS        (4096)
 
 #define ASSERT_HIGH(X)  assert(X == ARM_DRIVER_OK)
 
@@ -90,6 +92,7 @@ static volatile DSTATUS Stat = STA_NOINIT;    /* Physical drive status */
 //static volatile UINT Timer1, Timer2;        /* 1kHz decrement timer stopped at zero (disk_timerproc()) */
 
 static BYTE CardType;    /* Card type flags */
+static uint32_t LastError;
 
 /*-----------------------------------------------------------------------*/
 /* SPI controls (Platform dependent)                                     */
@@ -203,8 +206,13 @@ static int wait_ready (    /* 1:Ready, 0:Timeout */
 
     datain = xchg_spi(0xFF);
 
-    while (datain != 0xFF && !timed_out(start, limit)) {
+    uint32_t polls = 0;
+
+    while (datain != 0xFF) {
+        int late = timed_out(start, limit) && polls >= MIN_POLLS;
         datain = xchg_spi(0xFF);
+        polls++;
+        if (late) break;
     }
 
     return (datain == 0xFF) ? 1 : 0;
@@ -254,12 +262,19 @@ static int rcvr_datablock (    /* 1:OK, 0:Error */
 
     token = xchg_spi(0xFF);
 
-    while (token == 0xFF && !timed_out(start, limit)) {
+    uint32_t polls = 0;
+
+    while (token == 0xFF) {
+        int late = timed_out(start, limit) && polls >= MIN_POLLS;
         token = xchg_spi(0xFF);
+        polls++;
+        if (late) break;
     }
 
-    if(token != 0xFE)
-        return 0; /* Function fails if invalid DataStart token or timeout */
+    if(token != 0xFE) {
+        LastError = 0x30000u | token;
+        return 0;
+    } /* Function fails if invalid DataStart token or timeout */
 
     rcvr_spi_multi(buff, btr);        /* Store trailing data to the buffer */
     xchg_spi(0xFF);
@@ -598,6 +613,13 @@ DSTATUS mmc_disk_initialize (void)
     return Stat;
 }
 
+uint32_t mmc_disk_last_error(void)
+{
+    uint32_t e = LastError;
+    LastError = 0;
+    return e;
+}
+
 void mmc_disk_deinit(void)
 {
     if (!(Stat & STA_NOINIT)) {
@@ -640,19 +662,23 @@ DRESULT mmc_disk_read (
         sect *= 512;    /* LBA ot BA conversion (byte addressing cards) */
 
     if (count == 1) {    /* Single sector read */
-        if ((send_cmd(CMD17, sect) == 0)    /* READ_SINGLE_BLOCK */
-            && rcvr_datablock(buff, 512)) {
+        BYTE res = send_cmd(CMD17, sect);
+        if (res != 0)
+            LastError = 0x10000u | (17u << 8) | res;
+        else if (rcvr_datablock(buff, 512))
             count = 0;
-        }
     }
     else {                /* Multiple sector read */
-        if (send_cmd(CMD18, sect) == 0) {    /* READ_MULTIPLE_BLOCK */
+        BYTE res = send_cmd(CMD18, sect);
+        if (res == 0) {    /* READ_MULTIPLE_BLOCK */
             do {
                 if (!rcvr_datablock(buff, 512)) break;
                 buff += 512;
             } while (--count);
 
             send_cmd(CMD12, 0);                /* STOP_TRANSMISSION */
+        } else {
+            LastError = 0x10000u | (18u << 8) | res;
         }
     }
 
@@ -962,3 +988,4 @@ void mmc_disk_timerproc (void)
     Stat = s;
 #endif
 }
+#endif

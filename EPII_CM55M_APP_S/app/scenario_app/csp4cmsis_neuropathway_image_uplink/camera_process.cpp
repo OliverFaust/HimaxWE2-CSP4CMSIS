@@ -1,3 +1,4 @@
+#ifndef FRAME_SOURCE_SDCARD
 #include "camera_process.h"
 #include "cisdp_cfg.h"
 #include "frame_buffers.h"
@@ -184,6 +185,7 @@ void Camera::run() {
     f.buf = cur;
     f.changed = changed;
     f.failed = failed;
+    f.end = 0;
     f.settings = settings;
     changed = 0;
     failed = 0;
@@ -255,3 +257,4 @@ void Camera::run() {
     sensordplib_retrigger_capture();
   }
 }
+#endif

@@ -35,6 +35,7 @@ static const char* const SETTING_NAMES[SETTING_COUNT] = {"again", "dgain", "expo
 
 const char* setting_name(uint8_t setting)
 {
+    if (setting == SETTING_PACE) return "pace";
     return setting < SETTING_COUNT ? SETTING_NAMES[setting] : "?";
 }
 

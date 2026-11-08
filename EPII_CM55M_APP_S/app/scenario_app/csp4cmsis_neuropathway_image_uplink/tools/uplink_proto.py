@@ -33,12 +33,12 @@ MAX_BODY = 1 << 17
 WINDOW_LINE = re.compile(rb"^Window (\d+): frames (\d+)-(\d+) best (\d+|-) score (-?\d+|-) merged (\d+) failed (\d+)")
 SCORES = re.compile(rb" p((?: -?\d+){2,20}) n((?: -?\d+){2,20})\s*$")
 WINDOW_Y = re.compile(rb" y (\d+\.\d) clip (\d+\.\d\d)")
-WINDOW_FILTER = re.compile(rb" above (\d+) sent ([01]) suppressed (\d+) lost (\d+)(?: eoi (\d+))?")
+WINDOW_FILTER = re.compile(rb" above (\d+) sent ([01]) suppressed (\d+) lost (\d+)(?: eoi (\d+))?(?: infer (\d+))?")
 SCORES_LINE = re.compile(rb"^Scores (\d+) (\d+):((?: -?\d+/-?\d+)*)\s*$")
 MODEL_LINE = re.compile(r"^Inference: output tensor type (\d+) scale (\S+) zero point (-?\d+)")
-APPLIED_LINE = re.compile(r"^(Camera|Inference): (\w+)=(-?\d+) applied at frame (\d+)")
-APPLY_FAILED_LINE = re.compile(r"^(Camera|Inference): (\w+) write FAILED at frame (\d+), still (\d+)")
-SETTINGS_LINE = re.compile(r"^Camera: again=(\d+) dgain=(\d+) exposure=(\d+) framelen=(\d+) window=(\d+)"
+APPLIED_LINE = re.compile(r"^(Camera|FileSource|Inference): (\w+)=(-?\d+) applied at frame (\d+)")
+APPLY_FAILED_LINE = re.compile(r"^(Camera|FileSource|Inference): (\w+) write FAILED at frame (\d+), still (\d+)")
+SETTINGS_LINE = re.compile(r"^(?:Camera|FileSource): again=(\d+) dgain=(\d+) exposure=(\d+) framelen=(\d+) window=(\d+)"
                            r"(?: threshold=(-?\d+) k=(\d+))?")
 COMMAND_LINE = re.compile(r"^Command: (.*)")
 SETTING_NAMES = ("again", "dgain", "exposure", "framelen", "window", "threshold", "k")
@@ -53,8 +53,8 @@ RX_PREFIX = "# "
 SCORE_SCALE = 1 / 256
 SCORE_ZERO_POINT = -128
 
-Window = namedtuple("Window", "window first last best score merged failed p n y clip above sent suppressed lost eoi",
-                    defaults=(None,) * 7)
+Window = namedtuple("Window", "window first last best score merged failed p n y clip above sent suppressed lost eoi infer",
+                    defaults=(None,) * 8)
 
 
 def probability(score):
@@ -124,7 +124,7 @@ def parse_window(line):
     return Window(int(m.group(1)), int(m.group(2)), int(m.group(3)), best, score,
                   int(m.group(6)), int(m.group(7)), p, n,
                   float(yc.group(1)) if yc else None, float(yc.group(2)) if yc else None,
-                  *([None if v is None else int(v) for v in fl.groups()] if fl else [None] * 5))
+                  *([None if v is None else int(v) for v in fl.groups()] if fl else [None] * 6))
 
 
 def parse_scores(line):
@@ -162,6 +162,8 @@ def window_text(w):
         s += f" above {w.above} sent {w.sent} suppressed {w.suppressed} lost {w.lost}"
         if w.eoi is not None:
             s += f" eoi {w.eoi}"
+        if w.infer is not None:
+            s += f" infer {w.infer}"
     if w.p is not None:
         s += " p " + " ".join(map(str, w.p)) + " n " + " ".join(map(str, w.n))
     return s
@@ -391,7 +393,7 @@ class Recorder:
         self.windows_csv.writerow(["window", "first", "last", "best", "best_score", "merged", "failed", "t_pc"]
                                   + [f"p{k}" for k in range(UPLINK_WINDOW)]
                                   + [f"n{k}" for k in range(UPLINK_WINDOW)] + ["y_mean", "clip_pct",
-                                                                               "above", "sent", "suppressed", "lost", "eoi"])
+                                                                               "above", "sent", "suppressed", "lost", "eoi", "infer_us"])
         self.images_file = open(self.out / "images.csv", "w", newline="")
         self.images_csv = csv.writer(self.images_file)
         self.images_csv.writerow(["window", "frame", "score", "seq", "file", "bytes", "decoded"])
@@ -405,7 +407,7 @@ class Recorder:
                                    "" if w.score is None else w.score, w.merged, w.failed, f"{now - self.t0:.2f}"]
                                   + (pad(w.p) + pad(w.n) if w.p is not None else [""] * (2 * UPLINK_WINDOW))
                                   + ["" if w.y is None else f"{w.y:.1f}", "" if w.clip is None else f"{w.clip:.2f}"]
-                                  + ["" if v is None else v for v in (w.above, w.sent, w.suppressed, w.lost, w.eoi)])
+                                  + ["" if v is None else v for v in (w.above, w.sent, w.suppressed, w.lost, w.eoi, w.infer)])
 
     def scores(self, first, pairs, now):
         for k, (pp, nn) in enumerate(pairs):

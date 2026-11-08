@@ -7,6 +7,5 @@
 FRESULT sd_card_mount(FATFS* fs);
 void sd_card_unmount(void);
 uint32_t sd_card_spi_hz(void);
-const char* sd_card_result_name(int32_t res);
 
 #endif
