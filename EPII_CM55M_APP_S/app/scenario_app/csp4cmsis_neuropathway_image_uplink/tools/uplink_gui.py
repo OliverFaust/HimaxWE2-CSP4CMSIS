@@ -83,8 +83,8 @@ DEFAULTS = {"again": 0xB4, "dgain": 0xDDF, "exposure": 0x11CC, "framelen": 0x190
 SLIDERS = (("again", 0, 232), ("dgain", 0x100, 0xFFF), ("exposure", 1, 0x1908 - 4),
            ("framelen", 2464 + 32, 8000), ("window", 2, 20), ("k", 1, 20))
 PREVIEW_WINDOW = 4
-CFG_DEFINES = (("exposure", "IMX219_EXPOSURE_SETTING"), ("again", "IMX219_AGAIN_SETTING"),
-               ("dgain", "IMX219_DGAIN_SETTING"), ("framelen", "IMX219_FRAMELEN_SETTING"))
+CFG_DEFINES = (("exposure", "SENSOR_EXPOSURE_SETTING"), ("again", "SENSOR_AGAIN_SETTING"),
+               ("dgain", "SENSOR_DGAIN_SETTING"), ("framelen", "SENSOR_FRAMELEN_SETTING"))
 RIGHT_MIN_W = 560
 UI = 1.0
 
