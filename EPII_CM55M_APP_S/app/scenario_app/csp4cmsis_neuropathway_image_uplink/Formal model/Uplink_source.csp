@@ -1,0 +1,54 @@
+-- Frame source: the assertions. The processes are in Uplink_source_defs.csp; Uplink.csp checks
+-- the Camera network of Uplink_defs.csp, Uplink_command.csp the command path.
+
+include "Uplink_source_defs.csp"
+
+-- The source protocol on frame_chan and release_chan: the source sends a frame or a terminator
+-- in the buffer it was last given (buffer 0 at start), then takes any buffer as the next one.
+-- Camera and FileSource both refine it (everything but the two channels hidden), so everything
+-- Inference and the rest of the network can see of either source is a behaviour of SOURCE.
+SRC_EVENTS = {| frame_chan, release_chan |}
+SOURCE(b) = (|~| k : kind_t @ frame_chan!b!k -> release_chan?nb -> SOURCE(nb))
+
+assert SOURCE(0) [FD= Camera \ diff(Events, SRC_EVENTS)
+assert SOURCE(0) [FD= FileSource \ diff(Events, SRC_EVENTS)
+
+-- The FileSource network keeps the properties of Uplink.csp.
+SYSTEM_FS = SYS(FileSource, Inference, Reporter, MainApp)
+
+assert SYSTEM_FS :[deadlock free [F]]
+assert SYSTEM_FS :[divergence free]
+assert RUN(diff(Events, {error, overflow})) [T= OBSERVED(SYSTEM_FS)
+
+MCOUNT(k) = (merge -> MCOUNT(sat(k + 1)))
+            [] (report_chan.window!k -> MCOUNT(0))
+            [] (report_chan.wimage!k?b -> MCOUNT(0))
+
+assert MCOUNT(0) [T= SYSTEM_FS \ diff(Events, {| merge, report_chan.window, report_chan.wimage |})
+
+INF_REPORTS = {| report_chan.scores, report_chan.window, report_chan.wimage |}
+TOKEN = ([] r : INF_REPORTS @ r -> ready_in -> TOKEN)
+
+assert TOKEN [T= SYSTEM_FS \ diff(Events, union(INF_REPORTS, {ready_in}))
+
+-- Frames keep flowing (with end of stream and restart) while the Reporter runs: frame_chan is
+-- never refused for ever. MainApp with one report (Uplink.csp: two): with two, the check ran
+-- out of memory at 14 GB; any finite number keeps the stack reports from forming a hidden loop.
+CYCLE_F = (|~| b : IDS, k : kind_t @ frame_chan!b!k -> CYCLE_F)
+
+assert CYCLE_F [FD= SYS(FileSource, Inference, Reporter, MainAppN(1)) \ diff(Events, {| frame_chan |})
+
+-- Expected to FAIL, and documented as a difference between the sources: with the Reporter
+-- stalled, FileSource stops. It writes report_chan between frames (errors, acknowledgements,
+-- status, end of stream), and Inference's end-of-stream flush waits for the ready token. Camera
+-- writes report_chan only at start and never sends a terminator, so it keeps cycling (last check).
+assert CYCLE_F [FD= SYS(FileSource, Inference, ReporterStall, MainAppN(1)) \ diff(Events, {| frame_chan |})
+
+-- The Camera network with this Inference (window position, end-of-stream branch) keeps the
+-- buffer roles and keeps cycling with the Reporter stalled, as with the Inference of Uplink.csp.
+SYSTEM_CAM = SYS(Camera, Inference, Reporter, MainApp)
+CYCLE = g_trigger_chan -> CYCLE
+
+assert SYSTEM_CAM :[deadlock free [F]]
+assert RUN(diff(Events, {error, overflow})) [T= OBSERVED(SYSTEM_CAM)
+assert CYCLE [FD= SYS(Camera, Inference, ReporterStall, MainAppN(2)) \ diff(Events, {g_trigger_chan})

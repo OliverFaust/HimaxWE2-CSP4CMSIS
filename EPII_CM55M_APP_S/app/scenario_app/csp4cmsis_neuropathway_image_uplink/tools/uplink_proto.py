@@ -19,6 +19,7 @@ the board; unpark() restores the baud rate for the flasher.
 import csv
 import io
 import pathlib
+import queue
 import re
 import struct
 import termios
@@ -33,12 +34,12 @@ MAX_BODY = 1 << 17
 WINDOW_LINE = re.compile(rb"^Window (\d+): frames (\d+)-(\d+) best (\d+|-) score (-?\d+|-) merged (\d+) failed (\d+)")
 SCORES = re.compile(rb" p((?: -?\d+){2,20}) n((?: -?\d+){2,20})\s*$")
 WINDOW_Y = re.compile(rb" y (\d+\.\d) clip (\d+\.\d\d)")
-WINDOW_FILTER = re.compile(rb" above (\d+) sent ([01]) suppressed (\d+) lost (\d+)")
+WINDOW_FILTER = re.compile(rb" above (\d+) sent ([01]) suppressed (\d+) lost (\d+)(?: eoi (\d+))?(?: infer (\d+))?(?: read (\d+))?")
 SCORES_LINE = re.compile(rb"^Scores (\d+) (\d+):((?: -?\d+/-?\d+)*)\s*$")
 MODEL_LINE = re.compile(r"^Inference: output tensor type (\d+) scale (\S+) zero point (-?\d+)")
-APPLIED_LINE = re.compile(r"^(Camera|Inference): (\w+)=(-?\d+) applied at frame (\d+)")
-APPLY_FAILED_LINE = re.compile(r"^(Camera|Inference): (\w+) write FAILED at frame (\d+), still (\d+)")
-SETTINGS_LINE = re.compile(r"^Camera: again=(\d+) dgain=(\d+) exposure=(\d+) framelen=(\d+) window=(\d+)"
+APPLIED_LINE = re.compile(r"^(Camera|FileSource|Inference): (\w+)=(-?\d+) applied at frame (\d+)")
+APPLY_FAILED_LINE = re.compile(r"^(Camera|FileSource|Inference): (\w+) write FAILED at frame (\d+), still (\d+)")
+SETTINGS_LINE = re.compile(r"^(?:Camera|FileSource): again=(\d+) dgain=(\d+) exposure=(\d+) framelen=(\d+) window=(\d+)"
                            r"(?: threshold=(-?\d+) k=(\d+))?")
 COMMAND_LINE = re.compile(r"^Command: (.*)")
 SETTING_NAMES = ("again", "dgain", "exposure", "framelen", "window", "threshold", "k")
@@ -49,12 +50,13 @@ UPLINK_WINDOW = 20
 BOOT_BANNER = b"1st BL Modem"
 EOI_ERROR = b"Uplink: frame"
 RX_PREFIX = "# "
+READER_GAP_S = 0.2
 
 SCORE_SCALE = 1 / 256
 SCORE_ZERO_POINT = -128
 
-Window = namedtuple("Window", "window first last best score merged failed p n y clip above sent suppressed lost",
-                    defaults=(None,) * 6)
+Window = namedtuple("Window", "window first last best score merged failed p n y clip above sent suppressed lost eoi infer read",
+                    defaults=(None,) * 9)
 
 
 def probability(score):
@@ -82,6 +84,40 @@ def park(s):
     attrs[4] = attrs[5] = termios.B0
     termios.tcsetattr(s.fd, termios.TCSANOW, attrs)
     s.close()
+
+
+def port_reader(port, baud, data_q, cmd_q, stop):
+    """Body of the GUI's reader process: only reads the port and forwards the
+    bytes, with the read time and the interval since the previous read, on
+    data_q (a multiprocessing.Queue, whose feeder thread does the pipe writes,
+    so this loop never waits for the GUI); writes the command lines from
+    cmd_q; parks the port when stop is set."""
+    try:
+        s = open_port(port, baud)
+        s.timeout = 0.05
+    except Exception as e:
+        data_q.put(("error", time.monotonic(), str(e)))
+        return
+    data_q.put(("open", time.monotonic(), ""))
+    last = time.monotonic()
+    try:
+        while not stop.is_set():
+            while True:
+                try:
+                    cmd = cmd_q.get_nowait()
+                except queue.Empty:
+                    break
+                s.write((cmd + "\n").encode("ascii"))
+                data_q.put(("sent", time.monotonic(), cmd))
+            data = s.read(8192)
+            now = time.monotonic()
+            data_q.put(("data", now, data, now - last))
+            last = now
+    except Exception as e:
+        data_q.put(("error", time.monotonic(), str(e)))
+    finally:
+        park(s)
+        data_q.put(("closed", time.monotonic(), ""))
 
 
 def unpark(port, baud):
@@ -124,7 +160,7 @@ def parse_window(line):
     return Window(int(m.group(1)), int(m.group(2)), int(m.group(3)), best, score,
                   int(m.group(6)), int(m.group(7)), p, n,
                   float(yc.group(1)) if yc else None, float(yc.group(2)) if yc else None,
-                  *([int(v) for v in fl.groups()] if fl else [None] * 4))
+                  *([None if v is None else int(v) for v in fl.groups()] if fl else [None] * 7))
 
 
 def parse_scores(line):
@@ -160,6 +196,12 @@ def window_text(w):
         s += f" y {w.y:.1f} clip {w.clip:.2f}"
     if w.sent is not None:
         s += f" above {w.above} sent {w.sent} suppressed {w.suppressed} lost {w.lost}"
+        if w.eoi is not None:
+            s += f" eoi {w.eoi}"
+        if w.infer is not None:
+            s += f" infer {w.infer}"
+        if w.read is not None:
+            s += f" read {w.read}"
     if w.p is not None:
         s += " p " + " ".join(map(str, w.p)) + " n " + " ".join(map(str, w.n))
     return s
@@ -237,6 +279,7 @@ class Stats:
         self.decode_failures = 0
         self.eoi_errors = 0
         self.resets = 0
+        self.boot_before_start = False
         self.first_frame = None
         self.last_frame = None
         self.text_lines = 0
@@ -261,6 +304,9 @@ class Stats:
         self.windows_sent = 0
         self.suppressed = 0
         self.frames_above = 0
+        self.board_eoi = 0
+        self.reader_gap_max = 0.0
+        self.reader_gaps = 0
 
     def resyncing(self, now):
         return now < self.resync_until
@@ -300,6 +346,10 @@ class Stats:
                 if w.lost > self.scores_lost:
                     self.say(f"!! {w.lost - self.scores_lost} scores lost on the board (batch full)")
                 self.scores_lost = w.lost
+            if w.eoi is not None and w.eoi != self.board_eoi:
+                if w.eoi > self.board_eoi:
+                    self.say(f"!! {w.eoi - self.board_eoi} frames without EOI where the padding rule puts it")
+                self.board_eoi = w.eoi
         image_due = w.best is not None and (w.sent is None or w.sent == 1)
         self.expect = (w.window, w.best, w.score, w.last) if image_due else None
         self.frame_line(w.last, now)
@@ -336,11 +386,13 @@ class Stats:
             f"elapsed {elapsed:.0f} s, text lines {self.text_lines}",
             f"images {self.images} ({self.images / elapsed:.2f}/s), CRC errors {self.crc_errors}, "
             f"bad frames {self.bad_frames}, seq gaps {self.seq_gaps}, decode failures {self.decode_failures}, "
-            f"EOI errors reported by the board {self.eoi_errors}",
+            f"EOI errors reported by the board {self.eoi_errors} (Uplink lines), {self.board_eoi} (Window lines)",
             f"windows {self.windows}, window gaps {self.window_gaps}, windows merged {self.windows_merged} "
             f"(in {self.lines_merged} lines), images not the window's best {self.not_best}, "
             f"inference failures {self.inference_failures}, resync losses {self.resync_losses}",
             f"board resets seen {self.resets}",
+            f"longest interval between serial reads {self.reader_gap_max * 1000:.0f} ms, "
+            f"{self.reader_gaps} longer than {READER_GAP_S * 1000:.0f} ms",
         ]
         if self.score_lines:
             lines.append(f"scores: {self.scored} frames in {self.score_lines} lines, gaps {self.score_gaps}, "
@@ -358,10 +410,10 @@ class Stats:
 
     def passed(self):
         return ((self.images > 0 or self.windows_sent == 0 and self.score_lines > 0) and self.crc_errors == 0 and self.bad_frames == 0 and self.seq_gaps == 0
-                and self.decode_failures == 0 and self.eoi_errors == 0 and self.resets == 0
+                and self.decode_failures == 0 and self.eoi_errors == 0 and self.board_eoi == 0 and self.resets == 0
                 and self.window_gaps == 0 and self.inference_failures == 0 and self.not_best == 0
                 and self.score_gaps == 0 and self.scores_lost == 0
-                and self.first_frame is not None and self.first_frame[0] >= UPLINK_WINDOW)
+                and self.first_frame is not None)
 
 
 def pad(values):
@@ -383,7 +435,7 @@ class Recorder:
         self.windows_csv.writerow(["window", "first", "last", "best", "best_score", "merged", "failed", "t_pc"]
                                   + [f"p{k}" for k in range(UPLINK_WINDOW)]
                                   + [f"n{k}" for k in range(UPLINK_WINDOW)] + ["y_mean", "clip_pct",
-                                                                               "above", "sent", "suppressed", "lost"])
+                                                                               "above", "sent", "suppressed", "lost", "eoi", "infer_us", "read_ms"])
         self.images_file = open(self.out / "images.csv", "w", newline="")
         self.images_csv = csv.writer(self.images_file)
         self.images_csv.writerow(["window", "frame", "score", "seq", "file", "bytes", "decoded"])
@@ -397,7 +449,7 @@ class Recorder:
                                    "" if w.score is None else w.score, w.merged, w.failed, f"{now - self.t0:.2f}"]
                                   + (pad(w.p) + pad(w.n) if w.p is not None else [""] * (2 * UPLINK_WINDOW))
                                   + ["" if w.y is None else f"{w.y:.1f}", "" if w.clip is None else f"{w.clip:.2f}"]
-                                  + ["" if v is None else v for v in (w.above, w.sent, w.suppressed, w.lost)])
+                                  + ["" if v is None else v for v in (w.above, w.sent, w.suppressed, w.lost, w.eoi, w.infer, w.read)])
 
     def scores(self, first, pairs, now):
         for k, (pp, nn) in enumerate(pairs):
@@ -482,6 +534,13 @@ class Session:
             elif kind == "image":
                 self.image(*ev[1:], now)
 
+    def reader_gap(self, gap, now):
+        st = self.st
+        st.reader_gap_max = max(st.reader_gap_max, gap)
+        if gap > READER_GAP_S:
+            st.reader_gaps += 1
+            self.message(f"-- reader gap {gap * 1000:.0f} ms", now)
+
     def text(self, chunk, now):
         for raw in chunk.split(b"\n"):
             line = raw.rstrip(b"\r")
@@ -492,7 +551,10 @@ class Session:
         st = self.st
         st.text_lines += 1
         if BOOT_BANNER in line:
-            st.resets += 1
+            if st.first_frame is None and not st.boot_before_start:
+                st.boot_before_start = True
+            else:
+                st.resets += 1
         if line.startswith(EOI_ERROR):
             st.eoi_errors += 1
         w = parse_window(line)

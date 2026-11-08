@@ -98,3 +98,23 @@ CHECKING CSP: CYCLE [FD= CSP: (SYS(Camera3,Reporter,(MainAppN(2)),CommandNone))\
 CSP: (SYS((Camera3),(Reporter),(MainAppN(2)),(CommandNone)))\(diff(Events,{g_trigger_chan})) is *not* a failure_divergences refinement of CSP: CYCLE
 % Refinement Check [FD=] CPU Time: 101 ms
 Could not execute trace from state 16: [go(tau,17),go(g_trigger_chan,19),go(tau,66),go(tau,85),go(tau,82),go(tau,81),go(tau,80),go(tau,77),go(tau,76),go(tau,75),go(tau,74),cannot_refuse_compl([]),cannot_refuse([cmd_empty,cmd_in,cmd_out,frame_chan,g_trigger_chan,line,overflow,ready_empty,ready_in,rea ...
+
+## probcli Uplink_source.csp -assertions (each assertion in its own probcli run, at most 14 GB; wall-clock time per run)
+CSP: (Camera)\(diff(Events,(SRC_EVENTS))) is a failure_divergences refinement of CSP: SOURCE(0)   [3 s]
+CSP: (FileSource)\(diff(Events,(SRC_EVENTS))) is a failure_divergences refinement of CSP: SOURCE(0)   [3 s]
+CSP: SYSTEM_FS is deadlock free   [366 s]
+CSP: SYSTEM_FS is divergence free   [363 s]
+CSP: OBSERVED((SYSTEM_FS)) is a trace refinement of CSP: RUN(diff(Events,{error,overflow}))   [778 s]
+CSP: (SYSTEM_FS)\(diff(Events,{|merge,report_chan.window,report_chan.wimage|})) is a trace refinement of CSP: MCOUNT(0)   [434 s]
+CSP: (SYSTEM_FS)\(diff(Events,union((INF_REPORTS),{ready_in}))) is a trace refinement of CSP: TOKEN   [442 s]
+CSP: (SYS((FileSource),(Inference),(Reporter),(MainAppN(1))))\(diff(Events,{|frame_chan|})) is a failure_divergences refinement of CSP: CYCLE_F   [482 s, 9012892 KB]   (with MainAppN(2): out of memory at 14 GB after 743 s)
+CSP: (SYS((FileSource),(Inference),(ReporterStall),(MainAppN(1))))\(diff(Events,{|frame_chan|})) is *not* a failure_divergences refinement of CSP: CYCLE_F   [15 s]   (expected: false)
+CSP: SYSTEM_CAM is deadlock free   [143 s]
+CSP: OBSERVED((SYSTEM_CAM)) is a trace refinement of CSP: RUN(diff(Events,{error,overflow}))   [297 s]
+CSP: (SYS((Camera),(Inference),(ReporterStall),(MainAppN(2))))\(diff(Events,{g_trigger_chan})) is a failure_divergences refinement of CSP: CYCLE   [413 s]
+
+## probcli Uplink_source_controls.csp -assertions (counterexample traces shortened)
+CSP: OBSERVED((SYS((FileSource),(Inference5),(Reporter),(MainApp)))) is *not* a trace refinement of CSP: RUN(diff(Events,{error,overflow}))   [136 s]
+Could not execute trace from state 13: [go(report_chan.(started.filesource),15),go(tau,17),go(stack_tick,21),go(line.(started.filesource),33),go(report_chan.srcmsg,34),go(tau,36),go(fs_read,39),go(frame_chan.0.img,43),go(line.srcmsg,45),go(report_chan.(started.inference),46),go(poll_empty,48),go(rea ...
+CSP: (FileSource6)\(diff(Events,(SRC_EVENTS))) is *not* a failure_divergences refinement of CSP: SOURCE(0)   [2 s]
+Could not execute trace from state 13: [go(tau,18),go(tau,19),go(tau,21),go(tau,22),go(tau,24),go(frame_chan.0.img,25),go(release_chan.1,32),go(tau,39),go(tau,40),go(tau,41),go(tau,43),go(frame_chan.1.img,44),go(release_chan.2,33),go(tau,50),go(tau,51),go(tau,52),go(tau,54),go(frame_chan.2.img,55),g ...

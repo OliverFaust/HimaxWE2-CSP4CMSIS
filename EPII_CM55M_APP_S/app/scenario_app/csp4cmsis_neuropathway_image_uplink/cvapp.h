@@ -19,7 +19,7 @@ extern "C" {
  * allocation. Does not print (the Reporter prints the result). */
 int cv_init(bool security_enable, bool privilege_enable);
 
-void cv_prepare(void);
+void cv_prepare(const uint8_t* raw, uint32_t w, uint32_t h);
 
 int cv_invoke(int8_t* person_score, int8_t* no_person_score);
 

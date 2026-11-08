@@ -1,5 +1,6 @@
 #include "uplink.h"
-#include "cisdp_cfg.h"
+#include "sensor_defaults.h"
+#include "frame_buffers.h"
 
 namespace {
 
@@ -25,29 +26,8 @@ uint32_t crc32_update(uint32_t crc, const uint8_t* p, uint32_t n)
     return c ^ 0xFFFFFFFFu;
 }
 
-uint32_t jpeg_length(const uint8_t* p, uint32_t jpeg_sz, uint32_t buf_size)
-{
-    if (jpeg_sz < JPEG_SIZE_PAD + 4 || jpeg_sz > buf_size) return 0;
-    for (uint32_t end = jpeg_sz - JPEG_SIZE_PAD; end + 4 > jpeg_sz - JPEG_SIZE_PAD; end--) {
-        if (p[end - 2] == 0xFF && p[end - 1] == 0xD9) return end;
-    }
-    return 0;
-}
-
-static constexpr int32_t AGAIN_MAX = 232;
-static constexpr int32_t DGAIN_MIN = 0x0100;
-static constexpr int32_t DGAIN_MAX = 0x0FFF;
-static constexpr int32_t EXPOSURE_MIN = 1;
-static constexpr int32_t EXPOSURE_MARGIN = 4;
-static constexpr int32_t FRAMELEN_MIN = 2464 + 32;
-static constexpr int32_t FRAMELEN_MAX = 0xFFFE;
-
-static_assert(IMX219_EXPOSURE_SETTING >= EXPOSURE_MIN, "exposure below 1 line");
-static_assert(IMX219_EXPOSURE_SETTING <= IMX219_FRAMELEN_SETTING - EXPOSURE_MARGIN, "exposure must be <= framelen - 4");
-static_assert(IMX219_FRAMELEN_SETTING >= FRAMELEN_MIN && IMX219_FRAMELEN_SETTING <= FRAMELEN_MAX, "framelen out of range");
-static_assert(IMX219_AGAIN_SETTING <= AGAIN_MAX, "analogue gain out of range");
-static_assert(IMX219_DGAIN_SETTING >= DGAIN_MIN && IMX219_DGAIN_SETTING <= DGAIN_MAX, "digital gain out of range");
 static_assert(UPLINK_WINDOW >= UPLINK_WINDOW_MIN && UPLINK_WINDOW <= UPLINK_WINDOW_MAX, "window out of range");
+static_assert(UPLINK_BUFFERS == CISDP_JPEG_BUF_CNT, "UPLINK_BUFFERS must match CISDP_JPEG_BUF_CNT");
 static_assert(UPLINK_K >= 1 && UPLINK_K <= UPLINK_WINDOW_MAX, "k out of range");
 
 static const char* const SETTING_NAMES[SETTING_COUNT] = {"again", "dgain", "exposure", "framelen", "window",
@@ -55,16 +35,17 @@ static const char* const SETTING_NAMES[SETTING_COUNT] = {"again", "dgain", "expo
 
 const char* setting_name(uint8_t setting)
 {
+    if (setting == SETTING_PACE) return "pace";
     return setting < SETTING_COUNT ? SETTING_NAMES[setting] : "?";
 }
 
 settings_t default_settings(void)
 {
     settings_t s;
-    s.value[SETTING_AGAIN] = IMX219_AGAIN_SETTING;
-    s.value[SETTING_DGAIN] = IMX219_DGAIN_SETTING;
-    s.value[SETTING_EXPOSURE] = IMX219_EXPOSURE_SETTING;
-    s.value[SETTING_FRAMELEN] = IMX219_FRAMELEN_SETTING;
+    s.value[SETTING_AGAIN] = SENSOR_AGAIN_SETTING;
+    s.value[SETTING_DGAIN] = SENSOR_DGAIN_SETTING;
+    s.value[SETTING_EXPOSURE] = SENSOR_EXPOSURE_SETTING;
+    s.value[SETTING_FRAMELEN] = SENSOR_FRAMELEN_SETTING;
     s.value[SETTING_WINDOW] = UPLINK_WINDOW;
     s.value[SETTING_THRESHOLD] = (uint16_t)(int16_t)UPLINK_THRESHOLD;
     s.value[SETTING_K] = UPLINK_K;
@@ -80,11 +61,11 @@ int32_t setting_min(uint8_t setting, const settings_t& s)
 {
     switch (setting) {
     case SETTING_AGAIN: return 0;
-    case SETTING_DGAIN: return DGAIN_MIN;
-    case SETTING_EXPOSURE: return EXPOSURE_MIN;
+    case SETTING_DGAIN: return SENSOR_DGAIN_MIN;
+    case SETTING_EXPOSURE: return SENSOR_EXPOSURE_MIN;
     case SETTING_FRAMELEN: {
-        int32_t m = (int32_t)s.value[SETTING_EXPOSURE] + EXPOSURE_MARGIN;
-        return m > FRAMELEN_MIN ? m : FRAMELEN_MIN;
+        int32_t m = (int32_t)s.value[SETTING_EXPOSURE] + SENSOR_EXPOSURE_MARGIN;
+        return m > SENSOR_FRAMELEN_MIN ? m : SENSOR_FRAMELEN_MIN;
     }
     case SETTING_WINDOW: return UPLINK_WINDOW_MIN;
     case SETTING_THRESHOLD: return -128;
@@ -96,10 +77,10 @@ int32_t setting_min(uint8_t setting, const settings_t& s)
 int32_t setting_max(uint8_t setting, const settings_t& s)
 {
     switch (setting) {
-    case SETTING_AGAIN: return AGAIN_MAX;
-    case SETTING_DGAIN: return DGAIN_MAX;
-    case SETTING_EXPOSURE: return (int32_t)s.value[SETTING_FRAMELEN] - EXPOSURE_MARGIN;
-    case SETTING_FRAMELEN: return FRAMELEN_MAX;
+    case SETTING_AGAIN: return SENSOR_AGAIN_MAX;
+    case SETTING_DGAIN: return SENSOR_DGAIN_MAX;
+    case SETTING_EXPOSURE: return (int32_t)s.value[SETTING_FRAMELEN] - SENSOR_EXPOSURE_MARGIN;
+    case SETTING_FRAMELEN: return SENSOR_FRAMELEN_MAX;
     case SETTING_WINDOW: return UPLINK_WINDOW_MAX;
     case SETTING_THRESHOLD: return 127;
     case SETTING_K: return UPLINK_WINDOW_MAX;

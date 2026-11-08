@@ -62,7 +62,7 @@ import pathlib
 import sys
 import time
 
-from uplink_proto import (UPLINK_WINDOW, BOOT_BANNER, EOI_ERROR, Recorder, Session, Stats, image_text,
+from uplink_proto import (BOOT_BANNER, EOI_ERROR, Recorder, Session, Stats, image_text,
                           open_port, park)
 
 PROMPT_WARN_S = 10.0
@@ -132,6 +132,7 @@ def receive(s, session, buf, deadline, next_summary, args):
     pause = None
     if args.pause:
         pause = (st.t0 + args.pause[0], st.t0 + args.pause[0] + args.pause[1])
+    last_read = time.monotonic()
     while time.monotonic() < deadline:
         now = time.monotonic()
         if args.prompter:
@@ -145,11 +146,14 @@ def receive(s, session, buf, deadline, next_summary, args):
             buf.clear()
             now = time.monotonic()
             session.resync(now)
+            last_read = now
             st.pauses.append([pause[0], None, f0, None])
             print("-- reading again", flush=True)
             pause = None
         buf += s.read(8192)
         now = time.monotonic()
+        session.reader_gap(now - last_read, now)
+        last_read = now
         session.feed(buf, now)
         args.sender.poll(now)
         if now >= next_summary:
@@ -230,8 +234,8 @@ def main():
     if args.sender.sent:
         print(f"commands sent {args.sender.sent}")
     ok = st.passed()
-    if st.first_frame is not None and st.first_frame[0] < UPLINK_WINDOW:
-        print("!! the first window seen was window 0: the board started (or restarted) while the receiver was open")
+    if st.boot_before_start:
+        print("-- the board booted before the first Window line; judged from that line on")
     print("UPLINK:", "PASS" if ok else "FAIL")
     return 0 if ok else 1
 

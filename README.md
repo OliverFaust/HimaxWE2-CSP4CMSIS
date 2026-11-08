@@ -31,7 +31,7 @@ Finally, teach you how to restore to the original factory settings and run [Sens
 | CSP: Keyword detection with actuation |[csp4cmsis_kws_iic](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_kws_iic) |
 | CSP: Keyword detection |[csp4cmsis_kws_pdm_record](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_kws_pdm_record) |
 | CSP: Person Detection | [csp4cmsis_allon_sensor_tflm](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_allon_sensor_tflm) |
-| CSP: Neuropathway Image Uplink (on-board person detection; sends the best frame of each window above the threshold) | [csp4cmsis_neuropathway_image_uplink](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_neuropathway_image_uplink) |
+| CSP: Neuropathway Image Uplink (on-board person detection; camera or SD-card frame source; sends the best frame of each window above the threshold) | [csp4cmsis_neuropathway_image_uplink](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_neuropathway_image_uplink) |
 | CSP: Interrupt to Channel | [csp4cmsis_irq](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/blob/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_irq) | 
 | CSP: Comstime Benchmark | [csp4cmsis_comstime](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_comstime) | 
 | CSP: Resident-Guard ALT Test | [csp4cmsis_alt_test](https://github.com/OliverFaust/HimaxWE2-CSP4CMSIS/tree/main/EPII_CM55M_APP_S/app/scenario_app/csp4cmsis_alt_test) | 
@@ -83,6 +83,8 @@ Also: application code must not call RTOS functions while it has raised BASEPRI 
 
 ## How to build the firmware?
 This part explains how you can build the firmware for Grove Vision AI Module V2.
+
+`csp4cmsis_neuropathway_image_uplink` takes its frames from the camera by default; `make FRAME_SOURCE=sdcard` builds it with frames from an SD card instead (`make clean` first when switching; see the app's README, "Build Instructions").
 ### Build the firmware at Linux environment
 Note: The following has been tested to work on Ubuntu 20.04 PC
 - Step 1: Install the following prerequisites

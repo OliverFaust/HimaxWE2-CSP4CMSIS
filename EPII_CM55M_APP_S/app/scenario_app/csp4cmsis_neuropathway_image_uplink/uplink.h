@@ -10,10 +10,14 @@ static constexpr uint32_t UPLINK_WINDOW_MAX = 20;
 static constexpr int8_t UPLINK_THRESHOLD = 0;
 static constexpr uint32_t UPLINK_K = 1;
 static constexpr uint8_t UPLINK_BUFFERS = 4;
-static constexpr uint32_t JPEG_SIZE_PAD = 32;
+static constexpr uint32_t SOURCE_PACE_MAX_MS = 10000;
+#ifdef FRAME_SOURCE_SDCARD
+static constexpr const char* FRAME_SOURCE_NAME = "FileSource";
+#else
+static constexpr const char* FRAME_SOURCE_NAME = "Camera";
+#endif
 
 uint32_t crc32_update(uint32_t crc, const uint8_t* p, uint32_t n);
-uint32_t jpeg_length(const uint8_t* p, uint32_t jpeg_sz, uint32_t buf_size);
 
 const char* setting_name(uint8_t setting);
 settings_t default_settings(void);
