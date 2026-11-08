@@ -7,6 +7,7 @@
 
 #include "cisdp_sensor.h"
 #include "cisdp_cfg.h"
+#include "frame_buffers.h"
 #include "hx_drv_CIS_common.h"
 #include "hx_drv_timer.h"
 #include "hx_drv_hxautoi2c_mst.h"
@@ -44,19 +45,15 @@
 #endif
 #endif
 
-#define JPEG_BUFSIZE  (((623+ (IMX219_HW5x5_CROP_WIDTH/16)*(IMX219_HW5x5_CROP_HEIGHT/16)* 96 + 35) >>2 ) <<2)	//YUV420 x4 Compress = ((623+ (W/16)*(H/16)* 96 + 35) >>2 ) <<2  byte
-#define JPEG_BUF_STRIDE  ((JPEG_BUFSIZE + 31) & ~31)
-__attribute__(( section(".bss.NoInit"))) uint8_t jpegbuf[CISDP_JPEG_BUF_CNT][JPEG_BUF_STRIDE] __ALIGNED(32);
-
-#define RAW_BUFSIZE  (IMX219_HW5x5_CROP_WIDTH*IMX219_HW5x5_CROP_HEIGHT*3/2)   //YUV420: Y= W*H byte, U = ((W*H)>>2) byte, V = ((W*H)>>2) byte
-__attribute__(( section(".bss.NoInit"))) uint8_t demosbuf[RAW_BUFSIZE] __ALIGNED(32);
+_Static_assert(IMX219_HW5x5_CROP_WIDTH == FRAME_RAW_WIDTH && IMX219_HW5x5_CROP_HEIGHT == FRAME_RAW_HEIGHT,
+               "frame_buffers.h must match the HW5x5 output size");
 
 #define JPEG_HEADER_BUFSIZE 100
 __attribute__(( section(".bss.NoInit"))) uint8_t jpegfilesizebuf[JPEG_HEADER_BUFSIZE] __ALIGNED(32);
 
-static volatile uint32_t g_wdma1_baseaddr = (uint32_t)jpegbuf[0]; // = (uint32_t)cdmbuf; // - no use
-static volatile uint32_t g_wdma2_baseaddr = (uint32_t)jpegbuf[0];
-static volatile uint32_t g_wdma3_baseaddr = (uint32_t)demosbuf;
+static volatile uint32_t g_wdma1_baseaddr;
+static volatile uint32_t g_wdma2_baseaddr;
+static volatile uint32_t g_wdma3_baseaddr;
 static volatile uint32_t g_jpegautofill_addr = (uint32_t)jpegfilesizebuf;
 
 static HX_CIS_SensorSetting_t IMX219_init_setting[] = {
@@ -101,6 +98,9 @@ static HX_CIS_SensorSetting_t  IMX219_mirror_setting[] = {
 
 static void cisdp_wdma_addr_init(APP_DP_INP_SUBSAMPLE_E subs)
 {
+    g_wdma1_baseaddr = frame_jpeg_addr(0);
+    g_wdma2_baseaddr = frame_jpeg_addr(0);
+    g_wdma3_baseaddr = frame_raw_addr();
     sensordplib_set_xDMA_baseaddrbyapp(g_wdma1_baseaddr, g_wdma2_baseaddr, g_wdma3_baseaddr);
     sensordplib_set_jpegfilesize_addrbyapp(g_jpegautofill_addr);
 
@@ -689,19 +689,19 @@ void cisdp_get_jpginfo(uint32_t *jpeg_enc_filesize, uint32_t *jpeg_enc_addr)
 
 void cisdp_set_jpeg_buf(uint8_t id)
 {
-    g_wdma2_baseaddr = (uint32_t)jpegbuf[id];
+    g_wdma2_baseaddr = frame_jpeg_addr(id);
     sensordplib_set_xDMA_baseaddrbyapp(g_wdma1_baseaddr, g_wdma2_baseaddr, g_wdma3_baseaddr);
     hx_drv_xdma_set_WDMA2Addr(g_wdma2_baseaddr);
 }
 
 uint32_t cisdp_get_jpeg_buf_addr(uint8_t id)
 {
-    return (uint32_t)jpegbuf[id];
+    return frame_jpeg_addr(id);
 }
 
 uint32_t cisdp_get_jpeg_buf_size()
 {
-    return JPEG_BUF_STRIDE;
+    return frame_jpeg_size();
 }
 
 uint32_t cisdp_get_wdma2_hw_addr()
@@ -724,7 +724,7 @@ uint32_t app_get_raw_addr()
 
 uint32_t app_get_raw_sz()
 {
-	return (IMX219_HW5x5_CROP_WIDTH*IMX219_HW5x5_CROP_HEIGHT*3/2);  //YUV420
+	return frame_raw_size();
 }
 
 uint32_t app_get_raw_width()

@@ -1,6 +1,5 @@
 #include "reporter_process.h"
 #include "uplink.h"
-#include "cisdp_sensor.h"
 #include "WE2_device.h"
 #include "xprintf.h"
 
@@ -90,20 +89,18 @@ void Reporter::print_window(const report_t& r)
     xprintf(" merged %d failed %ld y %ld.%ld clip %ld.%02ld", (int)r.code, (long)r.value[WV_FAILED],
             (long)(r.value[WV_Y] / 10), (long)(r.value[WV_Y] % 10),
             (long)(r.value[WV_CLIP] / 100), (long)(r.value[WV_CLIP] % 100));
-    xprintf(" above %ld sent %ld suppressed %ld lost %ld\r\n", (long)r.value[WV_ABOVE], (long)r.value[WV_SENT],
-            (long)r.value[WV_SUPPRESSED], (long)r.value[WV_LOST]);
+    xprintf(" above %ld sent %ld suppressed %ld lost %ld eoi %ld\r\n", (long)r.value[WV_ABOVE], (long)r.value[WV_SENT],
+            (long)r.value[WV_SUPPRESSED], (long)r.value[WV_LOST], (long)r.value[WV_EOI]);
 }
 
-void Reporter::send_image(uint32_t frame, int8_t score, uint32_t window, uint32_t jpeg_addr, uint32_t jpeg_sz)
+void Reporter::send_image(uint32_t frame, int8_t score, uint32_t window, uint32_t jpeg_addr, uint32_t len)
 {
     const uint8_t* p = (const uint8_t*)(uintptr_t)jpeg_addr;
-    uint32_t buf_size = cisdp_get_jpeg_buf_size();
-    SCB_InvalidateDCache_by_Addr((void*)p, (int32_t)((jpeg_sz <= buf_size) ? jpeg_sz : buf_size));
-    uint32_t len = jpeg_length(p, jpeg_sz, buf_size);
-    if (len == 0) {
+    SCB_InvalidateDCache_by_Addr((void*)p, (int32_t)len);
+    if (len < 4 || p[0] != 0xFF || p[1] != 0xD8 || p[len - 2] != 0xFF || p[len - 1] != 0xD9) {
         m_eoi_errors++;
-        xprintf("Uplink: frame %lu not sent: no EOI 32-35 bytes before size %lu (%lu EOI errors)\r\n",
-                (unsigned long)frame, (unsigned long)jpeg_sz, (unsigned long)m_eoi_errors);
+        xprintf("Uplink: frame %lu not sent: no SOI at 0 or no EOI at %lu (%lu errors)\r\n",
+                (unsigned long)frame, (unsigned long)(len - 2), (unsigned long)m_eoi_errors);
         return;
     }
     uint8_t header[12] = {0xA5, 0x5A, 'I', 'M', FRAME_TYPE_IMAGE, 0};
@@ -141,7 +138,7 @@ void Reporter::run()
             print_window(r);
             if (r.value[WV_SENT]) {
                 send_image((uint32_t)r.value[WV_BEST], (int8_t)r.value[WV_SCORE], r.index,
-                           (uint32_t)r.value[WV_JPEG_ADDR], (uint32_t)r.value[WV_JPEG_SZ]);
+                           (uint32_t)r.value[WV_JPEG_ADDR], (uint32_t)r.value[WV_JPEG_LEN]);
 #ifdef UPLINK_STALL_MS
                 SleepFor(Milliseconds(UPLINK_STALL_MS));
 #endif

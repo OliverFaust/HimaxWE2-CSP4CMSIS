@@ -156,7 +156,7 @@ def stack_text(stacks):
 def snapshot(st):
     return {
         "elapsed": st.elapsed(), "fps": st.fps(), "images": st.images, "crc": st.crc_errors,
-        "seq_gaps": st.seq_gaps, "eoi": st.eoi_errors, "window_gaps": st.window_gaps,
+        "seq_gaps": st.seq_gaps, "eoi": st.eoi_errors + st.board_eoi, "window_gaps": st.window_gaps,
         "decode": st.decode_failures, "merged": st.windows_merged, "failed": st.inference_failures,
         "not_best": st.not_best, "resets": st.resets, "bad_frames": st.bad_frames,
         "resync_losses": st.resync_losses, "windows": st.windows, "lines": st.text_lines,
