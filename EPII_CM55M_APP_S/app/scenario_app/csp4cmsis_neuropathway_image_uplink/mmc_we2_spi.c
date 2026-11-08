@@ -93,6 +93,9 @@ static volatile DSTATUS Stat = STA_NOINIT;    /* Physical drive status */
 
 static BYTE CardType;    /* Card type flags */
 static uint32_t LastError;
+static uint32_t WaitOverruns;
+static uint32_t WaitTimeouts;
+static uint32_t WaitLongest;
 
 /*-----------------------------------------------------------------------*/
 /* SPI controls (Platform dependent)                                     */
@@ -133,6 +136,14 @@ static uint32_t ms_to_cycles(uint32_t ms)
 static int timed_out(uint32_t start, uint32_t limit)
 {
     return (uint32_t)(DWT->CYCCNT - start) > limit;
+}
+
+static void wait_done(uint32_t start, uint32_t limit, int ok)
+{
+    uint32_t c = DWT->CYCCNT - start;
+    if (c > limit) WaitOverruns++;
+    if (!ok) WaitTimeouts++;
+    if (c > WaitLongest) WaitLongest = c;
 }
 
 /* Exchange a byte */
@@ -215,6 +226,7 @@ static int wait_ready (    /* 1:Ready, 0:Timeout */
         if (late) break;
     }
 
+    wait_done(start, limit, datain == 0xFF);
     return (datain == 0xFF) ? 1 : 0;
 }
 
@@ -271,6 +283,7 @@ static int rcvr_datablock (    /* 1:OK, 0:Error */
         if (late) break;
     }
 
+    wait_done(start, limit, token != 0xFF);
     if(token != 0xFE) {
         LastError = 0x30000u | token;
         return 0;
@@ -618,6 +631,14 @@ uint32_t mmc_disk_last_error(void)
     uint32_t e = LastError;
     LastError = 0;
     return e;
+}
+
+void mmc_disk_wait_stats(uint32_t *overruns, uint32_t *timeouts, uint32_t *longest_us)
+{
+    *overruns = WaitOverruns;
+    *timeouts = WaitTimeouts;
+    *longest_us = WaitLongest / (SystemCoreClock / 1000000u);
+    WaitLongest = 0;
 }
 
 void mmc_disk_deinit(void)

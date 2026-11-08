@@ -35,6 +35,7 @@ private:
     void send_terminator();
     void report_totals(int16_t kind);
     void report_simple(int16_t code, int32_t v0);
+    void report_status();
     void report_manifest(uint32_t line, int32_t reason, int32_t a, int32_t b, int32_t c, int32_t d);
     const char* path_of(const char* file);
 
@@ -63,6 +64,10 @@ private:
     uint64_t m_crc_cycles;
     uint64_t m_wait_cycles;
     uint8_t m_path_slot;
+    uint32_t m_remounts;
+    uint32_t m_status_frames;
+    uint32_t m_status_slowest_us;
+    uint32_t m_status_tick;
 };
 
 #endif

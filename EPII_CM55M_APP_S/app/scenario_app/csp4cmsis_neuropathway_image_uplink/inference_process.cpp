@@ -66,6 +66,7 @@ void Inference::run()
     uint32_t y_pixels = 0;
     uint32_t y_clipped = 0;
     uint64_t infer_cycles = 0;
+    uint32_t read_max_us = 0;
     uint32_t inferred = 0;
 
     uint8_t filling = 0;
@@ -105,6 +106,7 @@ void Inference::run()
         r.value[WV_LOST] = scores_lost;
         r.value[WV_EOI] = eoi_errors;
         r.value[WV_INFER] = inferred ? (int32_t)(infer_cycles / inferred / cycles_per_us) : 0;
+        r.value[WV_READ] = (int32_t)read_max_us;
         if (send) {
             r.value[WV_JPEG_ADDR] = (int32_t)best.jpeg_addr;
             r.value[WV_JPEG_LEN] = (int32_t)best.jpeg_len;
@@ -123,6 +125,7 @@ void Inference::run()
         y_clipped = 0;
         infer_cycles = 0;
         inferred = 0;
+        read_max_us = 0;
     };
 
     auto send_report = [&](uint32_t next_index) {
@@ -218,6 +221,7 @@ void Inference::run()
         int status = cv_invoke(&person_score, &no_person_score);
         infer_cycles += DWT->CYCCNT - t0;
         inferred++;
+        if (f.read_us > read_max_us) read_max_us = f.read_us;
 
         score_batch_t& b = g_batch[filling];
         if (b.count < SCORE_BATCH) {
