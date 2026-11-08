@@ -35,6 +35,9 @@ APPL_DEFINES += -DCSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY=5
 MID_SEL = fatfs
 FATFS_PORT_LIST = app_local
 APPL_DEFINES += -DFATFS_PORT_mmc_spi
+# SD card SPI clock in Hz (make clean after changing it): 24 MHz, or 16000000 as the fallback for cards that show CRC or read errors
+SD_SPI_HZ ?= 24000000
+APPL_DEFINES += -DSD_SPI_CLOCK_HZ=$(SD_SPI_HZ)
 CMSIS_DRIVERS_LIST = SPI
 
 #override OS_SEL := freertos

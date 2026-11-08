@@ -46,7 +46,7 @@ FnPtr_GPIO_Pinmux getFnPtr_CMSIS_Driver_SPI0_SSPI_CS_GPIO_Pinmux(void) {
 
 #define SPI_CLOCK_SLOW   (200000)
 #ifndef SD_SPI_CLOCK_HZ
-#define SD_SPI_CLOCK_HZ  (12000000)
+#error "SD_SPI_CLOCK_HZ is set by SD_SPI_HZ in the .mk"
 #endif
 #define SPI_CLOCK_FAST   (SD_SPI_CLOCK_HZ)
 #define TOKEN_TIMEOUT_MS (200)
