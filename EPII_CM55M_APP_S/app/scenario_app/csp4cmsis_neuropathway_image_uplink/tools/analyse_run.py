@@ -23,11 +23,29 @@ phase changed are left out of the statistics (the operator is still moving)
 but kept on the contact sheets, marked with *.
 
     python3 analyse_run.py run_person1
+
+With --manifest (an SD-card run, FRAME_SOURCE=sdcard): joins the board's
+per-frame scores (scores.csv) with the labels in the manifest that was on the
+card, by frame index. FileSource numbers the frames it passes on
+consecutively, so frame f is manifest row (f - first) mod N, first being the
+first frame of the stream (from the chosen "FileSource: started" line in
+console.log, --stream, default the last; or --first). The stream ends at the
+next "started" line. A stream in which FileSource skipped a frame (read or
+CRC error) is refused, since the join would be off from there. It prints per
+set (the manifest's source column) and overall the hit rate (labelled
+positives with score >= T) and the false-detection rate (labelled negatives
+with score >= T) at T = 50 %, a threshold table, and whether rows seen in
+several passes got the same score; it writes evaluation.txt and
+evaluation_frames.csv into the run folder.
+
+    python3 analyse_run.py eval_run --manifest eval/manifest.csv
 """
 import argparse
 import bisect
 import csv
+import math
 import pathlib
+import re
 import statistics
 import sys
 
@@ -119,13 +137,127 @@ def contact_sheet(path, phase, rows, run):
     sheet.save(path)
 
 
+EVAL_PERCENT = (10, 20, 30, 40, 50, 60, 70, 80, 90)
+STARTED = re.compile(r"^\s*([0-9.]+) FileSource: started (\d+) frames")
+FILE_ERROR = re.compile(r"^\s*([0-9.]+) FileSource: frame \d+ .*(FAILED|CRC mismatch|wrong size)")
+
+
+def score_at(percent):
+    return math.ceil(256 * percent / 100 - 128)
+
+
+def rate(k, n):
+    return f"{k / n:6.1%} ({k}/{n})" if n else "     - (0/0)"
+
+
+def evaluate(args):
+    run = pathlib.Path(args.run)
+    with open(args.manifest, newline="") as f:
+        rows = list(csv.DictReader(f))
+    n_rows = len(rows)
+    starts, errors = [], []
+    log = run / "console.log"
+    if log.exists():
+        for line in log.read_text(errors="replace").splitlines():
+            m = STARTED.match(line)
+            if m:
+                starts.append((float(m.group(1)), int(m.group(2))))
+            m = FILE_ERROR.match(line)
+            if m:
+                errors.append((float(m.group(1)), line.strip()))
+    scores = []
+    with open(run / "scores.csv", newline="") as f:
+        for r in csv.DictReader(f):
+            scores.append((int(r["frame"]), int(r["person"]), float(r["t_pc"])))
+    t_start, t_end = 0.0, math.inf
+    if args.first is None:
+        if not starts:
+            sys.exit("no 'FileSource: started' line in console.log; give --first")
+        k = args.stream if args.stream is not None else len(starts) - 1
+        t_start = starts[k][0]
+        if k + 1 < len(starts):
+            t_end = starts[k + 1][0]
+        if starts[k][1] != n_rows:
+            sys.exit(f"the stream has {starts[k][1]} frames, the manifest {n_rows}: not the same set")
+    stream = [(f, p) for f, p, t in scores if t_start < t < t_end]
+    if not stream:
+        sys.exit("no scores in the chosen stream")
+    first = args.first if args.first is not None else min(f for f, _ in stream)
+    stream = sorted((f, p) for f, p in stream if f >= first)
+    bad = [line for t, line in errors if t_start < t < t_end]
+    if bad:
+        sys.exit("FileSource skipped frames in this stream, so frame indices no longer match manifest rows:\n  "
+                 + "\n  ".join(bad[:5]))
+
+    out = []
+
+    def say(text=""):
+        out.append(text)
+        print(text)
+
+    seen = {}
+    frames = []
+    for f, p in stream:
+        row = (f - first) % n_rows
+        r = rows[row]
+        frames.append((f, row, r["source"], r["label"].strip(), p))
+        seen.setdefault(row, set()).add(p)
+    sets = sorted({s for _, _, s, _, _ in frames})
+    unlabelled = sum(1 for x in frames if x[3] not in ("0", "1"))
+    passes = len(frames) / n_rows
+    say(f"run {run}, manifest {args.manifest} ({n_rows} rows): frames {stream[0][0]}..{stream[-1][0]} "
+        f"({len(frames)} scores, {passes:.2f} passes), row 0 = frame {first}; {unlabelled} unlabelled")
+    repeated = [row for row, ps in seen.items() if len(ps) > 1]
+    multi = sum(1 for row in seen if sum(1 for x in frames if x[1] == row) > 1)
+    if multi:
+        say(f"rows seen in more than one pass: {multi}, with differing scores: {len(repeated)}")
+    say()
+
+    def counts(selection, threshold):
+        pos = [x for x in selection if x[3] == "1"]
+        neg = [x for x in selection if x[3] == "0"]
+        return (sum(x[4] >= threshold for x in pos), len(pos), sum(x[4] >= threshold for x in neg), len(neg))
+
+    t50 = score_at(50)
+    say(f"at T = 50 % (score >= {t50}), per frame")
+    say(f"  {'set':12s} {'hit rate':>18s} {'false detections':>20s}")
+    for name in sets + ["all"]:
+        sel = frames if name == "all" else [x for x in frames if x[2] == name]
+        h, p, fd, n = counts(sel, t50)
+        say(f"  {name:12s} {rate(h, p):>18s} {rate(fd, n):>20s}")
+    say()
+
+    say("threshold table, per frame: hit rate / false-detection rate")
+    say(f"  {'T':>4s} {'score':>6s}  " + "  ".join(f"{name:>15s}" for name in sets + ["all"]))
+    for pc in EVAL_PERCENT:
+        t = score_at(pc)
+        cells = []
+        for name in sets + ["all"]:
+            sel = frames if name == "all" else [x for x in frames if x[2] == name]
+            h, p, fd, n = counts(sel, t)
+            cells.append((f"{h / p:6.1%}" if p else "     -") + " / " + (f"{fd / n:6.1%}" if n else "     -"))
+        say(f"  {pc:3d}% {t:6d}  " + "  ".join(f"{c:>15s}" for c in cells))
+
+    (run / "evaluation.txt").write_text("\n".join(out) + "\n")
+    with open(run / "evaluation_frames.csv", "w", newline="") as f:
+        wr = csv.writer(f, lineterminator="\n")
+        wr.writerow(["frame", "row", "set", "label", "person"])
+        wr.writerows(frames)
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("run")
     ap.add_argument("--phases", help="phase table (default: phases.csv in the run folder)")
     ap.add_argument("--settle", type=float, default=5.0)
     ap.add_argument("--no-sheets", action="store_true")
+    ap.add_argument("--manifest", help="manifest.csv of an SD-card run: evaluate against its labels")
+    ap.add_argument("--stream", type=int, help="which 'FileSource: started' line (0 = first; default the last)")
+    ap.add_argument("--first", type=int, help="board frame index of manifest row 0")
     args = ap.parse_args()
+    if args.manifest:
+        return evaluate(args)
 
     run = pathlib.Path(args.run)
     windows, images, steps = load(run, pathlib.Path(args.phases) if args.phases else run / "phases.csv")
