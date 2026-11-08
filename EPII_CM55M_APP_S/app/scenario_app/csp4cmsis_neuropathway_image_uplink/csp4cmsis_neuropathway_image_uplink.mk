@@ -33,7 +33,8 @@ APPL_DEFINES += -DCSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY=5
 # The source code should be loacted in ~\middleware\{mid_name}\
 ##
 MID_SEL = fatfs
-FATFS_PORT_LIST = mmc_spi
+FATFS_PORT_LIST = app_local
+APPL_DEFINES += -DFATFS_PORT_mmc_spi
 CMSIS_DRIVERS_LIST = SPI
 
 #override OS_SEL := freertos
