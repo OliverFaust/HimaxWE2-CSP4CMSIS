@@ -4,7 +4,6 @@ APPL_DEFINES += -DCSP4CMSIS_NEUROPATHWAY_IMAGE_UPLINK
 #APPL_DEFINES += -DUPLINK_STAGE0
 APPL_DEFINES += -DCISDP_JPEG_BUF_CNT=4
 #APPL_DEFINES += -DUPLINK_STALL_MS=1500
-#APPL_DEFINES += -DSD_BENCH
 #APPL_DEFINES += -DIP_xdma
 #APPL_DEFINES += -DEVT_DATAPATH
 
@@ -32,13 +31,31 @@ APPL_DEFINES += -DCSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY=5
 # Add new middleware here
 # The source code should be loacted in ~\middleware\{mid_name}\
 ##
+# Frame source (make clean after changing any of these): camera (IMX219) or sdcard (FileSource, /frames/ on the card)
+FRAME_SOURCE ?= camera
+# SD read benchmark instead of the pipeline: y or n
+SD_BENCH ?= n
+# SD card SPI clock in Hz: 24 MHz, or 16000000 as the fallback for cards that show CRC or read errors
+SD_SPI_HZ ?= 24000000
+# Card directory with manifest.csv and the frames (FRAME_SOURCE=sdcard)
+SD_FRAME_DIR ?= /frames
+
+ifeq ($(SD_BENCH),y)
+APPL_DEFINES += -DSD_BENCH
+SD_CARD = y
+endif
+ifeq ($(FRAME_SOURCE),sdcard)
+APPL_DEFINES += -DFRAME_SOURCE_SDCARD -DSD_FRAME_DIR=\"$(SD_FRAME_DIR)\"
+SD_CARD = y
+else ifneq ($(FRAME_SOURCE),camera)
+$(error FRAME_SOURCE must be camera or sdcard)
+endif
+ifeq ($(SD_CARD),y)
 MID_SEL = fatfs
 FATFS_PORT_LIST = app_local
-APPL_DEFINES += -DFATFS_PORT_mmc_spi
-# SD card SPI clock in Hz (make clean after changing it): 24 MHz, or 16000000 as the fallback for cards that show CRC or read errors
-SD_SPI_HZ ?= 24000000
-APPL_DEFINES += -DSD_SPI_CLOCK_HZ=$(SD_SPI_HZ)
+APPL_DEFINES += -DSD_CARD -DFATFS_PORT_mmc_spi -DSD_SPI_CLOCK_HZ=$(SD_SPI_HZ)
 CMSIS_DRIVERS_LIST = SPI
+endif
 
 #override OS_SEL := freertos
 override OS_SEL := freertos_10_5_1
@@ -50,7 +67,9 @@ override TRUSTZONE_FW_TYPE := 1
 override CIS_SEL := HM_COMMON
 override EPII_USECASE_SEL := drv_onecore_cm55m_s
 
+ifeq ($(FRAME_SOURCE),camera)
 CIS_SUPPORT_INAPP = cis_sensor
+endif
 #CIS_SUPPORT_INAPP_MODEL = cis_hm0360
 #CIS_SUPPORT_INAPP_MODEL = cis_ov5647
 CIS_SUPPORT_INAPP_MODEL = cis_imx219

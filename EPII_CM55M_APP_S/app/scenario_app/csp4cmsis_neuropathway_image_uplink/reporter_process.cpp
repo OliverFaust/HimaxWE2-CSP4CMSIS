@@ -1,6 +1,6 @@
 #include "reporter_process.h"
 #include "uplink.h"
-#include "sd_card.h"
+#include "sd_result.h"
 #include "WE2_device.h"
 #include "xprintf.h"
 
@@ -90,8 +90,78 @@ void Reporter::print_window(const report_t& r)
     xprintf(" merged %d failed %ld y %ld.%ld clip %ld.%02ld", (int)r.code, (long)r.value[WV_FAILED],
             (long)(r.value[WV_Y] / 10), (long)(r.value[WV_Y] % 10),
             (long)(r.value[WV_CLIP] / 100), (long)(r.value[WV_CLIP] % 100));
-    xprintf(" above %ld sent %ld suppressed %ld lost %ld eoi %ld\r\n", (long)r.value[WV_ABOVE], (long)r.value[WV_SENT],
-            (long)r.value[WV_SUPPRESSED], (long)r.value[WV_LOST], (long)r.value[WV_EOI]);
+    xprintf(" above %ld sent %ld suppressed %ld lost %ld eoi %ld infer %ld\r\n", (long)r.value[WV_ABOVE],
+            (long)r.value[WV_SENT], (long)r.value[WV_SUPPRESSED], (long)r.value[WV_LOST], (long)r.value[WV_EOI],
+            (long)r.value[WV_INFER]);
+}
+
+static void print_ms(const char* label, int32_t us)
+{
+    xprintf(" %s %ld.%ld ms", label, (long)(us / 1000), (long)((us % 1000) / 100));
+}
+
+void Reporter::print_source(const report_t& r)
+{
+    static const char* const FILE_ERRORS[] = {"read FAILED", "wrong size", "CRC mismatch", "no SOI/EOI"};
+    static const char* const MANIFEST_ERRORS[] = {"cannot open", "bad header", "bad line", "mixed frame sizes",
+                                                  "unsupported frame size", "no frames"};
+    const int32_t* v = r.value;
+    switch (r.code) {
+    case SRC_STARTED:
+        xprintf("%s: started %ld frames %ldx%ld, pace %ld ms, loop %s, SPI %ld Hz\r\n", r.name, (long)v[SV_FRAMES],
+                (long)v[SV_WIDTH], (long)v[SV_HEIGHT], (long)v[SV_PACE], v[SV_LOOP] ? "on" : "off", (long)v[SV_SPI_HZ]);
+        break;
+    case SRC_PASS:
+    case SRC_END:
+        xprintf("%s: %s %lu: %ld frames %ld errors (read %ld, crc %ld, jpeg %ld);", r.name,
+                r.code == SRC_END ? "end" : "pass", (unsigned long)r.index, (long)v[SV_FRAMES],
+                (long)(v[SV_READ_ERRORS] + v[SV_CRC_ERRORS] + v[SV_JPEG_ERRORS]), (long)v[SV_READ_ERRORS],
+                (long)v[SV_CRC_ERRORS], (long)v[SV_JPEG_ERRORS]);
+        print_ms("read", v[SV_READ_US]);
+        print_ms("crc", v[SV_CRC_US]);
+        print_ms("wait", v[SV_WAIT_US]);
+        xprintf(" per frame\r\n");
+        break;
+    case SRC_FILE_ERROR:
+        if (v[0] == FILE_READ) {
+            xprintf("%s: frame %lu %s: read FAILED: %s (%ld), card step %lx\r\n", r.name, (unsigned long)r.index,
+                    r.text, sd_card_result_name(v[1]), (long)v[1], (unsigned long)(uint32_t)v[2]);
+        } else if (v[0] == FILE_CRC) {
+            xprintf("%s: frame %lu %s: CRC mismatch: %08lx, manifest %08lx\r\n", r.name, (unsigned long)r.index,
+                    r.text, (unsigned long)(uint32_t)v[1], (unsigned long)(uint32_t)v[2]);
+        } else {
+            xprintf("%s: frame %lu %s: %s (%ld bytes)\r\n", r.name, (unsigned long)r.index, r.text,
+                    FILE_ERRORS[v[0] & 3], (long)v[1]);
+        }
+        break;
+    case SRC_MANIFEST_ERROR:
+        xprintf("%s: manifest %s line %lu: %s", r.name, r.text, (unsigned long)r.index,
+                (uint32_t)v[0] < 6 ? MANIFEST_ERRORS[v[0]] : "?");
+        if (v[0] == MANIFEST_OPEN) xprintf(": %s (%ld)", sd_card_result_name(v[1]), (long)v[1]);
+        if (v[0] == MANIFEST_MIXED || v[0] == MANIFEST_SIZE) {
+            xprintf(": %ldx%ld", (long)v[1], (long)v[2]);
+            if (v[0] == MANIFEST_MIXED) xprintf(", first frame %ldx%ld", (long)v[3], (long)v[4]);
+        }
+        xprintf("; waiting for restart\r\n");
+        break;
+    case SRC_MOUNT_FAILED:
+        xprintf("%s: mount FAILED: %s (%ld); waiting for restart\r\n", r.name, sd_card_result_name(v[0]), (long)v[0]);
+        break;
+    case SRC_PACE:
+        xprintf("%s: pace %ld ms\r\n", r.name, (long)v[0]);
+        break;
+    case SRC_LOOP:
+        xprintf("%s: loop %s\r\n", r.name, v[0] ? "on" : "off");
+        break;
+    case SRC_RESTART:
+        xprintf("%s: restart\r\n", r.name);
+        break;
+    case SRC_NOT_APPLICABLE:
+        xprintf("%s: %s not applicable (no sensor)\r\n", r.name, setting_name((uint8_t)v[0]));
+        break;
+    default:
+        break;
+    }
 }
 
 void Reporter::send_image(uint32_t frame, int8_t score, uint32_t window, uint32_t jpeg_addr, uint32_t len)
@@ -189,11 +259,18 @@ void Reporter::run()
             case REJECT_LINE_TOO_LONG:
                 xprintf("%s: rejected: line too long\r\n", r.name);
                 break;
+            case REJECT_NOT_APPLICABLE:
+                if (r.value[0] == SETTING_PACE) {
+                    xprintf("%s: rejected pace: not applicable to this frame source\r\n", r.name);
+                } else {
+                    xprintf("%s: rejected: loop and restart are not applicable to this frame source\r\n", r.name);
+                }
+                break;
             case REJECT_BYTES_LOST:
                 xprintf("%s: %ld received bytes lost (buffer full)\r\n", r.name, (long)r.value[1]);
                 break;
             default:
-                xprintf("%s: rejected: unknown command (set again|dgain|exposure|framelen|window|threshold|k <value>, get)\r\n", r.name);
+                xprintf("%s: rejected: unknown command (set again|dgain|exposure|framelen|window|threshold|k|pace <value>, get, loop on|off, restart)\r\n", r.name);
                 break;
             }
             break;
@@ -259,6 +336,9 @@ void Reporter::run()
         }
         case ReportKind::SdBenchDone:
             xprintf("%s: done in %ld ms\r\n", r.name, (long)r.value[0]);
+            break;
+        case ReportKind::Source:
+            print_source(r);
             break;
         case ReportKind::Stack:
             if (r.value[2] < 0) {

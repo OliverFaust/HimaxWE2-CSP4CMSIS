@@ -1,3 +1,4 @@
+#ifdef SD_CARD
 #include "xprintf.h"
 #include "ff.h"
 #include "hx_drv_gpio.h"
@@ -205,3 +206,4 @@ FRESULT scan_files (char* path)     /* Start node to be scanned (***also used as
 
     return res;
 }
+#endif
