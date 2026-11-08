@@ -1,0 +1,77 @@
+-- Positive controls for Uplink_source.csp: plausible wrong designs of the new parts. Each must
+-- FAIL its check. The variants are copies with a suffix.
+
+include "Uplink_source_defs.csp"
+
+-- Control 5 (must break the buffer roles): at end of stream Inference flushes the partial window
+-- with its image without waiting for the free token, i.e. possibly before the Reporter has
+-- finished sending the previous image.
+Inference5 = frame_chan?p?k -> report_chan!started.inference -> Infer5(0, p, k, diff(IDS, {p}), NONE, true, true, 0, false)
+
+Infer5(pos, p, k, sp, best, tok, rdy, m, sc) =
+    (free_out?b -> PollReady5(pos, p, k, union(sp, {b}), best, true, rdy, m, sc))
+    [] (poll_empty -> PollReady5(pos, p, k, sp, best, tok, rdy, m, sc))
+
+PollReady5(pos, p, k, sp, best, tok, rdy, m, sc) =
+    (ready_out -> Dispatch5(pos, p, k, sp, best, tok, true, m, sc))
+    [] (ready_empty -> Dispatch5(pos, p, k, sp, best, tok, rdy, m, sc))
+
+Dispatch5(pos, p, k, sp, best, tok, rdy, m, sc) =
+    if k == img then Release5(pos, p, sp, best, tok, rdy, m, sc)
+    else release_chan!p -> Flush5(pos, sp, best, tok, rdy, m, sc)
+
+Release5(pos, p, sp, best, tok, rdy, m, sc) =
+    |~| s : sp @ release_chan!s -> Score5(pos, p, diff(sp, {s}), best, tok, rdy, m, sc)
+
+Score5(pos, p, sp, best, tok, rdy, m, sc) =
+    if best == NONE then
+        (scored!failed!p -> End5(pos, union(sp, {p}), best, tok, rdy, m))
+        |~| (scored!better!p -> End5(pos, sp, p, tok, rdy, m))
+    else
+        (scored!failed!p -> End5(pos, union(sp, {p}), best, tok, rdy, m))
+        |~| (scored!better!p -> End5(pos, union(sp, {best}), p, tok, rdy, m))
+        |~| (scored!worse!p -> End5(pos, union(sp, {p}), best, tok, rdy, m))
+
+WindowReport5(sp, best, tok, m) =
+    if best == NONE then report_chan!window.m -> Next5(0, sp, NONE, tok, false, 0, false)
+    else (report_chan!wimage.m.best -> Next5(0, sp, NONE, false, false, 0, false))
+         |~| (suppress!best -> report_chan!window.m -> Next5(0, union(sp, {best}), NONE, tok, false, 0, false))
+
+End5(pos, sp, best, tok, rdy, m) =
+    if rdy then
+        if pos == W - 1 and tok then WindowReport5(sp, best, tok, m)
+        else if pos == W - 1 then
+            merge -> report_chan!scores -> Next5(0, sp, best, tok, false, sat(m + 1), false)
+        else
+            report_chan!scores -> Next5(pos + 1, sp, best, tok, false, m, false)
+    else if pos == W - 1 then
+        merge -> Next5(0, sp, best, tok, rdy, sat(m + 1), true)
+    else
+        Next5(pos + 1, sp, best, tok, rdy, m, true)
+
+Flush5(pos, sp, best, tok, rdy, m, sc) =
+    if pos > 0 or sc then
+        (if rdy then FlushReady5(pos, sp, best, tok, m)
+         else ready_out -> FlushReady5(pos, sp, best, tok, m))
+    else Next5(0, sp, best, tok, rdy, m, false)
+
+FlushReady5(pos, sp, best, tok, m) =
+    if pos > 0 then
+        WindowReport5(sp, best, tok, m)
+    else report_chan!scores -> Next5(0, sp, best, tok, false, m, false)
+
+Next5(pos, sp, best, tok, rdy, m, sc) = frame_chan?p?k -> Infer5(pos, p, k, sp, best, tok, rdy, m, sc)
+
+assert RUN(diff(Events, {error, overflow})) [T= OBSERVED(SYS(FileSource, Inference5, Reporter, MainApp))   -- expected: false
+
+-- Control 6 (must break the source protocol): after the terminator FileSource goes on with the
+-- same buffer instead of waiting for Inference to release one.
+FileSource6 = report_chan!started.filesource -> FS6(0)
+FS6(b) = (report_chan!srcmsg -> FSFrame6(b)) |~| FSFrame6(b)
+FSFrame6(b) = (fs_read -> frame_chan!b!img -> release_chan?nb -> FS6(nb))
+              |~| (frame_chan!b!eos -> report_chan!srcmsg -> fs_restart -> report_chan!started.filesource -> FS6(b))
+
+SRC_EVENTS = {| frame_chan, release_chan |}
+SOURCE(b) = (|~| k : kind_t @ frame_chan!b!k -> release_chan?nb -> SOURCE(nb))
+
+assert SOURCE(0) [FD= FileSource6 \ diff(Events, SRC_EVENTS)   -- expected: false

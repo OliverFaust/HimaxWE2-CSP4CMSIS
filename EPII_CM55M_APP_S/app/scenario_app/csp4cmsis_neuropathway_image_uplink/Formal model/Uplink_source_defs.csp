@@ -1,0 +1,180 @@
+-- Frame source (FRAME_SOURCE = camera | sdcard), definitions shared by Uplink_source.csp and
+-- Uplink_source_controls.csp. Derived from Uplink_defs.csp (same buffers, tokens, Reporter and
+-- MainApp), with three changes:
+--  * frame_chan carries the buffer id and a kind: img (a frame) or eos (the end-of-stream
+--    terminator, frame_t.end: it carries a JPEG buffer but no image);
+--  * Inference counts its position in the window (pos) instead of taking it from the frame
+--    index, as the firmware does (pos restarts at 0 after an end-of-stream flush);
+--  * the source is a parameter: Camera or FileSource.
+-- Bounded as in Uplink_defs.csp: windows of W = 2 frames, the merged count saturating at MAXM.
+
+W         = 2
+IDS       = {0..3}
+NONE      = 4                                  -- no buffer
+MAXM      = 2
+
+sat(m) = if m > MAXM then MAXM else m
+
+datatype source_t  = camera | inference | filesource
+datatype kind_t    = img | eos
+datatype outcome_t = better | worse | failed
+datatype report_t  = started.source_t | stack | srcmsg | scores | window.{0..MAXM} | wimage.{0..MAXM}.IDS
+
+INF_TEXT = union({scores}, {window.m | m <- {0..MAXM}})  -- Inference's text reports (return the token)
+OTHER    = {started.camera, started.inference, started.filesource, stack, srcmsg}
+
+channel g_trigger_chan                         -- frame-ready interrupt -> Camera
+channel frame_chan   : IDS.kind_t              -- source -> Inference: buffer, frame or terminator
+channel release_chan : IDS                     -- Inference -> source: the next buffer to fill
+channel free_in      : IDS                     -- Reporter -> free_chan's slot
+channel free_out     : IDS                     -- free_chan's slot -> Inference
+channel poll_empty                             -- free_chan's slot -> Inference (poll, SKIP taken)
+channel ready_in                               -- Reporter -> ready_chan's slot
+channel ready_out                              -- ready_chan's slot -> Inference
+channel ready_empty                            -- ready_chan's slot -> Inference (poll, SKIP taken)
+channel report_chan  : report_t                -- the sources, Inference, MainApp -> Reporter
+channel line         : report_t                -- the Reporter's text lines
+channel uplink       : IDS                     -- the Reporter sends the JPEG in this buffer
+channel scored       : outcome_t.IDS           -- Inference has scored the frame in this buffer
+channel suppress     : IDS                     -- the window's best fails the filter
+channel merge                                  -- Inference merges a window (no token at its end)
+channel fs_read                                -- FileSource has read a frame's two files
+channel fs_restart                             -- FileSource starts the stream again (restart)
+channel camera_log, stack_tick
+channel overflow, error
+
+ENV = g_trigger_chan -> ENV
+
+RUN(A) = [] x : A @ x -> RUN(A)
+
+-- Camera: as in Uplink_defs.csp, without the frame index (only Inference's window position used
+-- it). It writes report_chan once, at start, and never sends a terminator.
+Camera = camera_log -> report_chan!started.camera -> CameraLoop(0)
+CameraLoop(b) = g_trigger_chan -> frame_chan!b!img -> release_chan?nb -> CameraLoop(nb)
+
+-- FileSource: before each frame it may write one report (a read or CRC error with the file name,
+-- a command acknowledgement, a status line); then either a frame (its two files read into the
+-- raw buffer and the JPEG buffer b) or, at the end of the manifest without loop, the terminator
+-- in b, the end report, and a wait for restart, after which it starts again. A frame that fails
+-- its CRC is not passed on: the report is written, the next frame is read into the same buffers.
+-- Pace and the cmd_chan polls only add delays and are left out (cmd_chan: Uplink_command.csp).
+FileSource = report_chan!started.filesource -> FS(0)
+FS(b) = (report_chan!srcmsg -> FSFrame(b)) |~| FSFrame(b)
+FSFrame(b) = (fs_read -> frame_chan!b!img -> release_chan?nb -> FS(nb))
+             |~| (frame_chan!b!eos -> release_chan?nb -> report_chan!srcmsg -> fs_restart ->
+                  report_chan!started.filesource -> FS(nb))
+
+-- Inference: pos = position in the window, p = the buffer just received, k = its kind, sp =
+-- spare buffers, best = the window's best (NONE if none), tok = holds the free token, rdy = holds
+-- the ready token, m = windows merged since the last Window line, sc = scores not yet reported.
+Inference = frame_chan?p?k -> report_chan!started.inference -> Infer(0, p, k, diff(IDS, {p}), NONE, true, true, 0, false)
+
+Infer(pos, p, k, sp, best, tok, rdy, m, sc) =
+    (free_out?b -> PollReady(pos, p, k, union(sp, {b}), best, true, rdy, m, sc))
+    [] (poll_empty -> PollReady(pos, p, k, sp, best, tok, rdy, m, sc))
+
+PollReady(pos, p, k, sp, best, tok, rdy, m, sc) =
+    (ready_out -> Dispatch(pos, p, k, sp, best, tok, true, m, sc))
+    [] (ready_empty -> Dispatch(pos, p, k, sp, best, tok, rdy, m, sc))
+
+Dispatch(pos, p, k, sp, best, tok, rdy, m, sc) =
+    if k == img then Release(pos, p, sp, best, tok, rdy, m, sc)
+    else release_chan!p -> Flush(pos, sp, best, tok, rdy, m, sc)
+
+Release(pos, p, sp, best, tok, rdy, m, sc) =
+    |~| s : sp @ release_chan!s -> Score(pos, p, diff(sp, {s}), best, tok, rdy, m, sc)
+
+Score(pos, p, sp, best, tok, rdy, m, sc) =
+    if best == NONE then
+        (scored!failed!p -> End(pos, union(sp, {p}), best, tok, rdy, m))
+        |~| (scored!better!p -> End(pos, sp, p, tok, rdy, m))
+    else
+        (scored!failed!p -> End(pos, union(sp, {p}), best, tok, rdy, m))
+        |~| (scored!better!p -> End(pos, union(sp, {best}), p, tok, rdy, m))
+        |~| (scored!worse!p -> End(pos, union(sp, {p}), best, tok, rdy, m))
+
+-- After scoring there is always a score not yet reported; every report of Inference's carries
+-- the scores and clears it. Window end: pos == W - 1.
+WindowReport(sp, best, tok, m) =
+    if best == NONE then report_chan!window.m -> Next(0, sp, NONE, tok, false, 0, false)
+    else (report_chan!wimage.m.best -> Next(0, sp, NONE, false, false, 0, false))
+         |~| (suppress!best -> report_chan!window.m -> Next(0, union(sp, {best}), NONE, tok, false, 0, false))
+
+End(pos, sp, best, tok, rdy, m) =
+    if rdy then
+        if pos == W - 1 and tok then WindowReport(sp, best, tok, m)
+        else if pos == W - 1 then
+            merge -> report_chan!scores -> Next(0, sp, best, tok, false, sat(m + 1), false)
+        else
+            report_chan!scores -> Next(pos + 1, sp, best, tok, false, m, false)
+    else if pos == W - 1 then
+        merge -> Next(0, sp, best, tok, rdy, sat(m + 1), true)
+    else
+        Next(pos + 1, sp, best, tok, rdy, m, true)
+
+-- End of stream: the terminator's buffer goes straight back to the source; if the window has
+-- frames (pos > 0) or scores are waiting, Inference waits for the ready token (a blocking read,
+-- not a poll), for a partial window also for the free token, and sends the Window report of the
+-- partial window (or a Scores report). The next stream starts a new window.
+Flush(pos, sp, best, tok, rdy, m, sc) =
+    if pos > 0 or sc then
+        (if rdy then FlushReady(pos, sp, best, tok, m)
+         else ready_out -> FlushReady(pos, sp, best, tok, m))
+    else Next(0, sp, best, tok, rdy, m, false)
+
+FlushReady(pos, sp, best, tok, m) =
+    if pos > 0 then
+        (if tok then WindowReport(sp, best, tok, m)
+         else free_out?b -> WindowReport(union(sp, {b}), best, true, m))
+    else report_chan!scores -> Next(0, sp, best, tok, false, m, false)
+
+Next(pos, sp, best, tok, rdy, m, sc) = frame_chan?p?k -> Infer(pos, p, k, sp, best, tok, rdy, m, sc)
+
+-- free_chan and ready_chan: one-slot buffered channels, as in Uplink_defs.csp. Inference's
+-- blocking reads at end of stream take free_out / ready_out like a poll that finds a value.
+FREE = (free_in?b -> FREE_FULL(b)) [] (poll_empty -> FREE)
+FREE_FULL(b) = (free_out!b -> FREE) [] (free_in?x -> overflow -> STOP)
+
+READY = (ready_in -> READY_FULL) [] (ready_empty -> READY)
+READY_FULL = (ready_out -> READY) [] (ready_in -> overflow -> STOP)
+
+MainApp = stack_tick -> report_chan!stack -> MainApp
+MainAppN(n) = if n == 0 then STOP else stack_tick -> report_chan!stack -> MainAppN(n - 1)
+
+-- Reporter: as in Uplink_defs.csp; the source's reports are OTHER (a line, no token).
+Reporter = (report_chan?r:INF_TEXT -> line!r -> ready_in -> Reporter)
+           [] (report_chan?r:OTHER -> line!r -> Reporter)
+           [] (report_chan.wimage?m?b -> line!window.m -> uplink!b -> free_in!b -> ready_in -> Reporter)
+
+ReporterStall = (report_chan?r:INF_TEXT -> line!r -> ((ready_in -> ReporterStall) |~| STOP))
+                [] (report_chan?r:OTHER -> line!r -> ReporterStall)
+                [] (report_chan.wimage?m?b -> line!window.m -> uplink!b ->
+                    ((free_in!b -> ready_in -> ReporterStall) |~| STOP))
+
+PIPE(Src, Inf) = Src [| {| frame_chan, release_chan |} |] Inf
+NETWORK(Src, Inf, Rep, Main) =
+    (((PIPE(Src, Inf) ||| Main) [| {| report_chan |} |] Rep)
+     [| {| free_in, free_out, poll_empty |} |] FREE)
+    [| {| ready_in, ready_out, ready_empty |} |] READY
+SYS(Src, Inf, Rep, Main) = ENV [| {| g_trigger_chan |} |] NETWORK(Src, Inf, Rep, Main)
+
+-- Buffer roles, as in Uplink_defs.csp, plus the terminator: its buffer goes from the source's
+-- target straight back to the spares (Inference releases it as the next target).
+OBS(cam, pend, best, sp, send, slot) =
+    (frame_chan?b?k -> (if b != cam then error -> STOP
+                        else if k == img then OBS(NONE, b, best, sp, send, slot)
+                        else OBS(NONE, pend, best, union(sp, {b}), send, slot)))
+ [] (release_chan?b -> (if cam == NONE and member(b, sp)
+                        then OBS(b, pend, best, diff(sp, {b}), send, slot) else error -> STOP))
+ [] (scored?o?b -> (if b != pend then error -> STOP
+                    else if o == better
+                    then OBS(cam, NONE, b, if best == NONE then sp else union(sp, {best}), send, slot)
+                    else OBS(cam, NONE, best, union(sp, {b}), send, slot)))
+ [] (suppress?b -> (if b == best then OBS(cam, pend, NONE, union(sp, {b}), send, slot) else error -> STOP))
+ [] (report_chan.wimage?m?b -> (if b == best and send == NONE and slot == NONE
+                                then OBS(cam, pend, NONE, sp, b, slot) else error -> STOP))
+ [] (free_in?b -> (if b == send then OBS(cam, pend, best, sp, NONE, b) else error -> STOP))
+ [] (free_out?b -> (if b == slot then OBS(cam, pend, best, union(sp, {b}), send, NONE) else error -> STOP))
+
+ROLE_EVENTS = {| frame_chan, release_chan, scored, suppress, report_chan.wimage, free_in, free_out |}
+OBSERVED(P) = P [| ROLE_EVENTS |] OBS(0, NONE, NONE, {1, 2, 3}, NONE, NONE)
