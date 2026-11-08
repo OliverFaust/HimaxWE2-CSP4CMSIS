@@ -66,6 +66,7 @@ void Inference::run()
     g_batch[filling].count = 0;
     int32_t scores_lost = 0;
     int32_t suppressed = 0;
+    int32_t eoi_errors = 0;
 
     uint32_t first = f.index;
     int16_t merged = 0;
@@ -82,7 +83,7 @@ void Inference::run()
         }
         if (poll_ready.priSelect() == 0) ready = true;
 
-        cv_prepare();
+        cv_prepare((const uint8_t*)(uintptr_t)f.raw_addr, f.raw_w, f.raw_h);
         m_release_out.write(release_t { spare[--spares] });
 
         uint32_t sum, clipped;
@@ -117,12 +118,13 @@ void Inference::run()
             scores_lost++;
         }
 
+        if (f.jpeg_len == 0) eoi_errors++;
         if (status != 0) {
             failed++;
             spare[spares++] = f.buf;
         } else {
             if (person_score >= threshold) above++;
-            if (!have_best || person_score > best_score) {
+            if (f.jpeg_len != 0 && (!have_best || person_score > best_score)) {
                 if (have_best) spare[spares++] = best.buf;
                 best = f;
                 best_score = person_score;
@@ -157,9 +159,10 @@ void Inference::run()
                 r.value[WV_SENT] = send ? 1 : 0;
                 r.value[WV_SUPPRESSED] = suppressed;
                 r.value[WV_LOST] = scores_lost;
+                r.value[WV_EOI] = eoi_errors;
                 if (send) {
                     r.value[WV_JPEG_ADDR] = (int32_t)best.jpeg_addr;
-                    r.value[WV_JPEG_SZ] = (int32_t)best.jpeg_sz;
+                    r.value[WV_JPEG_LEN] = (int32_t)best.jpeg_len;
                     r.value[WV_BUF] = best.buf;
                     uplink_free = false;
                 } else if (have_best) {

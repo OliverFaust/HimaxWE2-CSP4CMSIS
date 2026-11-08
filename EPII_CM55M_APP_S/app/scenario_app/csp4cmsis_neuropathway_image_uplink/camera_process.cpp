@@ -1,5 +1,6 @@
 #include "camera_process.h"
 #include "cisdp_cfg.h"
+#include "frame_buffers.h"
 #include "WE2_debug.h"
 #include "WE2_device.h"
 #include "uplink.h"
@@ -7,6 +8,17 @@
 #include <string.h>
 
 using namespace csp;
+
+static constexpr uint32_t JPEG_SIZE_PAD = 32;
+
+static uint32_t jpeg_length(const uint8_t* p, uint32_t jpeg_sz, uint32_t buf_size)
+{
+  if (jpeg_sz < JPEG_SIZE_PAD + 4 || jpeg_sz > buf_size) return 0;
+  for (uint32_t end = jpeg_sz - JPEG_SIZE_PAD; end + 4 > jpeg_sz - JPEG_SIZE_PAD; end--) {
+    if (p[end - 2] == 0xFF && p[end - 1] == 0xD9) return end;
+  }
+  return 0;
+}
 
 #ifdef UPLINK_STAGE0
 static constexpr uint32_t STAGE0_FRAMES = 100;
@@ -158,10 +170,17 @@ void Camera::run() {
     uint32_t jpeg_addr, jpeg_sz;
     cisdp_get_jpginfo(&jpeg_sz, &jpeg_addr);
 
+    const uint8_t* jpeg = (const uint8_t*)jpeg_addr;
+    uint32_t buf_size = frame_jpeg_size();
+    SCB_InvalidateDCache_by_Addr((void*)jpeg, (int32_t)((jpeg_sz <= buf_size) ? jpeg_sz : buf_size));
+
     frame_t f;
     f.index = m_frame_counter++;
     f.jpeg_addr = jpeg_addr;
-    f.jpeg_sz = jpeg_sz;
+    f.jpeg_len = jpeg_length(jpeg, jpeg_sz, buf_size);
+    f.raw_addr = frame_raw_addr();
+    f.raw_w = FRAME_RAW_WIDTH;
+    f.raw_h = FRAME_RAW_HEIGHT;
     f.buf = cur;
     f.changed = changed;
     f.failed = failed;

@@ -50,7 +50,10 @@ struct score_batch_t {
 struct frame_t {
     uint32_t   index;
     uint32_t   jpeg_addr;
-    uint32_t   jpeg_sz;
+    uint32_t   jpeg_len;
+    uint32_t   raw_addr;
+    uint16_t   raw_w;
+    uint16_t   raw_h;
     uint8_t    buf;
     uint8_t    changed;
     uint8_t    failed;
@@ -96,8 +99,9 @@ enum WindowValue : uint8_t {
     WV_SENT,
     WV_SUPPRESSED,
     WV_LOST,
+    WV_EOI,
     WV_JPEG_ADDR,
-    WV_JPEG_SZ,
+    WV_JPEG_LEN,
     WV_BUF,
     WV_COUNT,
 };

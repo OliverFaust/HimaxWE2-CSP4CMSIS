@@ -1,5 +1,6 @@
 #include "uplink.h"
 #include "cisdp_cfg.h"
+#include "frame_buffers.h"
 
 namespace {
 
@@ -25,15 +26,6 @@ uint32_t crc32_update(uint32_t crc, const uint8_t* p, uint32_t n)
     return c ^ 0xFFFFFFFFu;
 }
 
-uint32_t jpeg_length(const uint8_t* p, uint32_t jpeg_sz, uint32_t buf_size)
-{
-    if (jpeg_sz < JPEG_SIZE_PAD + 4 || jpeg_sz > buf_size) return 0;
-    for (uint32_t end = jpeg_sz - JPEG_SIZE_PAD; end + 4 > jpeg_sz - JPEG_SIZE_PAD; end--) {
-        if (p[end - 2] == 0xFF && p[end - 1] == 0xD9) return end;
-    }
-    return 0;
-}
-
 static constexpr int32_t AGAIN_MAX = 232;
 static constexpr int32_t DGAIN_MIN = 0x0100;
 static constexpr int32_t DGAIN_MAX = 0x0FFF;
@@ -48,6 +40,7 @@ static_assert(IMX219_FRAMELEN_SETTING >= FRAMELEN_MIN && IMX219_FRAMELEN_SETTING
 static_assert(IMX219_AGAIN_SETTING <= AGAIN_MAX, "analogue gain out of range");
 static_assert(IMX219_DGAIN_SETTING >= DGAIN_MIN && IMX219_DGAIN_SETTING <= DGAIN_MAX, "digital gain out of range");
 static_assert(UPLINK_WINDOW >= UPLINK_WINDOW_MIN && UPLINK_WINDOW <= UPLINK_WINDOW_MAX, "window out of range");
+static_assert(UPLINK_BUFFERS == CISDP_JPEG_BUF_CNT, "UPLINK_BUFFERS must match CISDP_JPEG_BUF_CNT");
 static_assert(UPLINK_K >= 1 && UPLINK_K <= UPLINK_WINDOW_MAX, "k out of range");
 
 static const char* const SETTING_NAMES[SETTING_COUNT] = {"again", "dgain", "exposure", "framelen", "window",

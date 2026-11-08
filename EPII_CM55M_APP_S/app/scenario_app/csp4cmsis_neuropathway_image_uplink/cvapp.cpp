@@ -14,7 +14,6 @@
 #include "WE2_device.h"
 #include "board.h"
 #include "cvapp.h"
-#include "cisdp_sensor.h"
 
 #include "WE2_core.h"
 #include "WE2_device.h"
@@ -27,7 +26,6 @@
 #include "tensorflow/lite/micro/micro_error_reporter.h"
 
 #include "xprintf.h"
-#include "cisdp_cfg.h"
 
 #include "person_detect_model_data_vela.h"
 #include "common_config.h"
@@ -196,9 +194,9 @@ int cv_init(bool security_enable, bool privilege_enable)
 	return ercode;
 }
 
-void cv_prepare(void) {
-	img_rescale((uint8_t*)app_get_raw_addr(), app_get_raw_width(), app_get_raw_height(), INPUT_SIZE_X, INPUT_SIZE_Y,
-			input->data.int8, SC(app_get_raw_width(), INPUT_SIZE_X), SC(app_get_raw_height(), INPUT_SIZE_Y));
+void cv_prepare(const uint8_t* raw, uint32_t w, uint32_t h) {
+	img_rescale((uint8_t*)raw, w, h, INPUT_SIZE_X, INPUT_SIZE_Y,
+			input->data.int8, SC(w, INPUT_SIZE_X), SC(h, INPUT_SIZE_Y));
 }
 
 int cv_invoke(int8_t* person_score_out, int8_t* no_person_score_out) {

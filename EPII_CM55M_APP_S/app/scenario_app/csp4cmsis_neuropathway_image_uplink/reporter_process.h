@@ -11,7 +11,7 @@ public:
     const char* name() const override { return "Reporter"; }
 
 private:
-    void send_image(uint32_t frame, int8_t score, uint32_t window, uint32_t jpeg_addr, uint32_t jpeg_sz);
+    void send_image(uint32_t frame, int8_t score, uint32_t window, uint32_t jpeg_addr, uint32_t jpeg_len);
     void print_scores(const score_batch_t* b);
     void print_window(const report_t& r);
 
