@@ -34,7 +34,7 @@ MAX_BODY = 1 << 17
 WINDOW_LINE = re.compile(rb"^Window (\d+): frames (\d+)-(\d+) best (\d+|-) score (-?\d+|-) merged (\d+) failed (\d+)")
 SCORES = re.compile(rb" p((?: -?\d+){2,20}) n((?: -?\d+){2,20})\s*$")
 WINDOW_Y = re.compile(rb" y (\d+\.\d) clip (\d+\.\d\d)")
-WINDOW_FILTER = re.compile(rb" above (\d+) sent ([01]) suppressed (\d+) lost (\d+)(?: eoi (\d+))?(?: infer (\d+))?")
+WINDOW_FILTER = re.compile(rb" above (\d+) sent ([01]) suppressed (\d+) lost (\d+)(?: eoi (\d+))?(?: infer (\d+))?(?: read (\d+))?")
 SCORES_LINE = re.compile(rb"^Scores (\d+) (\d+):((?: -?\d+/-?\d+)*)\s*$")
 MODEL_LINE = re.compile(r"^Inference: output tensor type (\d+) scale (\S+) zero point (-?\d+)")
 APPLIED_LINE = re.compile(r"^(Camera|FileSource|Inference): (\w+)=(-?\d+) applied at frame (\d+)")
@@ -55,8 +55,8 @@ READER_GAP_S = 0.2
 SCORE_SCALE = 1 / 256
 SCORE_ZERO_POINT = -128
 
-Window = namedtuple("Window", "window first last best score merged failed p n y clip above sent suppressed lost eoi infer",
-                    defaults=(None,) * 8)
+Window = namedtuple("Window", "window first last best score merged failed p n y clip above sent suppressed lost eoi infer read",
+                    defaults=(None,) * 9)
 
 
 def probability(score):
@@ -160,7 +160,7 @@ def parse_window(line):
     return Window(int(m.group(1)), int(m.group(2)), int(m.group(3)), best, score,
                   int(m.group(6)), int(m.group(7)), p, n,
                   float(yc.group(1)) if yc else None, float(yc.group(2)) if yc else None,
-                  *([None if v is None else int(v) for v in fl.groups()] if fl else [None] * 6))
+                  *([None if v is None else int(v) for v in fl.groups()] if fl else [None] * 7))
 
 
 def parse_scores(line):
@@ -200,6 +200,8 @@ def window_text(w):
             s += f" eoi {w.eoi}"
         if w.infer is not None:
             s += f" infer {w.infer}"
+        if w.read is not None:
+            s += f" read {w.read}"
     if w.p is not None:
         s += " p " + " ".join(map(str, w.p)) + " n " + " ".join(map(str, w.n))
     return s
@@ -433,7 +435,7 @@ class Recorder:
         self.windows_csv.writerow(["window", "first", "last", "best", "best_score", "merged", "failed", "t_pc"]
                                   + [f"p{k}" for k in range(UPLINK_WINDOW)]
                                   + [f"n{k}" for k in range(UPLINK_WINDOW)] + ["y_mean", "clip_pct",
-                                                                               "above", "sent", "suppressed", "lost", "eoi", "infer_us"])
+                                                                               "above", "sent", "suppressed", "lost", "eoi", "infer_us", "read_ms"])
         self.images_file = open(self.out / "images.csv", "w", newline="")
         self.images_csv = csv.writer(self.images_file)
         self.images_csv.writerow(["window", "frame", "score", "seq", "file", "bytes", "decoded"])
@@ -447,7 +449,7 @@ class Recorder:
                                    "" if w.score is None else w.score, w.merged, w.failed, f"{now - self.t0:.2f}"]
                                   + (pad(w.p) + pad(w.n) if w.p is not None else [""] * (2 * UPLINK_WINDOW))
                                   + ["" if w.y is None else f"{w.y:.1f}", "" if w.clip is None else f"{w.clip:.2f}"]
-                                  + ["" if v is None else v for v in (w.above, w.sent, w.suppressed, w.lost, w.eoi, w.infer)])
+                                  + ["" if v is None else v for v in (w.above, w.sent, w.suppressed, w.lost, w.eoi, w.infer, w.read)])
 
     def scores(self, first, pairs, now):
         for k, (pp, nn) in enumerate(pairs):

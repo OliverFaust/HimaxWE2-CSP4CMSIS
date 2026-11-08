@@ -90,9 +90,9 @@ void Reporter::print_window(const report_t& r)
     xprintf(" merged %d failed %ld y %ld.%ld clip %ld.%02ld", (int)r.code, (long)r.value[WV_FAILED],
             (long)(r.value[WV_Y] / 10), (long)(r.value[WV_Y] % 10),
             (long)(r.value[WV_CLIP] / 100), (long)(r.value[WV_CLIP] % 100));
-    xprintf(" above %ld sent %ld suppressed %ld lost %ld eoi %ld infer %ld\r\n", (long)r.value[WV_ABOVE],
+    xprintf(" above %ld sent %ld suppressed %ld lost %ld eoi %ld infer %ld read %ld\r\n", (long)r.value[WV_ABOVE],
             (long)r.value[WV_SENT], (long)r.value[WV_SUPPRESSED], (long)r.value[WV_LOST], (long)r.value[WV_EOI],
-            (long)r.value[WV_INFER]);
+            (long)r.value[WV_INFER], (long)(r.value[WV_READ] / 1000));
 }
 
 static void print_ms(const char* label, int32_t us)
@@ -155,6 +155,14 @@ void Reporter::print_source(const report_t& r)
         break;
     case SRC_RESTART:
         xprintf("%s: restart\r\n", r.name);
+        break;
+    case SRC_STATUS:
+        xprintf("%s: status: %ld frames,", r.name, (long)v[SV_FRAMES]);
+        print_ms("slowest read", v[SV_READ_US]);
+        xprintf(",");
+        print_ms("longest card wait", v[SV_LONGEST_WAIT_US]);
+        xprintf(", card waits over the limit %ld, timeouts %ld, remounts %ld\r\n", (long)v[SV_OVERRUNS],
+                (long)v[SV_TIMEOUTS], (long)v[SV_REMOUNTS]);
         break;
     case SRC_NOT_APPLICABLE:
         xprintf("%s: %s not applicable (no sensor)\r\n", r.name, setting_name((uint8_t)v[0]));

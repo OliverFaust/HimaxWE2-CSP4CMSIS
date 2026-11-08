@@ -186,6 +186,7 @@ void Camera::run() {
     f.changed = changed;
     f.failed = failed;
     f.end = 0;
+    f.read_us = 0;
     f.settings = settings;
     changed = 0;
     failed = 0;

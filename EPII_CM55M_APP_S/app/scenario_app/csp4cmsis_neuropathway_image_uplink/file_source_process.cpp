@@ -15,6 +15,7 @@ static constexpr uint32_t FIELDS_MAX = 12;
 static constexpr uint32_t FIELDS_NEEDED = 11;
 static constexpr uint32_t NAME_MAX_LEN = 39;
 static constexpr uint32_t MIN_SIDE = 96;
+static constexpr uint32_t SOURCE_STATUS_MS = 10000;
 static const char MANIFEST_PATH[] = SD_FRAME_DIR "/manifest.csv";
 static const char MANIFEST_COLUMNS[] = "index,y_file,jpg_file,width,height,crc32_y,crc32_jpg";
 
@@ -138,7 +139,8 @@ FileSource::FileSource(Chanout<frame_t> out, Chanin<release_t> release, Chanin<c
     : m_frame_out(out), m_release_in(release), m_cmd_in(cmd), m_report_out(report), m_settings(default_settings()),
       m_changed(0), m_buf(0), m_loop(false), m_restart(false), m_pace_set(false), m_pace_ms(0), m_index(0),
       m_frames(0), m_width(0), m_height(0), m_pass(0), m_sent(0), m_read_errors(0), m_crc_errors(0),
-      m_jpeg_errors(0), m_read_cycles(0), m_crc_cycles(0), m_wait_cycles(0), m_path_slot(0)
+      m_jpeg_errors(0), m_read_cycles(0), m_crc_cycles(0), m_wait_cycles(0), m_path_slot(0), m_remounts(0),
+      m_status_frames(0), m_status_slowest_us(0), m_status_tick(0)
 {
 }
 
@@ -161,6 +163,26 @@ void FileSource::report_simple(int16_t code, int32_t v0)
     r.code = code;
     r.value[0] = v0;
     m_report_out.write(r);
+}
+
+void FileSource::report_status()
+{
+    report_t r = {};
+    r.kind = ReportKind::Source;
+    r.name = name();
+    r.code = SRC_STATUS;
+    uint32_t overruns, timeouts, longest_us;
+    mmc_disk_wait_stats(&overruns, &timeouts, &longest_us);
+    r.value[SV_FRAMES] = (int32_t)m_status_frames;
+    r.value[SV_READ_US] = (int32_t)m_status_slowest_us;
+    r.value[SV_OVERRUNS] = (int32_t)overruns;
+    r.value[SV_TIMEOUTS] = (int32_t)timeouts;
+    r.value[SV_REMOUNTS] = (int32_t)m_remounts;
+    r.value[SV_LONGEST_WAIT_US] = (int32_t)longest_us;
+    m_report_out.write(r);
+    m_status_frames = 0;
+    m_status_slowest_us = 0;
+    m_status_tick = osKernelGetTickCount();
 }
 
 void FileSource::report_manifest(uint32_t line, int32_t reason, int32_t a, int32_t b, int32_t c, int32_t d)
@@ -383,6 +405,7 @@ void FileSource::wait_for_restart()
 void FileSource::stream()
 {
     m_pass = 1;
+    m_status_tick = osKernelGetTickCount();
     command_t cmd = {};
     RelTimeoutGuard skip(Milliseconds(0));
     Alternative poll_cmd(m_cmd_in | cmd, skip);
@@ -423,6 +446,8 @@ void FileSource::stream()
                   && read_file(e.jpg_file, jpg, frame_jpeg_size(), jpg_size, m_index);
         uint32_t t1 = DWT->CYCCNT;
         m_read_cycles += t1 - t0;
+        uint32_t read_us = cycles_to_us(t1 - t0, 1);
+        if (read_us > m_status_slowest_us) m_status_slowest_us = read_us;
         if (ok && y_size != raw_size) {
             report_t r = {};
             r.kind = ReportKind::Source;
@@ -437,6 +462,7 @@ void FileSource::stream()
         }
         if (!ok) {
             m_read_errors++;
+            m_remounts++;
             sd_card_unmount();
             FRESULT res = sd_card_mount(&g_fs);
             if (res != FR_OK) {
@@ -510,6 +536,7 @@ void FileSource::stream()
         f.raw_addr = (uint32_t)raw;
         f.raw_w = m_width;
         f.raw_h = m_height;
+        f.read_us = read_us;
         f.buf = m_buf;
         f.changed = m_changed;
         f.settings = m_settings;
@@ -523,6 +550,8 @@ void FileSource::stream()
         m_buf = token.buf;
         m_wait_cycles += DWT->CYCCNT - tw;
         m_sent++;
+        m_status_frames++;
+        if (osKernelGetTickCount() - m_status_tick >= ms_to_ticks(SOURCE_STATUS_MS)) report_status();
     }
 }
 

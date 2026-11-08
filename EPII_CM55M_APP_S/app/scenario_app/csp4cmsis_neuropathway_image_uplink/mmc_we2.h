@@ -24,6 +24,7 @@ DSTATUS mmc_disk_initialize (void);
 DSTATUS mmc_disk_status (void);
 void mmc_disk_deinit (void);
 uint32_t mmc_disk_last_error (void);
+void mmc_disk_wait_stats (uint32_t *overruns, uint32_t *timeouts, uint32_t *longest_us);
 DRESULT mmc_disk_read (BYTE* buff, LBA_t sector, UINT count);
 DRESULT mmc_disk_write (const BYTE* buff, LBA_t sector, UINT count);
 DRESULT mmc_disk_ioctl (BYTE cmd, void* buff);

@@ -63,6 +63,7 @@ struct frame_t {
     uint8_t    changed;
     uint8_t    failed;
     uint8_t    end;
+    uint32_t   read_us;
     settings_t settings;
 };
 
@@ -110,6 +111,7 @@ enum SourceReport : int16_t {
     SRC_LOOP,
     SRC_RESTART,
     SRC_NOT_APPLICABLE,
+    SRC_STATUS,
 };
 
 enum SourceFileError : int32_t {
@@ -142,6 +144,11 @@ enum SourceValue : uint8_t {
     SV_CRC_US,
     SV_WAIT_US,
     SV_PASS,
+    SV_OVERRUNS,
+    SV_TIMEOUTS,
+    SV_REMOUNTS,
+    SV_LONGEST_WAIT_US,
+    SV_LAST,
 };
 
 enum WindowValue : uint8_t {
@@ -158,6 +165,7 @@ enum WindowValue : uint8_t {
     WV_LOST,
     WV_EOI,
     WV_INFER,
+    WV_READ,
     WV_JPEG_ADDR,
     WV_JPEG_LEN,
     WV_BUF,
@@ -176,7 +184,7 @@ struct report_t {
     uint8_t     bytes[16];
 #endif
 };
-static_assert((int)SV_PASS < (int)WV_COUNT, "source values must fit report_t::value");
+static_assert((int)SV_LAST <= (int)WV_COUNT, "source values must fit report_t::value");
 static_assert(std::is_trivially_copyable<report_t>::value, "channel element types must be trivially copyable");
 static_assert(std::is_trivially_copyable<frame_t>::value, "channel element types must be trivially copyable");
 static_assert(std::is_trivially_copyable<command_t>::value, "channel element types must be trivially copyable");
