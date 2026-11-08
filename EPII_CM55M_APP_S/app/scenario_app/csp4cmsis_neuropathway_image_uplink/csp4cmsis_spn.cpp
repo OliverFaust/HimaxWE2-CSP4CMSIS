@@ -3,6 +3,9 @@
 #include "inference_process.h"
 #include "reporter_process.h"
 #include "command_process.h"
+#ifdef SD_BENCH
+#include "sd_bench_process.h"
+#endif
 #include "xprintf.h"
 #include "cmsis_os2.h"
 #include "FreeRTOS.h"
@@ -41,6 +44,16 @@ void MainApp_Task(void* params)
     xprintf("CSP_Main: started\r\n");
     SleepFor(Milliseconds(500));
 
+#ifdef SD_BENCH
+    static BufferedChannel<uint8_t, 1> free_chan;
+    static BufferedChannel<uint8_t, 1> ready_chan;
+    static Channel<report_t> report_chan;
+
+    static SdBench   bench(report_chan.writer());
+    static Reporter  reporter(report_chan.reader(), free_chan.writer(), ready_chan.writer());
+
+    auto network = InParallel(bench, reporter);
+#else
     static Channel<frame_t>  frame_chan;
     static Channel<release_t> release_chan;
     static BufferedChannel<uint8_t, 1> free_chan;
@@ -55,6 +68,7 @@ void MainApp_Task(void* params)
     static Command   command(cmd_chan.writer(), report_chan.writer());
 
     auto network = InParallel(camera, inference, reporter, command);
+#endif
     Run(network, ExecutionMode::StaticNetwork, NETWORK_PRIORITY);
 
     Chanout<report_t> report_out = report_chan.writer();

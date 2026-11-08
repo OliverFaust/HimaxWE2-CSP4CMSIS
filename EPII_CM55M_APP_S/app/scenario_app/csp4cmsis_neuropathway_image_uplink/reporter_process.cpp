@@ -1,5 +1,6 @@
 #include "reporter_process.h"
 #include "uplink.h"
+#include "sd_card.h"
 #include "WE2_device.h"
 #include "xprintf.h"
 
@@ -195,6 +196,68 @@ void Reporter::run()
                 xprintf("%s: rejected: unknown command (set again|dgain|exposure|framelen|window|threshold|k <value>, get)\r\n", r.name);
                 break;
             }
+            break;
+        case ReportKind::SdMount:
+            if (r.code != 0) {
+                xprintf("%s: mount FAILED: %s (%d)\r\n", r.name, sd_card_result_name(r.code), (int)r.code);
+            } else {
+                xprintf("%s: mounted, FAT type %ld, %ld sectors per cluster, SPI %ld Hz, mount %ld us, core %ld Hz\r\n",
+                        r.name, (long)r.value[0], (long)r.value[1], (long)r.value[2], (long)r.value[3],
+                        (long)r.value[4]);
+            }
+            break;
+        case ReportKind::SdBench:
+            if (r.code != 0) {
+                xprintf("SdBench: %s FAILED after %ld reads: %s (%d)\r\n", r.name, (long)r.value[1],
+                        sd_card_result_name(r.code), (int)r.code);
+            } else {
+                uint64_t bytes = (uint64_t)(uint32_t)r.value[0] * (uint32_t)r.value[1];
+                uint32_t read_us = (uint32_t)r.value[2];
+                uint32_t all_us = read_us + (uint32_t)r.value[5];
+                xprintf("SdBench: %s %ld bytes x %ld: read %lu KB/s (min %ld us, max %ld us, mean %lu us), "
+                        "with open %lu KB/s (open mean %lu us), crc %08lx %s\r\n",
+                        r.name, (long)r.value[0], (long)r.value[1],
+                        (unsigned long)(read_us ? bytes * 1000u / read_us : 0), (long)r.value[3], (long)r.value[4],
+                        (unsigned long)(read_us / (uint32_t)r.value[1]),
+                        (unsigned long)(all_us ? bytes * 1000u / all_us : 0),
+                        (unsigned long)((uint32_t)r.value[5] / (uint32_t)r.value[1]),
+                        (unsigned long)(uint32_t)r.value[6], r.value[7] ? "same every read" : "DIFFERS between reads");
+            }
+            break;
+        case ReportKind::SdSectors: {
+            if (r.code != 0) {
+                xprintf("%s: sector 0 read FAILED (%d)\r\n", r.name, (int)r.code);
+                break;
+            }
+            char oem[9], oem1[9], fs1[9];
+            for (int k = 0; k < 4; k++) {
+                oem[k] = (char)(r.value[6] >> (8 * k));
+                oem[4 + k] = (char)(r.value[7] >> (8 * k));
+                oem1[k] = (char)(r.value[8] >> (8 * k));
+                oem1[4 + k] = (char)(r.value[9] >> (8 * k));
+                fs1[k] = (char)(r.value[10] >> (8 * k));
+                fs1[4 + k] = (char)(r.value[11] >> (8 * k));
+            }
+            for (int k = 0; k < 8; k++) {
+                if (oem[k] < 32 || oem[k] > 126) oem[k] = '.';
+                if (oem1[k] < 32 || oem1[k] > 126) oem1[k] = '.';
+                if (fs1[k] < 32 || fs1[k] > 126) fs1[k] = '.';
+            }
+            oem[8] = oem1[8] = fs1[8] = 0;
+            xprintf("%s: sector 0 signature %04lx, partition types %02lx %02lx %02lx %02lx, first partition at %lu, "
+                    "OEM '%s'\r\n", r.name, (unsigned long)r.value[0], (unsigned long)r.value[1],
+                    (unsigned long)r.value[2], (unsigned long)r.value[3], (unsigned long)r.value[4],
+                    (unsigned long)(uint32_t)r.value[5], oem);
+            if (r.index == 1) {
+                xprintf("%s: partition boot sector signature %04lx, OEM '%s', type '%s'\r\n", r.name,
+                        (unsigned long)r.value[12], oem1, fs1);
+            } else if (r.index > 1) {
+                xprintf("%s: partition boot sector read FAILED (%d)\r\n", r.name, (int)(r.index - 1));
+            }
+            break;
+        }
+        case ReportKind::SdBenchDone:
+            xprintf("%s: done in %ld ms\r\n", r.name, (long)r.value[0]);
             break;
         case ReportKind::Stack:
             if (r.value[2] < 0) {

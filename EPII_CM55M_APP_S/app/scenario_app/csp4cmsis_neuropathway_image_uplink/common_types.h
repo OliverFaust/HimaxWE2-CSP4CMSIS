@@ -70,6 +70,10 @@ enum class ReportKind : uint8_t {
     Applied,
     Settings,
     Rejected,
+    SdMount,
+    SdBench,
+    SdBenchDone,
+    SdSectors,
 #ifdef UPLINK_STAGE0
     BufferCheck,
     BufferTail,
