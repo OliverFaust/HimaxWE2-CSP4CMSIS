@@ -62,7 +62,7 @@ import pathlib
 import sys
 import time
 
-from uplink_proto import (UPLINK_WINDOW, BOOT_BANNER, EOI_ERROR, Recorder, Session, Stats, image_text,
+from uplink_proto import (BOOT_BANNER, EOI_ERROR, Recorder, Session, Stats, image_text,
                           open_port, park)
 
 PROMPT_WARN_S = 10.0
@@ -230,8 +230,8 @@ def main():
     if args.sender.sent:
         print(f"commands sent {args.sender.sent}")
     ok = st.passed()
-    if st.first_frame is not None and st.first_frame[0] < UPLINK_WINDOW:
-        print("!! the first window seen was window 0: the board started (or restarted) while the receiver was open")
+    if st.boot_before_start:
+        print("-- the board booted before the first Window line; judged from that line on")
     print("UPLINK:", "PASS" if ok else "FAIL")
     return 0 if ok else 1
 

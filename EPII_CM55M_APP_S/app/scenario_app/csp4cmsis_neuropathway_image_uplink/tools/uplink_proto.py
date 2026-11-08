@@ -239,6 +239,7 @@ class Stats:
         self.decode_failures = 0
         self.eoi_errors = 0
         self.resets = 0
+        self.boot_before_start = False
         self.first_frame = None
         self.last_frame = None
         self.text_lines = 0
@@ -368,7 +369,7 @@ class Stats:
                 and self.decode_failures == 0 and self.eoi_errors == 0 and self.board_eoi == 0 and self.resets == 0
                 and self.window_gaps == 0 and self.inference_failures == 0 and self.not_best == 0
                 and self.score_gaps == 0 and self.scores_lost == 0
-                and self.first_frame is not None and self.first_frame[0] >= UPLINK_WINDOW)
+                and self.first_frame is not None)
 
 
 def pad(values):
@@ -499,7 +500,10 @@ class Session:
         st = self.st
         st.text_lines += 1
         if BOOT_BANNER in line:
-            st.resets += 1
+            if st.first_frame is None and not st.boot_before_start:
+                st.boot_before_start = True
+            else:
+                st.resets += 1
         if line.startswith(EOI_ERROR):
             st.eoi_errors += 1
         w = parse_window(line)
