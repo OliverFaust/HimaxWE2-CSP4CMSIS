@@ -132,6 +132,7 @@ def receive(s, session, buf, deadline, next_summary, args):
     pause = None
     if args.pause:
         pause = (st.t0 + args.pause[0], st.t0 + args.pause[0] + args.pause[1])
+    last_read = time.monotonic()
     while time.monotonic() < deadline:
         now = time.monotonic()
         if args.prompter:
@@ -145,11 +146,14 @@ def receive(s, session, buf, deadline, next_summary, args):
             buf.clear()
             now = time.monotonic()
             session.resync(now)
+            last_read = now
             st.pauses.append([pause[0], None, f0, None])
             print("-- reading again", flush=True)
             pause = None
         buf += s.read(8192)
         now = time.monotonic()
+        session.reader_gap(now - last_read, now)
+        last_read = now
         session.feed(buf, now)
         args.sender.poll(now)
         if now >= next_summary:

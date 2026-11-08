@@ -19,6 +19,7 @@ the board; unpark() restores the baud rate for the flasher.
 import csv
 import io
 import pathlib
+import queue
 import re
 import struct
 import termios
@@ -49,6 +50,7 @@ UPLINK_WINDOW = 20
 BOOT_BANNER = b"1st BL Modem"
 EOI_ERROR = b"Uplink: frame"
 RX_PREFIX = "# "
+READER_GAP_S = 0.2
 
 SCORE_SCALE = 1 / 256
 SCORE_ZERO_POINT = -128
@@ -82,6 +84,40 @@ def park(s):
     attrs[4] = attrs[5] = termios.B0
     termios.tcsetattr(s.fd, termios.TCSANOW, attrs)
     s.close()
+
+
+def port_reader(port, baud, data_q, cmd_q, stop):
+    """Body of the GUI's reader process: only reads the port and forwards the
+    bytes, with the read time and the interval since the previous read, on
+    data_q (a multiprocessing.Queue, whose feeder thread does the pipe writes,
+    so this loop never waits for the GUI); writes the command lines from
+    cmd_q; parks the port when stop is set."""
+    try:
+        s = open_port(port, baud)
+        s.timeout = 0.05
+    except Exception as e:
+        data_q.put(("error", time.monotonic(), str(e)))
+        return
+    data_q.put(("open", time.monotonic(), ""))
+    last = time.monotonic()
+    try:
+        while not stop.is_set():
+            while True:
+                try:
+                    cmd = cmd_q.get_nowait()
+                except queue.Empty:
+                    break
+                s.write((cmd + "\n").encode("ascii"))
+                data_q.put(("sent", time.monotonic(), cmd))
+            data = s.read(8192)
+            now = time.monotonic()
+            data_q.put(("data", now, data, now - last))
+            last = now
+    except Exception as e:
+        data_q.put(("error", time.monotonic(), str(e)))
+    finally:
+        park(s)
+        data_q.put(("closed", time.monotonic(), ""))
 
 
 def unpark(port, baud):
@@ -267,6 +303,8 @@ class Stats:
         self.suppressed = 0
         self.frames_above = 0
         self.board_eoi = 0
+        self.reader_gap_max = 0.0
+        self.reader_gaps = 0
 
     def resyncing(self, now):
         return now < self.resync_until
@@ -351,6 +389,8 @@ class Stats:
             f"(in {self.lines_merged} lines), images not the window's best {self.not_best}, "
             f"inference failures {self.inference_failures}, resync losses {self.resync_losses}",
             f"board resets seen {self.resets}",
+            f"longest interval between serial reads {self.reader_gap_max * 1000:.0f} ms, "
+            f"{self.reader_gaps} longer than {READER_GAP_S * 1000:.0f} ms",
         ]
         if self.score_lines:
             lines.append(f"scores: {self.scored} frames in {self.score_lines} lines, gaps {self.score_gaps}, "
@@ -491,6 +531,13 @@ class Session:
                 st.bad_frames += 1
             elif kind == "image":
                 self.image(*ev[1:], now)
+
+    def reader_gap(self, gap, now):
+        st = self.st
+        st.reader_gap_max = max(st.reader_gap_max, gap)
+        if gap > READER_GAP_S:
+            st.reader_gaps += 1
+            self.message(f"-- reader gap {gap * 1000:.0f} ms", now)
 
     def text(self, chunk, now):
         for raw in chunk.split(b"\n"):

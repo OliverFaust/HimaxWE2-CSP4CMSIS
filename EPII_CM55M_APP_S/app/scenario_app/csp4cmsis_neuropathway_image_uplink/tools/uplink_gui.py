@@ -39,6 +39,7 @@ import collections
 import csv
 import io
 import math
+import multiprocessing
 import pathlib
 import queue
 import re
@@ -58,7 +59,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
 from uplink_proto import (COMMAND_LINE, IMAGE_LOG, RX_PREFIX, SETTING_NAMES, UPLINK_WINDOW, Recorder, Session,
-                          Stats, Window, list_ports, open_port, park, parse_applied, parse_settings, probability,
+                          Stats, Window, list_ports, parse_applied, parse_settings, port_reader, probability,
                           score_at, window_text)
 
 DRAIN_MS = 50
@@ -163,6 +164,7 @@ def snapshot(st):
         "stacks": dict(st.stacks), "first_frame": st.first_frame, "last_frame": st.last_frame,
         "sent": st.windows_sent, "suppressed": st.suppressed, "above": st.frames_above, "scored": st.scored,
         "score_gaps": st.score_gaps, "max_batch": st.max_batch, "scores_lost": st.scores_lost,
+        "reader_gap_max": st.reader_gap_max, "reader_gaps": st.reader_gaps,
     }
 
 
@@ -204,32 +206,58 @@ class LiveSource(Source):
         self.tx = queue.Queue()
 
     def run(self):
-        try:
-            s = open_port(self.port, self.baud)
-            s.timeout = 0.05
-        except Exception as e:
-            self.q.put(("ended", time.monotonic(), f"cannot open {self.port}: {e}"))
+        ctx = multiprocessing.get_context("spawn")
+        data_q, cmd_q, stop = ctx.Queue(), ctx.Queue(), ctx.Event()
+        reader = ctx.Process(target=port_reader, args=(self.port, self.baud, data_q, cmd_q, stop), daemon=True)
+        reader.start()
+        kind, t, text = data_q.get()
+        if kind != "open":
+            reader.join(timeout=2)
+            self.q.put(("ended", time.monotonic(), f"cannot open {self.port}: {text}"))
             return
-        now = time.monotonic()
         self.session.rec = self.recorder()
-        self.session.resync(now)
-        self.session.message(f"{CONNECTED} {self.port}", now)
-        self.q.put(("status", now, f"connected to {self.port}"))
+        self.session.resync(t)
+        self.session.message(f"{CONNECTED} {self.port}", t)
+        self.q.put(("status", t, f"connected to {self.port}"))
         buf = bytearray()
+        closed = False
         try:
             while not self.stop.is_set():
                 self.session.rec = self.recorder()
                 while not self.tx.empty():
-                    cmd = self.tx.get_nowait()
-                    s.write((cmd + "\n").encode("ascii"))
-                    self.session.message(f"-> {cmd}", time.monotonic())
-                buf += s.read(8192)
-                self.session.feed(buf, time.monotonic())
+                    cmd_q.put(self.tx.get_nowait())
+                try:
+                    msg = data_q.get(timeout=0.05)
+                except queue.Empty:
+                    self.tick()
+                    continue
+                if msg[0] == "data":
+                    buf += msg[2]
+                    self.session.reader_gap(msg[3], msg[1])
+                    self.session.feed(buf, msg[1])
+                elif msg[0] == "sent":
+                    self.session.message(f"-> {msg[2]}", msg[1])
+                elif msg[0] == "error":
+                    raise RuntimeError(msg[2])
+                elif msg[0] == "closed":
+                    closed = True
+                    break
                 self.tick()
         except Exception as e:
             self.q.put(("status", time.monotonic(), f"!! reader stopped: {e}"))
         finally:
-            park(s)
+            stop.set()
+            deadline = time.monotonic() + 3
+            while not closed and time.monotonic() < deadline:
+                try:
+                    msg = data_q.get(timeout=0.1)
+                except queue.Empty:
+                    continue
+                if msg[0] == "data":
+                    buf += msg[2]
+                    self.session.feed(buf, msg[1])
+                closed = msg[0] == "closed"
+            reader.join(timeout=2)
             self.session.message(f"-- disconnected, {self.port} parked", time.monotonic())
             if self.session.rec:
                 self.session.rec.flush()
@@ -387,6 +415,10 @@ class App:
             self.root.after(int(t * 1000), self.toggle_connect)
         for t, cmd in args.send_at or []:
             self.root.after(int(float(t) * 1000), lambda c=cmd: self.send_command(c))
+        for t in args.iconify_at:
+            self.root.after(int(t * 1000), self.root.iconify)
+        for t in args.deiconify_at:
+            self.root.after(int(t * 1000), self.root.deiconify)
         if args.exit_after:
             self.root.after(int(args.exit_after * 1000), self.quit)
 
@@ -942,6 +974,8 @@ class App:
                 f"merged {s['merged']}   frames >= T {s['above']}   failed {s['failed']}",
                 f"Scores      {s['scored']} frames   gaps {s['score_gaps']}   max batch {s['max_batch']}   "
                 f"lost on board {s['scores_lost']}   not best {s['not_best']}",
+                f"Reader      longest gap between serial reads {1000 * s['reader_gap_max']:.0f} ms   "
+                f"gaps > 200 ms {s['reader_gaps']}",
             ]
         out += [
             f"Threshold   {self.threshold.get():.1f} % (score >= {self.score_min()})   k "
@@ -1097,6 +1131,10 @@ def main():
     ap.add_argument("--exit-after", type=float, metavar="S", help="close the window after S seconds")
     ap.add_argument("--toggle-at", type=float, nargs="*", default=[], metavar="S",
                     help="press Connect/Disconnect after S seconds (tests)")
+    ap.add_argument("--iconify-at", type=float, nargs="*", default=[], metavar="S",
+                    help="minimise the window after S seconds (tests)")
+    ap.add_argument("--deiconify-at", type=float, nargs="*", default=[], metavar="S",
+                    help="restore the window after S seconds (tests)")
     ap.add_argument("--send-at", nargs=2, action="append", metavar=("S", "COMMAND"),
                     help="send COMMAND through the tuning path after S seconds (tests)")
     ap.add_argument("--tab", choices=("console", "tuning"), default="console", help="tab shown at start")
