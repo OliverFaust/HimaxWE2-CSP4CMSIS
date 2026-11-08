@@ -4,7 +4,7 @@
 #include <csp/csp4cmsis.h>
 #include "common_types.h"
 
-class Inference : public csp::CSProcessStatic<384> {
+class Inference : public csp::CSProcessStatic<512> {
 public:
     Inference(csp::Chanin<frame_t> in, csp::Chanout<release_t> release, csp::Chanin<uint8_t> free_in,
               csp::Chanin<uint8_t> ready_in, csp::Chanout<report_t> report);
