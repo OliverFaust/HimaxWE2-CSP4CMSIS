@@ -519,8 +519,9 @@ void FileSource::stream()
             uint32_t now = osKernelGetTickCount();
             while ((int32_t)(due - now) > 0 && !m_restart) {
                 RelTimeoutGuard timeout(Ticks(due - now));
-                Alternative wait(m_cmd_in | cmd, timeout);
-                if (wait.priSelect() == 0) handle(cmd);
+                command_t c;
+                Alternative wait(m_cmd_in | c, timeout);
+                if (wait.priSelect() == 0) handle(c);
                 now = osKernelGetTickCount();
             }
             uint32_t period = ms_to_ticks(m_pace_ms);
