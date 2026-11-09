@@ -93,6 +93,14 @@ namespace csp::internal {
         bool enable(AltScheduler* a, uint32_t f) override { alt = a; flag = f; return core->inEnable(a, f, dest); }
         bool disable() override { return core->inDisable(alt); }
         bool activate() override { return core->inActivate(alt, flag, dest); }
+        void retarget(void* t) override { dest = t; }
+#if defined(CSP4CMSIS_TRACE)
+        // The channel: the RendezvousChannel whose core this is (see RV_CHAN).
+        uint32_t traceDescribe(uint32_t& object) const override {
+            object = (uint32_t)(uintptr_t)(reinterpret_cast<const char*>(core) - sizeof(void*));
+            return CSP4CMSIS_TRACE_GUARD_INPUT;
+        }
+#endif
     };
 
     class ChanOutGuard : public Guard {
@@ -106,6 +114,13 @@ namespace csp::internal {
         bool enable(AltScheduler* a, uint32_t f) override { alt = a; flag = f; return core->outEnable(a, f, source); }
         bool disable() override { return core->outDisable(alt); }
         bool activate() override { return core->outActivate(alt, flag, source); }
+        void retarget(void* t) override { source = t; }
+#if defined(CSP4CMSIS_TRACE)
+        uint32_t traceDescribe(uint32_t& object) const override {
+            object = (uint32_t)(uintptr_t)(reinterpret_cast<const char*>(core) - sizeof(void*));
+            return CSP4CMSIS_TRACE_GUARD_OUTPUT;
+        }
+#endif
     };
 
 } // namespace csp::internal

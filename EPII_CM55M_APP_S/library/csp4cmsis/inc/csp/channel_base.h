@@ -29,6 +29,9 @@ namespace csp::internal {
      * channel: two writers ALTing on one channel no longer share -- and
      * re-target -- a single guard object. A process must not share one
      * handle object with another process (each process owns its ends).
+     * Every Alternative of the process that binds this end uses the guard in
+     * this slot; each sets the guard's target to its own variable before it
+     * selects (Guard::retarget(), 3.2.0).
      */
     struct GuardSlot {
         static constexpr size_t SIZE = 24;

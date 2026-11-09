@@ -1,13 +1,39 @@
 #include "csp/alt_channel_sync.h"
 #include "csp/csp_critical.h"
 #include "csp/csp_fatal.h"
+#include "csp/csp4cmsis_trace.h"
 #include <cstring>
 
 // Rendezvous core, one-winner ALT with re-verification (see the header and
 // docs/formal/alt_owrv_extended.csp). Every "Crit c;" scope below is one CSP
 // critical section; RTOS calls and element copies happen outside them.
+//
+// Trace (csp4cmsis_trace.h). RV_CHAN: the channel (RendezvousChannel, whose
+// only data member follows the vtable pointer: checked in
+// rendezvous_channel.h). RV_DONE_W(reader) / RV_DONE_R(writer): event
+// RendezvousDone, recorded once per communication by the second arriver
+// (writer or reader), naming the partner it takes or claims, in the critical
+// section in which it does so. RV_WAIT(dir) / RV_RESUME(dir) bracket a call
+// that can block; both record the channel with the direction in bit 0
+// (RV_IN 0: read, RV_OUT CSP4CMSIS_TRACE_DIR_WRITE: write).
+#define RV_CHAN (reinterpret_cast<const char*>(this) - sizeof(void*))
+#define RV_DONE_W(reader) CSP4CMSIS_TRACE_EVENT4(CSP4CMSIS_EVT_RENDEZVOUS_DONE, osThreadGetId(), (reader), RV_CHAN, 0U)
+#define RV_DONE_R(writer) CSP4CMSIS_TRACE_EVENT4(CSP4CMSIS_EVT_RENDEZVOUS_DONE, (writer), osThreadGetId(), RV_CHAN, 1U)
+#define RV_IN  0U
+#define RV_OUT CSP4CMSIS_TRACE_DIR_WRITE
+#define RV_WAIT(dir)   CSP4CMSIS_TRACE_EVENT(CSP4CMSIS_EVT_WAIT_CHANNEL, CSP4CMSIS_TRACE_SELF(), \
+                                             (uint32_t)(uintptr_t)RV_CHAN | (dir))
+#define RV_RESUME(dir) CSP4CMSIS_TRACE_EVENT(CSP4CMSIS_EVT_RESUME, CSP4CMSIS_TRACE_SELF(), \
+                                             (uint32_t)(uintptr_t)RV_CHAN | (dir))
 
 namespace csp::internal {
+
+#if defined(CSP4CMSIS_TRACE)
+// The direction bit needs a channel address with bit 0 clear: the channel
+// (RV_CHAN) is aligned like the RendezvousCore it contains.
+static_assert(alignof(RendezvousCore) >= 2 && alignof(void*) >= 2,
+              "WaitChannel packs the direction into bit 0 of the channel address");
+#endif
 
 namespace {
     struct Crit {
@@ -45,12 +71,15 @@ void RendezvousCore::waitDone(volatile bool& done) {
 // Plain operations
 // ---------------------------------------------------------------------------
 void RendezvousCore::output(const void* src) {
+    RV_WAIT(RV_OUT);
     if (!out_.serial.acquire(osWaitForever)) fatal("CSP4CMSIS: rendezvous: output() wait failed");
+    RV_RESUME(RV_OUT);
     osThreadId_t reader = nullptr; void* dst = nullptr; Wake wake;
     {
         Crit c;
         if (in_.pend_thread != nullptr) {                  // a plain reader waits: copy to it
             reader = in_.pend_thread; dst = in_.pend_data; in_.pend_thread = nullptr;
+            RV_DONE_W(reader);
         } else {                                           // offer; an ALT reader re-verifies
             out_.pend_thread = osThreadGetId(); out_.pend_data = const_cast<void*>(src); out_.pend_done = false;
             if (in_.alt != nullptr) { wake.thread = in_.alt->ownerThread(); wake.flag = in_.alt_flag; }
@@ -62,18 +91,23 @@ void RendezvousCore::output(const void* src) {
         (void)osThreadFlagsSet(reader, RENDEZVOUS_FLAG);
     } else {
         wake.signal();
+        RV_WAIT(RV_OUT);
         waitDone(out_.pend_done);
+        RV_RESUME(RV_OUT);
     }
     out_.serial.release();
 }
 
 void RendezvousCore::input(void* dst) {
+    RV_WAIT(RV_IN);
     if (!in_.serial.acquire(osWaitForever)) fatal("CSP4CMSIS: rendezvous: input() wait failed");
+    RV_RESUME(RV_IN);
     osThreadId_t writer = nullptr; const void* src = nullptr; Wake wake;
     {
         Crit c;
         if (out_.pend_thread != nullptr) {                 // a plain writer waits: copy from it
             writer = out_.pend_thread; src = out_.pend_data; out_.pend_thread = nullptr;
+            RV_DONE_R(writer);
         } else {                                           // offer; an ALT writer re-verifies
             in_.pend_thread = osThreadGetId(); in_.pend_data = dst; in_.pend_done = false;
             if (out_.alt != nullptr) { wake.thread = out_.alt->ownerThread(); wake.flag = out_.alt_flag; }
@@ -85,7 +119,9 @@ void RendezvousCore::input(void* dst) {
         (void)osThreadFlagsSet(writer, RENDEZVOUS_FLAG);
     } else {
         wake.signal();
+        RV_WAIT(RV_IN);
         waitDone(in_.pend_done);
+        RV_RESUME(RV_IN);
     }
     in_.serial.release();
 }
@@ -105,6 +141,7 @@ bool RendezvousCore::inEnable(AltScheduler* alt, uint32_t flag, void* dst) {
             pair_src_ = out_.alt_data; pair_writer_ = out_.alt->ownerThread(); pair_done_ = false;
             wake.thread = pair_writer_; wake.flag = out_.alt_flag;
             ready = true;
+            RV_DONE_R(pair_writer_);
         } else if (in_.alt != nullptr && in_.alt != alt) {
             conflict = true;
         } else {
@@ -131,11 +168,13 @@ bool RendezvousCore::inActivate(AltScheduler* alt, uint32_t flag, void* dst) {
             kind = PAIR; src = pair_src_; writer = pair_writer_;
         } else if (out_.pend_thread != nullptr) {          // take the pending plain writer
             kind = PLAIN; src = out_.pend_data; writer = out_.pend_thread; out_.pend_thread = nullptr;
+            RV_DONE_R(writer);
         } else if (out_.alt != nullptr && out_.alt->claimableLocked()) {
             out_.alt->claimLocked(out_.alt_flag);          // claim the ALT writer now
             kind = PAIR; src = out_.alt_data; writer = out_.alt->ownerThread();
             pair_src_ = src; pair_writer_ = writer; pair_done_ = false;
             wake.thread = writer; wake.flag = out_.alt_flag;
+            RV_DONE_R(writer);
         }
     }
     if (kind == NONE) return false;                        // partner went away: new round
@@ -161,6 +200,7 @@ bool RendezvousCore::outEnable(AltScheduler* alt, uint32_t flag, const void* src
             pair_src_ = src; pair_writer_ = alt->ownerThread(); pair_done_ = false;
             wake.thread = in_.alt->ownerThread(); wake.flag = in_.alt_flag;
             ready = true;
+            RV_DONE_W(wake.thread);
         } else if (out_.alt != nullptr && out_.alt != alt) {
             conflict = true;
         } else {
@@ -187,11 +227,13 @@ bool RendezvousCore::outActivate(AltScheduler* alt, uint32_t flag, const void* s
             kind = PAIR;
         } else if (in_.pend_thread != nullptr) {           // take the pending plain reader
             kind = PLAIN; reader = in_.pend_thread; dst = in_.pend_data; in_.pend_thread = nullptr;
+            RV_DONE_W(reader);
         } else if (in_.alt != nullptr && in_.alt->claimableLocked()) {
             in_.alt->claimLocked(in_.alt_flag);            // claim the ALT reader now
             pair_src_ = src; pair_writer_ = alt->ownerThread(); pair_done_ = false;
             wake.thread = in_.alt->ownerThread(); wake.flag = in_.alt_flag;
             kind = PAIR;
+            RV_DONE_W(wake.thread);
         }
     }
     if (kind == NONE) return false;                        // partner went away: new round
@@ -202,7 +244,9 @@ bool RendezvousCore::outActivate(AltScheduler* alt, uint32_t flag, const void* s
         return true;
     }
     wake.signal();
+    RV_WAIT(RV_OUT);
     waitDone(pair_done_);                                  // the reader copies from `src`
+    RV_RESUME(RV_OUT);
     return true;
 }
 

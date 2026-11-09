@@ -6,6 +6,7 @@
 #include <utility>
 #include "process.h"
 #include "csp_fatal.h"
+#include "csp4cmsis_trace.h"
 
 // --- 1. START CSP NAMESPACE (For Definitions) ---
 namespace csp {
@@ -77,6 +78,7 @@ private:
         // A process that did not start would leave its partners, or a
         // TerminatingNetwork's caller, blocked for ever: stop instead.
         if (handle == NULL) {
+            CSP4CMSIS_TRACE_EVENT(CSP4CMSIS_EVT_SPAWN_FAILED, CSP4CMSIS_TRACE_SELF(), &proc);
             internal::fatal("CSP4CMSIS: Run(): osThreadNew() failed");
         }
     }
@@ -126,9 +128,11 @@ public:
 
         spawn_all<0>(done_sem, composition_priority);
 
+        CSP4CMSIS_TRACE_EVENT(CSP4CMSIS_EVT_WAIT_JOIN, CSP4CMSIS_TRACE_SELF(), done_sem);
         for (size_t i = 0; i < num_procs; ++i) {
             osSemaphoreAcquire(done_sem, osWaitForever);
         }
+        CSP4CMSIS_TRACE_EVENT(CSP4CMSIS_EVT_RESUME, CSP4CMSIS_TRACE_SELF(), done_sem);
         osSemaphoreDelete(done_sem); // releases the handle, not done_sem_storage's memory
     }
 

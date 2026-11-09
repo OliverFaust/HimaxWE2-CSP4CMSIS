@@ -7,6 +7,9 @@
 #include <type_traits>
 #include "csp_time.h"
 #include "csp_fatal.h"
+#if defined(CSP4CMSIS_TRACE)
+#include "csp4cmsis_trace.h"     // AltGuard kinds (traceDescribe)
+#endif
 
 // =============================================================================
 // Thread-flag allocation (CMSIS-RTOS2 thread flags, per thread)
@@ -75,7 +78,19 @@ namespace csp {
             virtual bool enable(AltScheduler* alt, uint32_t flag) = 0;
             virtual bool disable() = 0;
             virtual bool activate() = 0;
+            /// Channel guards: the variable to read into (input) or write
+            /// from (output). Called by Alternative before every select
+            /// (3.2.0): a channel end has one guard, shared by every
+            /// Alternative that binds the end, and each Alternative sets it
+            /// to its own variable. Not called while a select is running.
+            virtual void retarget(void* target) { (void)target; }
             virtual ~Guard() = default;
+#if defined(CSP4CMSIS_TRACE)
+            /// Trace only (event AltGuard, csp4cmsis_trace.h): the guard's kind
+            /// (CSP4CMSIS_TRACE_GUARD_*) and its object (channel, or the delay
+            /// of a timeout guard). Never a channel element.
+            virtual uint32_t traceDescribe(uint32_t& object) const { object = 0U; return CSP4CMSIS_TRACE_GUARD_OTHER; }
+#endif
         };
 
         class AltScheduler {
@@ -152,6 +167,9 @@ namespace csp {
             }
             bool disable() override { return alt->elapsed() >= delay_ticks; }   // expired?
             bool activate() override { return true; }
+#if defined(CSP4CMSIS_TRACE)
+            uint32_t traceDescribe(uint32_t& object) const override { object = delay_ticks; return CSP4CMSIS_TRACE_GUARD_TIMEOUT; }
+#endif
         };
 
     } // namespace internal
@@ -161,7 +179,16 @@ namespace csp {
 
     /**
      * @brief Result of `in | var` and `out | value`: a channel end bound to the
-     * variable an ALT reads into or writes from. Pass it to Alternative.
+     * variable an ALT reads into or writes from. Pass it to an Alternative
+     * (its constructor or addBinding()); the binding then belongs to that
+     * Alternative, which keeps the address of `var` (`value`): the variable
+     * must live, at that address, as long as the Alternative is used.
+     * Since 3.2.0 several Alternatives may bind the same channel end, to the
+     * same or to different variables: each Alternative sets the end's guard
+     * to its own variable at the start of every select. Up to 3.1.0 the last
+     * binding of an end decided the variable for every Alternative on it
+     * (docs/known-issues.md). One channel end bound twice in one Alternative
+     * is a fatal error.
      */
     template <typename T, typename ChanType>
     class ChannelBinding {
@@ -171,6 +198,10 @@ namespace csp {
         friend class Alternative;
         internal::Guard* getInternalGuard() const {
             return channel.getGuard(data_ref);
+        }
+        // The guard's target (an output guard never writes through it).
+        void* target() const {
+            return const_cast<void*>(static_cast<const void*>(&data_ref));
         }
         ChanType& channel;
         T& data_ref;
@@ -209,16 +240,39 @@ namespace csp {
     };
 
     /**
-     * @brief The Alternative (ALT) construct.
-     * Manages multiple guards and selects the first one available.
+     * @brief The Alternative (ALT) construct: up to 16 guards (channel
+     * bindings `in | var`, `out | value`, and RelTimeoutGuards); priSelect()
+     * and fairSelect() wait until one can complete, complete it and return
+     * its index (the order in which the guards were added).
+     *
+     * Each channel end has one guard (in the Chanin/Chanout handle), shared
+     * by every Alternative that binds the end. The Alternative keeps the
+     * variable of each of its channel bindings and, at the start of every
+     * priSelect()/fairSelect(), sets each channel guard to it (3.2.0). So
+     * several Alternatives of a process may bind one channel end, with the
+     * same or with different variables, and each reads into (writes from)
+     * its own. Up to 3.1.0 the binding made last decided the variable for
+     * all of them (docs/known-issues.md). One channel end bound twice in one
+     * Alternative is a fatal error; at most one process may ALT on each end
+     * of a channel (a second one is a fatal error). Timeout guards are
+     * objects owned by the user (RelTimeoutGuard), which must outlive the
+     * Alternative's use. Creates no RTOS object; not copyable.
      */
     class Alternative {
     private:
         static const size_t MAX_GUARDS = internal::ALT_MAX_GUARDS;
         internal::Guard* internal_guards[MAX_GUARDS];
+        // The variable of channel guard i (set before every select);
+        // nullptr for a timeout guard.
+        void* targets_[MAX_GUARDS];
         size_t num_guards = 0;
         internal::AltScheduler internal_alt;
         size_t fair_select_start_index = 0;
+#if defined(CSP4CMSIS_TRACE)
+        // Trace: guards already described by AltGuard events (alternative.cpp).
+        size_t trace_described_ = 0;
+        void traceGuards();
+#endif
 
     public:
         Alternative() : num_guards(0) {}
@@ -250,12 +304,12 @@ namespace csp {
 
         template <typename T>
         void addBinding(const ChannelBinding<T, Chanin<T>>& b) {
-            addBinding(b.getInternalGuard());
+            addBinding(b.getInternalGuard(), b.target());
         }
 
         template <typename T>
         void addBinding(const ChannelBinding<const T, Chanout<T>>& b) {
-            addBinding(b.getInternalGuard());
+            addBinding(b.getInternalGuard(), b.target());
         }
 
         void addBinding(RelTimeoutGuard& tg) {
@@ -264,9 +318,25 @@ namespace csp {
 
     private:
         friend struct internal::Access;
-        void addBinding(internal::Guard* g) {
+#if defined(CSP4CMSIS_TRACE)
+        friend class internal::AltScheduler;   // trace: names the Alternative (alternative.cpp)
+#endif
+        // target: the variable of a channel guard, nullptr for a timeout guard.
+        void addBinding(internal::Guard* g, void* target = nullptr) {
             if (num_guards >= MAX_GUARDS) internal::fatal("CSP4CMSIS: Alternative: more than 16 guards");
-            internal_guards[num_guards++] = g;
+            if (target != nullptr) {
+                for (size_t i = 0; i < num_guards; ++i)
+                    if (internal_guards[i] == g) internal::fatal("CSP4CMSIS: Alternative: channel end bound twice");
+            }
+            internal_guards[num_guards] = g;
+            targets_[num_guards] = target;
+            ++num_guards;
+        }
+        // Before every select: each channel guard reads into (writes from)
+        // this Alternative's variable.
+        void retargetGuards() {
+            for (size_t i = 0; i < num_guards; ++i)
+                if (targets_[i] != nullptr) internal_guards[i]->retarget(targets_[i]);
         }
     };
 }

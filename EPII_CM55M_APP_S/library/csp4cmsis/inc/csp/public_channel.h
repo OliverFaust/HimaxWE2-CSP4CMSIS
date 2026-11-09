@@ -72,8 +72,17 @@ private:
     internal::IsrSink<T>* sink;
 public:
     explicit IsrChanout(internal::IsrSink<T>* s) : sink(s) {}
-    /// Never blocks. Block policy: false if the buffer is full.
-    /// KeepNewest/KeepOldest: always true (the policy decides what is kept).
+    /// Never blocks. Block policy: false when no space token is available at
+    /// that instant. A reader returns its slot's token only after its get has
+    /// completed, so a slot that was just emptied counts as occupied until the
+    /// reader releases the token. If the reader is preempted after its get has
+    /// completed but before it releases the token, putFromISR() keeps
+    /// returning false for that time, although the slot is free. Interrupt
+    /// producers that must not lose samples to this window: use KeepNewest or
+    /// KeepOldest (no space token; a slot is free as soon as the get
+    /// completes).
+    /// KeepNewest/KeepOldest: always true (the policy decides what is kept:
+    /// when full, KeepNewest overwrites the oldest, KeepOldest drops the new).
     bool putFromISR(const T& data) { return sink->putFromISR(data); }
 };
 

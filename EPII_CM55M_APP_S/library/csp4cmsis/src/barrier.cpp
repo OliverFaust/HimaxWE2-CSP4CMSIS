@@ -3,6 +3,7 @@
 #include "csp/barrier.h"
 #include "csp/csp_critical.h"
 #include "csp/csp_fatal.h"
+#include "csp/csp4cmsis_trace.h"
 
 namespace csp::internal {
 
@@ -32,7 +33,9 @@ void Barrier::sync() {
         // Release exactly the N - 1 processes waiting in this phase.
         for (size_t i = 1; i < max_processes; ++i) release_[p].release();
     } else {
+        CSP4CMSIS_TRACE_EVENT(CSP4CMSIS_EVT_WAIT_BARRIER, CSP4CMSIS_TRACE_SELF(), this);
         if (!release_[p].acquire(osWaitForever)) fatal("CSP4CMSIS: Barrier: wait failed");
+        CSP4CMSIS_TRACE_EVENT(CSP4CMSIS_EVT_RESUME, CSP4CMSIS_TRACE_SELF(), this);
     }
 }
 

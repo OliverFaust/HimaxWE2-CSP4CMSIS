@@ -31,7 +31,15 @@ public:
     bool space_available() override { return core_.space_available(); }
     bool pending() override { return core_.pending(); }
 
-    void input(T* const dest) override { core_.input(dest); }
+    void input(T* const dest) override {
+#if defined(CSP4CMSIS_TRACE)
+        // RendezvousDone records the channel as core address - sizeof(void*)
+        // (alt_channel_sync.cpp): core_ must directly follow the vtable pointer.
+        static_assert(sizeof(RendezvousChannel) == sizeof(void*) + sizeof(RendezvousCore),
+                      "RendezvousChannel layout: trace events would not name the channel");
+#endif
+        core_.input(dest);
+    }
     void output(const T* const source) override { core_.output(source); }
 
     internal::Guard* getInputGuard(GuardSlot& slot, T& dest) override {

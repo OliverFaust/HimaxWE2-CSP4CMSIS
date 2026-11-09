@@ -40,7 +40,9 @@
 //    it can only fail if another reader/writer took that token in between
 //    (i.e. made progress); select() then starts a new round, which reads the
 //    updated count.
-//  * putFromISR(): never blocks; Block policy fails if full. ISR priority
+//  * putFromISR(): never blocks; Block policy fails when no spaces token is
+//    available: also after a reader's pop (P) until its release (T), while
+//    the slot is already free (see IsrChanout::putFromISR()). ISR priority
 //    must be numerically >= CSP4CMSIS_MAX_SYSCALL_INTERRUPT_PRIORITY
 //    (masked by the critical section).
 //
@@ -75,6 +77,7 @@
 #include "csp_semaphore.h"
 #include "channel_base.h"
 #include "alt.h"
+#include "csp4cmsis_trace.h"
 #include <cstring>
 #include <cstddef>
 #include <type_traits>
@@ -107,6 +110,12 @@ namespace csp::internal {
                       "BufferedChannel: T must be trivially copyable (elements are copied with memcpy)");
 
         static constexpr bool kBlock = (P == csp::BufferPolicy::Block);
+#if defined(CSP4CMSIS_TRACE)
+        // Trace values: elements after << 16 | policy << 14 | capacity, ring
+        // slots in 16 bits.
+        static_assert(SIZE <= CSP4CMSIS_TRACE_CAPACITY_MASK,
+                      "BufferedChannel: tracing records the capacity in 14 bits (SIZE <= 16383)");
+#endif
 
         friend class BufferedInputGuard<T, SIZE, P>;
         friend class BufferedOutputGuard<T, SIZE, P>;
@@ -126,15 +135,30 @@ namespace csp::internal {
 
         unsigned char* at(size_t i) { return storage_ + (i % SIZE) * sizeof(T); }
 
+        // Trace (csp4cmsis_trace.h), inside the critical section of the
+        // operation, after it: c = elements after << 16 | policy << 14 |
+        // capacity (policy: 0 Block, 1 KeepNewest, 2 KeepOldest); d = the
+        // ring slot used. Slot arithmetic only in the macro arguments, which a
+        // build without CSP4CMSIS_TRACE never evaluates.
+#define CSP4CMSIS_BUF_TRACE(msg, slot) \
+        CSP4CMSIS_TRACE_EVENT4((msg), CSP4CMSIS_TRACE_SELF(), this, \
+                               ((uint32_t)count_ << 16) | ((uint32_t)P << CSP4CMSIS_TRACE_POLICY_SHIFT) | \
+                               (uint32_t)SIZE, (slot))
+
         // Inside a critical section: append / remove one element.
         void pushLocked(const T* src) {
             std::memcpy(at(head_ + count_), src, sizeof(T));
             count_ = count_ + 1;
+            // Trace: BufferedPut from a thread, PutFromISR from an interrupt
+            // handler; the slot just written is the newest, head_ + count_ - 1.
+            CSP4CMSIS_BUF_TRACE(__get_IPSR() != 0U ? CSP4CMSIS_EVT_PUT_FROM_ISR : CSP4CMSIS_EVT_BUFFERED_PUT,
+                                (head_ + count_ - 1U) % SIZE);
         }
         void popLocked(T* dst) {
             std::memcpy(dst, at(head_), sizeof(T));
             head_  = (head_ + 1) % SIZE;
             count_ = count_ - 1;
+            CSP4CMSIS_BUF_TRACE(CSP4CMSIS_EVT_BUFFERED_GET, (head_ + SIZE - 1U) % SIZE);   // the slot read: the old head_
         }
         // S: snapshot a registration (after the token was released).
         AltWake snapshot(const AltWake& slot) {
@@ -172,8 +196,13 @@ namespace csp::internal {
                     // (count_ and the tokens are unchanged).
                     std::memcpy(at(head_), src, sizeof(T));
                     head_ = (head_ + 1) % SIZE;
+                    // Trace: slot evicted << 16 | slot written, both the old head_.
+                    CSP4CMSIS_BUF_TRACE(CSP4CMSIS_EVT_OVERWROTE_OLDEST,
+                                        ((uint32_t)((head_ + SIZE - 1U) % SIZE) << 16) | (uint32_t)((head_ + SIZE - 1U) % SIZE));
+                } else {
+                    // KeepOldest and full: drop.
+                    CSP4CMSIS_BUF_TRACE(CSP4CMSIS_EVT_DROPPED_NEW, CSP4CMSIS_TRACE_NO_SLOT);
                 }
-                // KeepOldest and full: drop.
                 csp_exit_critical(s);
             }
             if (pushed) {
@@ -231,7 +260,8 @@ namespace csp::internal {
             else return true;
         }
 
-        /// Never blocks. Block: false if full. KeepNewest/KeepOldest: true.
+        /// Never blocks. Block: false if no spaces token is available (see the
+        /// header). KeepNewest/KeepOldest: true.
         bool putFromISR(const T& data) override {
             if constexpr (kBlock) {
                 if (!spaces_.acquire(0)) return false;
@@ -244,13 +274,17 @@ namespace csp::internal {
         }
 
         void input(T* const dest) override {
+            CSP4CMSIS_TRACE_EVENT(CSP4CMSIS_EVT_WAIT_BUFFERED_EMPTY, CSP4CMSIS_TRACE_SELF(), this);
             if (!items_.acquire(osWaitForever)) fatal("CSP4CMSIS: BufferedChannel: input() wait failed");
+            CSP4CMSIS_TRACE_EVENT(CSP4CMSIS_EVT_RESUME, CSP4CMSIS_TRACE_SELF(), this);
             popWithToken(dest);
         }
 
         void output(const T* const source) override {
             if constexpr (kBlock) {
+                CSP4CMSIS_TRACE_EVENT(CSP4CMSIS_EVT_WAIT_BUFFERED_FULL, CSP4CMSIS_TRACE_SELF(), this);
                 if (!spaces_.acquire(osWaitForever)) fatal("CSP4CMSIS: BufferedChannel: output() wait failed");
+                CSP4CMSIS_TRACE_EVENT(CSP4CMSIS_EVT_RESUME, CSP4CMSIS_TRACE_SELF(), this);
                 pushWithToken(source);
             } else {
                 offer(source);
@@ -292,6 +326,13 @@ namespace csp::internal {
             channel->popWithToken(dest);
             return true;
         }
+        void retarget(void* t) override { dest = static_cast<T*>(t); }
+#if defined(CSP4CMSIS_TRACE)
+        uint32_t traceDescribe(uint32_t& object) const override {
+            object = (uint32_t)(uintptr_t)channel;
+            return CSP4CMSIS_TRACE_GUARD_INPUT;
+        }
+#endif
     };
 
     template <typename T, size_t SIZE, csp::BufferPolicy P>
@@ -323,8 +364,17 @@ namespace csp::internal {
                 return true;
             }
         }
+        void retarget(void* t) override { source = static_cast<const T*>(t); }
+#if defined(CSP4CMSIS_TRACE)
+        uint32_t traceDescribe(uint32_t& object) const override {
+            object = (uint32_t)(uintptr_t)channel;
+            return CSP4CMSIS_TRACE_GUARD_OUTPUT;
+        }
+#endif
     };
 
 } // namespace csp::internal
+
+#undef CSP4CMSIS_BUF_TRACE
 
 #endif // CSP4CMSIS_BUFFERED_CHANNEL_H

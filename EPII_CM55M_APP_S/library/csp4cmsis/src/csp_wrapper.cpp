@@ -1,6 +1,7 @@
 // --- csp_wrapper.cpp ---
 
 #include "csp/run.h" // ThreadFuncWrapper, csp::internal::TaskCtx
+#include "csp/csp4cmsis_trace.h"
 
 // Define the function using the definition that was removed from the header.
 extern "C" {
@@ -9,7 +10,10 @@ extern "C" {
         csp::internal::TaskCtx* ctx = static_cast<csp::internal::TaskCtx*>(pvParameters);
 
         // 1. Run the process logic
+        CSP4CMSIS_TRACE_EVENT(CSP4CMSIS_EVT_PROCESS_START, osThreadGetId(), ctx->process);
+        CSP4CMSIS_TRACE_STRING(CSP4CMSIS_EVT_PROCESS_NAME, ctx->process->name());
         ctx->process->run();
+        CSP4CMSIS_TRACE_EVENT(CSP4CMSIS_EVT_PROCESS_END, osThreadGetId(), ctx->process);
 
         // 2. Signal completion
         if (ctx->completion_sem) {
