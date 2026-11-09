@@ -118,3 +118,26 @@ CSP: OBSERVED((SYS((FileSource),(Inference5),(Reporter),(MainApp)))) is *not* a 
 Could not execute trace from state 13: [go(report_chan.(started.filesource),15),go(tau,17),go(stack_tick,21),go(line.(started.filesource),33),go(report_chan.srcmsg,34),go(tau,36),go(fs_read,39),go(frame_chan.0.img,43),go(line.srcmsg,45),go(report_chan.(started.inference),46),go(poll_empty,48),go(rea ...
 CSP: (FileSource6)\(diff(Events,(SRC_EVENTS))) is *not* a failure_divergences refinement of CSP: SOURCE(0)   [2 s]
 Could not execute trace from state 13: [go(tau,18),go(tau,19),go(tau,21),go(tau,22),go(tau,24),go(frame_chan.0.img,25),go(release_chan.1,32),go(tau,39),go(tau,40),go(tau,41),go(tau,43),go(frame_chan.1.img,44),go(release_chan.2,33),go(tau,50),go(tau,51),go(tau,52),go(tau,54),go(frame_chan.2.img,55),g ...
+
+## probcli FileSource_commands.csp -assertions (2.3 s, 189 MB)
+CHECKING CSP: CMD_SPEC [T= CSP: (SYSTEM_REQ)\(Internal)
+CSP: (SYSTEM_REQ)\((Internal)) is a trace refinement of CSP: CMD_SPEC
+CHECKING CSP: CMD_SPEC [F= CSP: (SYSTEM_REQ)\(Internal)
+CSP: (SYSTEM_REQ)\((Internal)) is a failures refinement of CSP: CMD_SPEC
+CHECKING CSP: CMD_SPEC [T= CSP: (SYSTEM_BAD)\(Internal)
+CSP: (SYSTEM_BAD)\((Internal)) is *not* a trace refinement of CSP: CMD_SPEC
+Could not execute trace from state 35: [go(tau,36),go(tau,37),go(tau,38),go(cmd.Pace,39),go(tau,51),go(tau,52),go(tau,53),go(handled.Pace,54),go(tau,55),go(cmd.Pace,56),go(tau,64),go(tau,65),go(tau,66),go(handled.Pace,67),go(cmd.Restart,69),go(tau,86),go(tau,87),go(tau,88),go(handled.Restart,89),go(tau,92),go(tau,93),go(tau,94),go(cmd.Pa ...
+CHECKING CSP: CMD_SPEC [T= CSP: (SYSTEM_FIX)\(Internal)
+CSP: (SYSTEM_FIX)\((Internal)) is a trace refinement of CSP: CMD_SPEC
+CHECKING CSP: CMD_SPEC [F= CSP: (SYSTEM_FIX)\(Internal)
+CSP: (SYSTEM_FIX)\((Internal)) is a failures refinement of CSP: CMD_SPEC
+CHECKING CSP: SYSTEM_REQ :[ deadlock free [F] ]
+CSP: SYSTEM_REQ is deadlock free
+CHECKING CSP: SYSTEM_BAD :[ deadlock free [F] ]
+CSP: SYSTEM_BAD is deadlock free
+CHECKING CSP: SYSTEM_FIX :[ deadlock free [F] ]
+CSP: SYSTEM_FIX is deadlock free
+% CSP Assertion Checks Completed: [CSP: CMD_SPEC [T= CSP: (SYSTEM_REQ)\(Internal)=true,CSP: CMD_SPEC [F= CSP: (SYSTEM_REQ)\(Internal)=true,CSP: CMD_SPEC [T= CSP: (SYSTEM_BAD)\(Internal)=false,CSP: CMD_SPEC [T= CSP: (SYSTEM_FIX)\(Internal)=true,CSP: CMD_SPEC [F= CSP: (SYSTEM_FIX)\(Internal)=true,CSP: SYSTEM_REQ :[ deadlock free [F] ]=true,CSP: SYSTEM_BAD :[ deadlock free [F] ]=true,CSP: SYSTEM_FIX :[ deadlock free [F] ]=true]
+[runtime/230,total/8,true/7,false/1,unknown/0]
+Visible counterexample of CMD_SPEC [T= SYSTEM_BAD \ Internal (ProB's above is a longer one ending cmd.Restart, handled.Pace):
+CSP: (SYSTEM_BAD)\(Internal) [T= CSP: CEX=true, CSP: (SYSTEM_FIX)\(Internal) [T= CSP: CEX=false   with CEX = cmd.Restart -> handled.Init -> STOP

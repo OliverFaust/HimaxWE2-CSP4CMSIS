@@ -1,6 +1,6 @@
 # Neuropathway: Formal Model (CSP-M)
 
-This directory holds two models. `Neuropathway.csp` (with `Neuropathway_controls.csp`) models the network of the parent app, before the uplink; the sections below up to *Uplink model* describe it. `Uplink.csp` (with `Uplink_defs.csp` and `Uplink_controls.csp`) models this app's network with the four JPEG buffers and the Reporter's ready token as tokens, and `Uplink_command.csp` (with `Uplink_command_defs.csp` and `Uplink_command_controls.csp`) its command path; see [Uplink model](#uplink-model-uplinkcsp). `Uplink_source.csp` (with `Uplink_source_defs.csp` and `Uplink_source_controls.csp`) models the frame source, Camera or FileSource, with end of stream; see [Frame-source model](#frame-source-model-uplink_sourcecsp).
+This directory holds two models. `Neuropathway.csp` (with `Neuropathway_controls.csp`) models the network of the parent app, before the uplink; the sections below up to *Uplink model* describe it. `Uplink.csp` (with `Uplink_defs.csp` and `Uplink_controls.csp`) models this app's network with the four JPEG buffers and the Reporter's ready token as tokens, and `Uplink_command.csp` (with `Uplink_command_defs.csp` and `Uplink_command_controls.csp`) its command path; see [Uplink model](#uplink-model-uplinkcsp). `Uplink_source.csp` (with `Uplink_source_defs.csp` and `Uplink_source_controls.csp`) models the frame source, Camera or FileSource, with end of stream; see [Frame-source model](#frame-source-model-uplink_sourcecsp). `FileSource_commands.csp` states what FileSource's command handling must do and shows the ALT guard-slot defect of CSP4CMSIS against it; see [FileSource commands](#filesource-commands-filesource_commandscsp).
 
 This directory contains the CSPm formal specification for the neuropathway vision pipeline described in the *Neuropathways* chapter of the book: the three-stage `Camera` → `Inference` → `Reporter` network that processes camera frames through NPU-based person detection, and `MainApp`, which sends the stack report. It provides a mathematical abstraction of the pipeline's communication structure, isolating the CSP-level synchronisation guarantees from the low-level FreeRTOS task scheduling, hardware interrupt handling, and TensorFlow Lite Micro / Ethos-U55 driver details covered in the book. The model is checked with [ProB](https://prob.hhu.de/) 1.16.1 (`probcli Neuropathway.csp -assertions`); FDR can check it as well.
 
@@ -154,6 +154,28 @@ Bounds as in `Uplink.csp` (4 buffer ids, `W = 2`, `MAXM = 2`). Each assertion ra
 | 5 | at end of stream, Inference flushes the partial window with its image without waiting for the free token | `RUN(...) [T= OBSERVED(SYS(FileSource, Inference5, Reporter, MainApp))` | **fails** (as it should, 136 s): after a terminator the partial window's image is reported while the previous image's buffer is still in `free_chan`'s slot |
 | 6 | after the terminator, FileSource goes on with the same buffer instead of waiting for a release | `SOURCE(0) [FD= FileSource6 \ ...` | **fails** (as it should, 2 s): after `frame_chan.3.eos` the next frame comes without a `release_chan` event |
 
-Not modelled: the card driver's waits, pace, CRC checks and timing (internal to FileSource), and the ALT guard-slot issue of CSP4CMSIS. The latter is a property of the library's implementation, not of the channel protocol: two `Alternative`s on one channel end redirect each other's input. FileSource avoids it by binding both to one variable (app README, section 18).
+Not modelled: the card driver's waits, pace, CRC checks and timing (internal to FileSource), and the ALT guard-slot issue of CSP4CMSIS. The latter is a property of the library's implementation, not of the channel protocol: two `Alternative`s on one channel end redirect each other's input. FileSource avoids it by binding both to one variable (app README, section 18). `FileSource_commands.csp` models it on its own (below).
 
 ProB's output is in `prob_results.txt`: of the 12 assertions of `Uplink_source.csp`, 11 hold and the one expected to fail fails; both controls fail.
+
+
+## FileSource commands (`FileSource_commands.csp`)
+
+FileSource takes commands from `cmd_chan` in two `Alternative`s: a poll after each frame (a command or move on at once) and the pace wait (a command or the deadline). In CSP4CMSIS 2.0.0 to 3.1.0 a channel end has one ALT guard slot, and the latest `in | var` sets the variable a value taken from the end goes into. With the poll bound to `cmd` once and the wait bound to a loop-local `c` in every round, a command taken by the poll after the first pace wait went into `c`, and the poll read its own stale `cmd`: a `restart` was handled as `set again 0` (app README, section 18; CSP4CMSIS `docs/known-issues.md`).
+
+- **Part 1, the requirement.** `SYSTEM_REQ` is FileSource with both alternations as external choices, and any sequence of user commands (`Restart`, `Pace`). `CMD_SPEC = cmd?c -> handled!c -> CMD_SPEC`: every command FileSource accepts is acted on, with the value accepted, before the next one is accepted. Frames, the poll's empty branch and the pace deadline are hidden.
+- **Part 2, the defect.** `STORE` is one slot per channel end (`SLOT`, which remembers the variable of the latest `bind`) and the two variables, `V_cmd` (the poll's) and `V_c` (the wait's), both starting at `Init` (the zero-initialised `command_t`). A value taken from the channel (`deliver`) goes into the slot's variable (`put`) before the input completes; each alternation then reads its own variable (`get`). `FS_BAD` binds the poll once, then the wait in every round, as FileSource did.
+- **Part 3, the workaround.** `FS_FIX` binds both alternations to `V_cmd`, as FileSource does now. The library fix of CSP4CMSIS 3.2.0 (every `Alternative` sets its channel guards to its own variables at the start of each select) gives every alternation its own variable back, so the poll again reads what the slot delivered; `CMD_SPEC` is the behaviour it restores.
+
+| Assertion | Meaning | Result |
+|---|---|---|
+| `SYSTEM_REQ :[deadlock free [F]]` | the requirements model never stops | holds |
+| `CMD_SPEC [T= SYSTEM_REQ \ Internal`, `CMD_SPEC [F= ...` | the requirements model meets the requirement | holds (both) |
+| `CMD_SPEC [T= SYSTEM_BAD \ Internal` | the defective binding meets the requirement | **fails, as expected**: `cmd.Restart, handled.Init` |
+| `SYSTEM_BAD :[deadlock free [F]]` | the defect does not stop FileSource; it only acts on the wrong value | holds |
+| `CMD_SPEC [T= SYSTEM_FIX \ Internal`, `CMD_SPEC [F= ...` | the workaround meets the requirement | holds (both) |
+| `SYSTEM_FIX :[deadlock free [F]]` | the workaround never stops | holds |
+
+The counterexample: after one round with no command (poll empty, pace deadline, both hidden), the slot is bound to the wait's `V_c`; the next poll accepts `cmd.Restart`, the value goes into `V_c`, and the poll reads `V_cmd`, still `Init`. ProB searches depth first and reports a longer trace ending `cmd.Restart, handled.Pace` (the poll reads an older command). That `<cmd.Restart, handled.Init>` is a trace of `SYSTEM_BAD \ Internal` and not of `SYSTEM_FIX \ Internal` was checked separately with `CEX = cmd.Restart -> handled.Init -> STOP` (`SYSTEM_BAD \ Internal [T= CEX` holds, the same for `SYSTEM_FIX` fails).
+
+ProB 1.16.1, all 8 assertions in 2.3 s; the output is in `prob_results.txt` (7 hold, the one expected to fail fails).

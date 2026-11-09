@@ -1,0 +1,95 @@
+-- FileSource: command handling with two alternations
+-- Part 1 is the requirements model. Parts 2 and 3 show that the requirement
+-- distinguishes the defective binding from the workaround.
+
+datatype Cmd = Restart | Pace | Init
+nametype UserCmd = {Restart, Pace}
+
+channel frame, release
+channel cmd : UserCmd
+channel no_cmd
+channel pace_due
+channel handled : Cmd
+
+-- ===================== Part 1: requirements model =====================
+-- After each frame, FileSource offers a command or moves on at once (poll).
+-- Then it waits for the pace deadline, still accepting commands (wait).
+-- Both alternations are external choices.
+
+FS_REQ = frame -> release -> POLL
+
+POLL = cmd?c -> handled!c -> WAIT
+       [] no_cmd -> WAIT
+
+WAIT = cmd?c -> handled!c -> WAIT
+       [] pace_due -> FS_REQ
+
+COMMAND = [] c : UserCmd @ cmd!c -> COMMAND
+
+SYSTEM_REQ = FS_REQ [| {| cmd |} |] COMMAND
+
+Internal = {frame, release, no_cmd, pace_due}
+
+-- Requirement: every command FileSource accepts is acted on, with exactly
+-- the value accepted, before the next command is accepted.
+CMD_SPEC = cmd?c -> handled!c -> CMD_SPEC
+
+assert SYSTEM_REQ :[deadlock free [F]]
+assert CMD_SPEC [T= SYSTEM_REQ \ Internal
+assert CMD_SPEC [F= SYSTEM_REQ \ Internal
+
+-- ============ Part 2: one binding slot per channel end ==============
+-- Abstract mechanism: the channel end has one slot that remembers the
+-- variable the latest alternation bound it to. A value taken from the
+-- channel goes into that variable (put) before the input completes; each
+-- alternation then reads its own.
+
+datatype Var = V_cmd | V_c
+
+channel bind : Var
+channel deliver : UserCmd
+channel put : Var.Cmd
+channel get : Var.Cmd
+
+SLOT(t) = bind?t2 -> SLOT(t2)
+          [] deliver?x -> put!t!x -> SLOT(t)
+
+VAR(v, x) = put.v?y -> VAR(v, y)
+            [] get.v!x -> VAR(v, x)
+
+STORE = SLOT(V_cmd) [| {| put |} |] (VAR(V_cmd, Init) ||| VAR(V_c, Init))
+
+Mechanism = {| bind, deliver, put, get |}
+
+-- Defective: the poll binds to cmd once; each wait binds to its own c.
+FS_BAD = bind.V_cmd -> LOOP_BAD
+LOOP_BAD = frame -> release -> POLL_BAD
+POLL_BAD = cmd?x -> deliver!x -> put?_?_ -> get.V_cmd?y -> handled!y -> WAIT_BAD0
+           [] no_cmd -> WAIT_BAD0
+WAIT_BAD0 = bind.V_c -> WAIT_BAD
+WAIT_BAD = cmd?x -> deliver!x -> put?_?_ -> get.V_c?y -> handled!y -> WAIT_BAD
+           [] pace_due -> LOOP_BAD
+
+SYSTEM_BAD = ((FS_BAD [| {| bind, deliver, put, get |} |] STORE) \ Mechanism)
+             [| {| cmd |} |] COMMAND
+
+-- Expected to FAIL: counterexample (visible) cmd.Restart, handled.Init
+assert CMD_SPEC [T= SYSTEM_BAD \ Internal
+assert SYSTEM_BAD :[deadlock free [F]]
+
+-- ============ Part 3: workaround, both bind the same variable ==========
+FS_FIX = bind.V_cmd -> LOOP_FIX
+LOOP_FIX = frame -> release -> POLL_FIX
+POLL_FIX = cmd?x -> deliver!x -> put?_?_ -> get.V_cmd?y -> handled!y -> WAIT_FIX0
+           [] no_cmd -> WAIT_FIX0
+WAIT_FIX0 = bind.V_cmd -> WAIT_FIX
+WAIT_FIX = cmd?x -> deliver!x -> put?_?_ -> get.V_cmd?y -> handled!y -> WAIT_FIX
+           [] pace_due -> LOOP_FIX
+
+SYSTEM_FIX = ((FS_FIX [| {| bind, deliver, put, get |} |] STORE) \ Mechanism)
+             [| {| cmd |} |] COMMAND
+
+-- Expected to hold
+assert CMD_SPEC [T= SYSTEM_FIX \ Internal
+assert CMD_SPEC [F= SYSTEM_FIX \ Internal
+assert SYSTEM_FIX :[deadlock free [F]]
