@@ -1,1 +1,1 @@
-/media/of6/c615665c-b372-4e0b-8c40-ca60b0369c46/The_Way_of_Static_Process_Networks/GithubCode/CSP4CMSIS/we2_image_gen_local/output_case1_sec_wlcsp/hx_layout_ota.bin 0x34000000 0x3a0284ac 0x0010000 0
+/media/of6/c615665c-b372-4e0b-8c40-ca60b0369c46/The_Way_of_Static_Process_Networks/GithubCode/HimaxWE2-CSP4CMSIS/we2_image_gen_local/output_case1_sec_wlcsp/hx_layout_ota.bin 0x34000000 0x3a0284ac 0x0010000 0
